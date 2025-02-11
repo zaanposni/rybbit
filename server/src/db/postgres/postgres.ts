@@ -1,6 +1,7 @@
 import postgres from "postgres";
 import { Session } from "./types";
 import dotenv from "dotenv";
+import { auth } from "../../lib/auth";
 
 dotenv.config();
 
@@ -93,6 +94,19 @@ export async function initializePostgres() {
         );
       `,
     ]);
+
+    const user =
+      await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
+    if (user.length === 0) {
+      auth.api.signUpEmail({
+        body: {
+          email: "test@test.com",
+          username: "admin",
+          name: "admin",
+          password: "admin123",
+        },
+      });
+    }
 
     console.log("Tables created successfully.");
   } catch (err) {

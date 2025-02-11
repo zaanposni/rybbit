@@ -41,14 +41,16 @@ server.register(fastifyStatic, {
   prefix: "/", // optional: default '/'
 });
 
-server.route({
-  method: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
-  url: "/api/auth/*",
-  handler: (req, reply) => {
-    const handler = toNodeHandler(auth);
-    // @ts-ignore
-    return handler(req.raw, reply.raw);
-  },
+server.register(async (fastify) => {
+  const authHandler = toNodeHandler(auth); // auth = betterAuth(...) instance
+  fastify.addContentTypeParser("application/json", (_req, _payload, done) => {
+    done(null, null);
+  });
+  fastify.all("/api/auth/*", async (request, reply) => {
+    // Forward all /api/auth requests to BetterAuth
+    await authHandler(request.raw, reply.raw);
+    return reply; // ensure Fastify knows response was sent
+  });
 });
 
 // Health check endpoint
