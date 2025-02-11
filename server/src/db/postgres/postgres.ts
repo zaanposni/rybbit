@@ -14,25 +14,86 @@ export const sql = postgres({
 
 export async function initializePostgres() {
   try {
-    await sql<Session[]>`
-      CREATE TABLE IF NOT EXISTS active_sessions (
-        session_id TEXT PRIMARY KEY,
-        user_id TEXT,
-        hostname TEXT,
-        start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        pageviews INT DEFAULT 0,
-        entry_page TEXT,
-        exit_page TEXT,
-        device_type TEXT,
-        screen_width INT,
-        screen_height INT,
-        browser TEXT,
-        operating_system TEXT,
-        language TEXT,
-        referrer TEXT
-      );
-    `;
+    // Phase 1: Create tables with no dependencies
+    await Promise.all([
+      sql`
+        CREATE TABLE IF NOT EXISTS "user" (
+          "id" text not null primary key,
+          "name" text not null,
+          "email" text not null unique,
+          "emailVerified" boolean not null,
+          "image" text,
+          "createdAt" timestamp not null,
+          "updatedAt" timestamp not null
+        );
+      `,
+
+      sql`
+        CREATE TABLE IF NOT EXISTS "verification" (
+          "id" text not null primary key,
+          "identifier" text not null,
+          "value" text not null,
+          "expiresAt" timestamp not null,
+          "createdAt" timestamp,
+          "updatedAt" timestamp
+        );
+      `,
+
+      sql<Session[]>`
+        CREATE TABLE IF NOT EXISTS active_sessions (
+          session_id TEXT PRIMARY KEY,
+          user_id TEXT,
+          hostname TEXT,
+          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          pageviews INT DEFAULT 0,
+          entry_page TEXT,
+          exit_page TEXT,
+          device_type TEXT,
+          screen_width INT,
+          screen_height INT,
+          browser TEXT,
+          operating_system TEXT,
+          language TEXT,
+          referrer TEXT
+        );
+      `,
+    ]);
+
+    // Phase 2: Create tables with foreign key dependencies
+    await Promise.all([
+      sql`
+        CREATE TABLE IF NOT EXISTS "session" (
+          "id" text not null primary key,
+          "expiresAt" timestamp not null,
+          "token" text not null unique,
+          "createdAt" timestamp not null,
+          "updatedAt" timestamp not null,
+          "ipAddress" text,
+          "userAgent" text,
+          "userId" text not null references "user" ("id")
+        );
+      `,
+
+      sql`
+        CREATE TABLE IF NOT EXISTS "account" (
+          "id" text not null primary key,
+          "accountId" text not null,
+          "providerId" text not null,
+          "userId" text not null references "user" ("id"),
+          "accessToken" text,
+          "refreshToken" text,
+          "idToken" text,
+          "accessTokenExpiresAt" timestamp,
+          "refreshTokenExpiresAt" timestamp,
+          "scope" text,
+          "password" text,
+          "createdAt" timestamp not null,
+          "updatedAt" timestamp not null
+        );
+      `,
+    ]);
+
     console.log("Tables created successfully.");
   } catch (err) {
     console.error("Error creating tables:", err);

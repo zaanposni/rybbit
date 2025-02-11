@@ -2,6 +2,7 @@ import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import Fastify, { FastifyReply, FastifyRequest } from "fastify";
 import path from "path";
+import { toNodeHandler } from "better-auth/node";
 import { trackPageView } from "./actions/trackPageView";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse";
 import { TrackingPayload } from "./types";
@@ -17,6 +18,7 @@ import { getReferrers } from "./api/getReferrers";
 import { getPages } from "./api/getPages";
 import { getPageViews } from "./api/getPageViews";
 import { getOverview } from "./api/getOverview";
+import { auth } from "./lib/auth";
 
 const server = Fastify({
   logger: {
@@ -37,6 +39,16 @@ server.register(cors, {
 server.register(fastifyStatic, {
   root: path.join(__dirname, "../public"),
   prefix: "/", // optional: default '/'
+});
+
+server.route({
+  method: ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD", "OPTIONS"],
+  url: "/api/auth/*",
+  handler: (req, reply) => {
+    const handler = toNodeHandler(auth);
+    // @ts-ignore
+    return handler(req.raw, reply.raw);
+  },
 });
 
 // Health check endpoint
