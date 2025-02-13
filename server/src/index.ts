@@ -38,7 +38,7 @@ const server = Fastify({
 
 // Register CORS
 server.register(cors, {
-  origin: ["http://localhost:3002"], // In production, you should specify your frontend domain
+  origin: ["http://localhost:3002", "http://tracking.tomato.gg"], // In production, you should specify your frontend domain
   credentials: true,
 });
 
@@ -53,14 +53,14 @@ server.register(FastifyBetterAuth, { auth });
 server.addHook("onRequest", async (request, reply) => {
   const { url } = request.raw;
 
+  console.info(url);
+
   // Bypass auth for health check and tracking
   if (url?.startsWith("/health") || url?.startsWith("/track/pageview")) {
     return;
   }
 
   try {
-    console.info("Request Headers:", request.headers);
-
     // Convert Fastify headers object into Fetch-compatible Headers
     const headers = new Headers(request.headers as HeadersInit);
 
