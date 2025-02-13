@@ -23,7 +23,8 @@
     "node-cron": "^3.0.3",
     "pg": "^8.13.1",
     "postgres": "^3.4.5",
-    "ua-parser-js": "^2.0.0"
+    "ua-parser-js": "^2.0.0",
+    "undici": "^7.3.0"
   },
   "devDependencies": {
     "@types/luxon": "^3.4.2",

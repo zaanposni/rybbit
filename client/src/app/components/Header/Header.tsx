@@ -12,6 +12,7 @@ import {
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DateSelector } from "./DateSelector";
 import { DateTime } from "luxon";
+import { authedFetch } from "../../../hooks/utils";
 
 const canGoForward = (time: Time) => {
   const currentDay = DateTime.now().startOf("day");
@@ -42,9 +43,7 @@ export function Header() {
   const { data } = useQuery<{ count: number }>({
     queryKey: ["active-sessions"],
     queryFn: () =>
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/live-user-count`).then(
-        (res) => res.json()
-      ),
+      authedFetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/live-user-count`),
   });
 
   const { time } = useTimeSelection();

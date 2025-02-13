@@ -3,7 +3,9 @@ import fastifyStatic from "@fastify/static";
 import Fastify, { FastifyReply, FastifyRequest } from "fastify";
 import FastifyBetterAuth from "fastify-better-auth";
 import cron from "node-cron";
-import path from "path";
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
+import { Headers, HeadersInit } from "undici"; // Ensure Undici is used for Headers
 import { trackPageView } from "./actions/trackPageView.js";
 import { getBrowsers } from "./api/getBrowsers.js";
 import { getCountries } from "./api/getCountries.js";
@@ -19,8 +21,6 @@ import { initializePostgres } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { auth } from "./lib/auth.js";
 import { TrackingPayload } from "./types.js";
-import { fileURLToPath } from "url";
-import { dirname, join } from "path";
 
 // ESM replacement for __dirname:
 const __filename = fileURLToPath(import.meta.url);
@@ -49,6 +49,35 @@ server.register(fastifyStatic, {
 });
 
 server.register(FastifyBetterAuth, { auth });
+
+server.addHook("onRequest", async (request, reply) => {
+  const { url } = request.raw;
+
+  // Bypass auth for health check and tracking
+  if (url?.startsWith("/health") || url?.startsWith("/track/pageview")) {
+    return;
+  }
+
+  try {
+    console.info("Request Headers:", request.headers);
+
+    // Convert Fastify headers object into Fetch-compatible Headers
+    const headers = new Headers(request.headers as HeadersInit);
+
+    // Get session from BetterAuth
+    const session = await auth.api.getSession({ headers });
+
+    if (!session) {
+      return reply.status(401).send({ error: "Unauthorized" });
+    }
+
+    // Attach session user info to request
+    request.user = session.user;
+  } catch (err) {
+    console.error("Auth Error:", err);
+    return reply.status(500).send({ error: "Auth check failed" });
+  }
+});
 
 // Health check endpoint
 server.get("/health", async () => {
@@ -106,3 +135,9 @@ const start = async () => {
 };
 
 start();
+
+declare module "fastify" {
+  interface FastifyRequest {
+    user?: any; // Or define a more specific user type
+  }
+}

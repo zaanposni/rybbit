@@ -4,7 +4,7 @@ import {
   UseQueryResult,
 } from "@tanstack/react-query";
 import { useTimeSelection } from "../lib/timeSelectionStore";
-import { getStartAndEndDate } from "./utils";
+import { authedFetch, getStartAndEndDate } from "./utils";
 
 export type APIResponse<T> = {
   data: T;
@@ -25,9 +25,9 @@ export function useGenericQuery<T>(
     queryKey: [endpoint, timeToUse],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return fetch(
+      return authedFetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/${endpoint}?startDate=${startDate}&endDate=${endDate}&timezone=${timezone}`
-      ).then((res) => res.json());
+      );
     },
     staleTime: Infinity,
     placeholderData: keepPreviousData,
@@ -111,9 +111,9 @@ export function useGetPageviews(
     queryKey: ["pageviews", timeToUse, bucket],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return fetch(
+      return authedFetch(
         `${process.env.NEXT_PUBLIC_BACKEND_URL}/pageviews?startDate=${startDate}&endDate=${endDate}&timezone=${timezone}&bucket=${bucket}`
-      ).then((res) => res.json());
+      );
     },
     placeholderData: keepPreviousData,
     staleTime: Infinity,

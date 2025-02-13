@@ -2,8 +2,11 @@
 
 import { Button } from "@/components/ui/button";
 import { authClient } from "../../lib/auth";
+import { useRouter } from "next/navigation";
 
 export default function SettingsPage() {
+  const session = authClient.useSession();
+  const router = useRouter();
   return (
     <div className="container max-w-6xl py-6">
       <div className="space-y-6">
@@ -14,8 +17,9 @@ export default function SettingsPage() {
           </p>
         </div>
         <Button
-          onClick={() => {
-            authClient.signOut();
+          onClick={async () => {
+            await authClient.signOut();
+            router.push("/login");
           }}
         >
           Signout

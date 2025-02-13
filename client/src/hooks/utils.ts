@@ -15,3 +15,13 @@ export function getStartAndEndDate(time: Time) {
   }
   return { startDate: time.day, endDate: time.day };
 }
+
+export async function authedFetch(url: string) {
+  return fetch(url, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  }).then((res) => res.json());
+}
