@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse";
-import { getTimeStatement, processResults } from "./utils";
+import clickhouse from "../db/clickhouse/clickhouse.js";
+import { getTimeStatement, processResults } from "./utils.js";
 
 const TimeBucketToFn = {
   hour: "toStartOfHour",

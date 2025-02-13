@@ -1,3 +1,8 @@
+"use client";
+
+import { Button } from "@/components/ui/button";
+import { authClient } from "../../lib/auth";
+
 export default function SettingsPage() {
   return (
     <div className="container max-w-6xl py-6">
@@ -8,16 +13,13 @@ export default function SettingsPage() {
             Manage your analytics preferences and configurations.
           </p>
         </div>
-        <div className="border rounded-lg p-4">
-          <div className="space-y-4">
-            <div>
-              <h4 className="text-sm font-medium">Coming Soon</h4>
-              <p className="text-sm text-muted-foreground">
-                Settings configuration options will be available here.
-              </p>
-            </div>
-          </div>
-        </div>
+        <Button
+          onClick={() => {
+            authClient.signOut();
+          }}
+        >
+          Signout
+        </Button>
       </div>
     </div>
   );

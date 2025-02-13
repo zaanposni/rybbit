@@ -1,24 +1,30 @@
 import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import Fastify, { FastifyReply, FastifyRequest } from "fastify";
-import path from "path";
-import { toNodeHandler } from "better-auth/node";
-import { trackPageView } from "./actions/trackPageView";
-import { initializeClickhouse } from "./db/clickhouse/clickhouse";
-import { TrackingPayload } from "./types";
-import { initializePostgres } from "./db/postgres/postgres";
+import FastifyBetterAuth from "fastify-better-auth";
 import cron from "node-cron";
-import { cleanupOldSessions } from "./db/postgres/session-cleanup";
-import { getLiveUsercount } from "./api/getLiveUsercount";
-import { getCountries } from "./api/getCountries";
-import { getOperatingSystems } from "./api/getOperatingSystems";
-import { getBrowsers } from "./api/getBrowsers";
-import { getDevices } from "./api/getDevices";
-import { getReferrers } from "./api/getReferrers";
-import { getPages } from "./api/getPages";
-import { getPageViews } from "./api/getPageViews";
-import { getOverview } from "./api/getOverview";
-import { auth } from "./lib/auth";
+import path from "path";
+import { trackPageView } from "./actions/trackPageView.js";
+import { getBrowsers } from "./api/getBrowsers.js";
+import { getCountries } from "./api/getCountries.js";
+import { getDevices } from "./api/getDevices.js";
+import { getLiveUsercount } from "./api/getLiveUsercount.js";
+import { getOperatingSystems } from "./api/getOperatingSystems.js";
+import { getOverview } from "./api/getOverview.js";
+import { getPages } from "./api/getPages.js";
+import { getPageViews } from "./api/getPageViews.js";
+import { getReferrers } from "./api/getReferrers.js";
+import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
+import { initializePostgres } from "./db/postgres/postgres.js";
+import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
+import { auth } from "./lib/auth.js";
+import { TrackingPayload } from "./types.js";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+// ESM replacement for __dirname:
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const server = Fastify({
   logger: {
@@ -32,26 +38,17 @@ const server = Fastify({
 
 // Register CORS
 server.register(cors, {
-  origin: true, // In production, you should specify your frontend domain
+  origin: ["http://localhost:3002"], // In production, you should specify your frontend domain
+  credentials: true,
 });
 
 // Serve static files
 server.register(fastifyStatic, {
-  root: path.join(__dirname, "../public"),
-  prefix: "/", // optional: default '/'
+  root: join(__dirname, "../public"),
+  prefix: "/", // or whatever prefix you need
 });
 
-server.register(async (fastify) => {
-  const authHandler = toNodeHandler(auth); // auth = betterAuth(...) instance
-  fastify.addContentTypeParser("application/json", (_req, _payload, done) => {
-    done(null, null);
-  });
-  fastify.all("/api/auth/*", async (request, reply) => {
-    // Forward all /api/auth requests to BetterAuth
-    await authHandler(request.raw, reply.raw);
-    return reply; // ensure Fastify knows response was sent
-  });
-});
+server.register(FastifyBetterAuth, { auth });
 
 // Health check endpoint
 server.get("/health", async () => {

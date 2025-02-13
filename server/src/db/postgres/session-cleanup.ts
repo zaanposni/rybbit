@@ -1,6 +1,6 @@
-import { insertSessions } from "../clickhouse/clickhouse";
-import { sql } from "./postgres";
-import { Session } from "./types";
+import { insertSessions } from "../clickhouse/clickhouse.js";
+import { sql } from "./postgres.js";
+import { Session } from "./types.js";
 import { DateTime } from "luxon";
 
 // function convertPostgresToClickhouse(postgresTimestamp: string): string {

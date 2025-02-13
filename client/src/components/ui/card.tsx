@@ -1,3 +1,5 @@
+"use client";
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useMeasure } from "@uidotdev/usehooks";
@@ -27,7 +29,7 @@ const CardLoader = React.forwardRef<
     <div ref={ref2} className="mt-[-15px] absolute top-0 left-0 w-full">
       {/* @ts-ignore */}
       <l-zoomies
-        size={width}
+        size={1000}
         stroke="3"
         bg-opacity="0.1"
         speed="1.4"

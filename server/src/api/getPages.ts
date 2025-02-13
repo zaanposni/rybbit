@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { getTimeStatement, processResults } from "./utils";
-import clickhouse from "../db/clickhouse/clickhouse";
-import { GenericRequest } from "./types";
+import { getTimeStatement, processResults } from "./utils.js";
+import clickhouse from "../db/clickhouse/clickhouse.js";
+import { GenericRequest } from "./types.js";
 
 type GetPagesResponse = {
   pathname: string;

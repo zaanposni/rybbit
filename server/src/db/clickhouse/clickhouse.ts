@@ -1,5 +1,5 @@
 import { createClient } from "@clickhouse/client";
-import { Session } from "../postgres/types";
+import { Session } from "../postgres/types.js";
 
 export const clickhouse = createClient({
   host: process.env.CLICKHOUSE_HOST,

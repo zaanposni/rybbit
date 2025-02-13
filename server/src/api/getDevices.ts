@@ -1,7 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse";
-import { GenericRequest } from "./types";
-import { getTimeStatement, processResults } from "./utils";
+import clickhouse from "../db/clickhouse/clickhouse.js";
+import { GenericRequest } from "./types.js";
+import { getTimeStatement, processResults } from "./utils.js";
 
 type GetDevicesResponse = {
   device_type: string;

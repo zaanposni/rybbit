@@ -1,7 +1,7 @@
 import postgres from "postgres";
-import { Session } from "./types";
+import { Session } from "./types.js";
 import dotenv from "dotenv";
-import { auth } from "../../lib/auth";
+import { auth } from "../../lib/auth.js";
 
 dotenv.config();
 

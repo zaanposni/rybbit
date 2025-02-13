@@ -33,9 +33,7 @@ export function DateSelector() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Button variant="default">{getLabel(time)}</Button>
-      </DropdownMenuTrigger>
+      <DropdownMenuTrigger>{getLabel(time)}</DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem
           onClick={() =>

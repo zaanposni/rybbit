@@ -1,12 +1,12 @@
 import { FastifyRequest } from "fastify";
-import { TrackingPayload } from "../types";
-import { getUserId, getDeviceType, getIpAddress } from "../utils";
+import { TrackingPayload } from "../types.js";
+import { getUserId, getDeviceType, getIpAddress } from "../utils.js";
 import crypto from "crypto";
-import { sql } from "../db/postgres/postgres";
+import { sql } from "../db/postgres/postgres.js";
 import UAParser, { UAParser as userAgentParser } from "ua-parser-js";
 
-import { Pageview } from "../db/clickhouse/types";
-import { pageviewQueue } from "./pageviewQueue";
+import { Pageview } from "../db/clickhouse/types.js";
+import { pageviewQueue } from "./pageviewQueue.js";
 
 type TotalPayload = TrackingPayload & {
   userId: string;

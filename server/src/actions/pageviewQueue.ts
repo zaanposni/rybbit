@@ -1,7 +1,7 @@
 import { DateTime } from "luxon";
-import clickhouse from "../db/clickhouse/clickhouse";
-import { TrackingPayload } from "../types";
-import { getDeviceType } from "../utils";
+import clickhouse from "../db/clickhouse/clickhouse.js";
+import { TrackingPayload } from "../types.js";
+import { getDeviceType } from "../utils.js";
 
 type TotalPayload = TrackingPayload & {
   userId: string;

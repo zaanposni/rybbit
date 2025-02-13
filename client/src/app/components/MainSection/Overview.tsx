@@ -1,3 +1,5 @@
+"use client";
+
 import { Duration } from "luxon";
 import { Badge } from "../../../components/ui/badge";
 import { Skeleton } from "../../../components/ui/skeleton";
