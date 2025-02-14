@@ -21,6 +21,6 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3002",
     "http://localhost:3001",
-    "http://tracking.tomato.gg",
+    "https://tracking.tomato.gg",
   ],
 });
