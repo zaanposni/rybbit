@@ -57,13 +57,12 @@ server.register(FastifyBetterAuth, { auth });
 server.addHook("onRequest", async (request, reply) => {
   const { url } = request.raw;
 
-  console.info(url);
-
   // Bypass auth for health check and tracking
   if (
     url?.startsWith("/health") ||
     url?.startsWith("/track/pageview") ||
-    url?.startsWith("/analytics")
+    url?.startsWith("/analytics") ||
+    url?.startsWith("/api/auth")
   ) {
     return;
   }
