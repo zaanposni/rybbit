@@ -60,7 +60,11 @@ server.addHook("onRequest", async (request, reply) => {
   console.info(url);
 
   // Bypass auth for health check and tracking
-  if (url?.startsWith("/health") || url?.startsWith("/track/pageview")) {
+  if (
+    url?.startsWith("/health") ||
+    url?.startsWith("/track/pageview") ||
+    url?.startsWith("/analytics")
+  ) {
     return;
   }
 
