@@ -38,7 +38,11 @@ const server = Fastify({
 
 // Register CORS
 server.register(cors, {
-  origin: ["http://localhost:3002", "http://tracking.tomato.gg"], // In production, you should specify your frontend domain
+  origin: [
+    "http://localhost:3002",
+    "https://tracking.tomato.gg",
+    "https://tomato.gg",
+  ], // In production, you should specify your frontend domain
   credentials: true,
 });
 
