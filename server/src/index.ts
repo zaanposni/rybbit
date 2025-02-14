@@ -67,6 +67,8 @@ server.addHook("onRequest", async (request, reply) => {
     return;
   }
 
+  console.info(url);
+
   try {
     // Convert Fastify headers object into Fetch-compatible Headers
     const headers = new Headers(request.headers as HeadersInit);
