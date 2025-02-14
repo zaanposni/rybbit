@@ -18,5 +18,9 @@ export const auth = betterAuth({
     enabled: true,
   },
   plugins: [username()],
-  trustedOrigins: ["http://localhost:3002", "http://localhost:3001"],
+  trustedOrigins: [
+    "http://localhost:3002",
+    "http://localhost:3001",
+    "http://tracking.tomato.gg",
+  ],
 });
