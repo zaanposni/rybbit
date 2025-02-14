@@ -21,6 +21,8 @@ import { initializePostgres } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { auth } from "./lib/auth.js";
 import { TrackingPayload } from "./types.js";
+import { toNodeHandler } from "better-auth/node";
+import { mapHeaders } from "./lib/betterAuth.js";
 
 // ESM replacement for __dirname:
 const __filename = fileURLToPath(import.meta.url);
@@ -52,7 +54,31 @@ server.register(fastifyStatic, {
   prefix: "/", // or whatever prefix you need
 });
 
-server.register(FastifyBetterAuth, { auth });
+server.register(
+  async (fastify, options) => {
+    await fastify.register((fastify) => {
+      const authHandler = toNodeHandler(options.auth);
+
+      fastify.addContentTypeParser(
+        "application/json",
+        /* c8 ignore next 3 */
+        (_request, _payload, done) => {
+          done(null, null);
+        }
+      );
+
+      fastify.all("/api/auth/*", async (request, reply: any) => {
+        reply.raw.setHeaders(mapHeaders(reply.getHeaders()));
+        await authHandler(request.raw, reply.raw);
+      });
+      fastify.all("/api/auth/*", async (request, reply: any) => {
+        reply.raw.setHeaders(mapHeaders(reply.getHeaders()));
+        await authHandler(request.raw, reply.raw);
+      });
+    });
+  },
+  { auth }
+);
 
 server.addHook("onRequest", async (request, reply) => {
   const { url } = request.raw;
