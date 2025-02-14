@@ -62,6 +62,7 @@ server.addHook("onRequest", async (request, reply) => {
     url?.startsWith("/health") ||
     url?.startsWith("/track/pageview") ||
     url?.startsWith("/analytics") ||
+    url?.startsWith("/auth") ||
     url?.startsWith("/api/auth")
   ) {
     return;
