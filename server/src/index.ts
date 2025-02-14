@@ -71,7 +71,7 @@ server.register(
         reply.raw.setHeaders(mapHeaders(reply.getHeaders()));
         await authHandler(request.raw, reply.raw);
       });
-      fastify.all("/api/auth/*", async (request, reply: any) => {
+      fastify.all("/auth/*", async (request, reply: any) => {
         reply.raw.setHeaders(mapHeaders(reply.getHeaders()));
         await authHandler(request.raw, reply.raw);
       });
