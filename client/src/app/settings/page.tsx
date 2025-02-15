@@ -7,6 +7,9 @@ import { useRouter } from "next/navigation";
 export default function SettingsPage() {
   const session = authClient.useSession();
   const router = useRouter();
+
+  console.info({ session });
+
   return (
     <div className="container max-w-6xl py-6">
       <div className="space-y-6">
