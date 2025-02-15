@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../../lib/auth";
+import { userStore } from "../layout";
 
 export default function Page() {
   const [username, setUsername] = useState("");
@@ -26,23 +27,16 @@ export default function Page() {
     setIsLoading(true);
 
     try {
-      const { data, error } = await authClient.signIn.username(
-        {
-          username,
-          password,
-        },
-        {
-          onRequest: () => {
-            setIsLoading(true);
-          },
-          onSuccess: () => {
-            router.push("/");
-          },
-          onError: (ctx: any) => {
-            alert(JSON.stringify(ctx));
-          },
-        }
-      );
+      const { data, error } = await authClient.signIn.username({
+        username,
+        password,
+      });
+      if (data?.user) {
+        userStore.setState({
+          user: data.user,
+        });
+        router.push("/");
+      }
     } catch (error) {
       console.error("Login error:", error);
       alert("Failed to login. Please try again.");

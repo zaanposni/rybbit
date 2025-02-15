@@ -22,5 +22,6 @@ export const auth = betterAuth({
     "http://localhost:3002",
     "http://localhost:3001",
     "https://tracking.tomato.gg",
+    "https://tomato.gg",
   ],
 });
