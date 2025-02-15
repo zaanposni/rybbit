@@ -10,8 +10,7 @@ import { authClient } from "../lib/auth";
 import { redirect } from "next/navigation";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Session, set, User } from "better-auth";
-import { create } from "zustand";
+import { userStore } from "../lib/useStore";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,25 +19,6 @@ const metadata: Metadata = {
   description: "Analytics dashboard for your web applications",
 };
 const publicRoutes = ["/login"];
-
-export const userStore = create<{
-  user: User | null;
-  isPending: boolean;
-  setSession: (user: User) => void;
-  setIsPending: (isPending: boolean) => void;
-}>((set) => ({
-  user: null,
-  isPending: true,
-  setSession: (user) => set({ user }),
-  setIsPending: (isPending) => set({ isPending }),
-}));
-
-authClient.getSession().then(({ data: session }) => {
-  userStore.setState({
-    user: session?.user,
-    isPending: false,
-  });
-});
 
 export default function RootLayout({
   children,

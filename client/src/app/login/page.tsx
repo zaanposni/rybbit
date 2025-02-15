@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "../../lib/auth";
-import { userStore } from "../layout";
+import { userStore } from "../../lib/useStore";
 
 export default function Page() {
   const [username, setUsername] = useState("");
