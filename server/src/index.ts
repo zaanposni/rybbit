@@ -24,6 +24,8 @@ import { initializePostgres, sql } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { auth, initAuth } from "./lib/auth.js";
 import { mapHeaders } from "./lib/betterAuth.js";
+import { allowList } from "./lib/allowedDomains.js";
+import { loadAllowedDomains } from "./lib/allowedDomains.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -38,16 +40,16 @@ const server = Fastify({
   trustProxy: true,
 });
 
-const domains = await sql`SELECT domain FROM sites`;
-const allowList = [
-  "http://localhost:3002",
-  "https://tracking.tomato.gg",
-  ...domains.map(({ domain }) => `https://${domain}`),
-];
-initAuth(allowList);
+await loadAllowedDomains();
 
 server.register(cors, {
-  origin: allowList,
+  origin: (origin, callback) => {
+    if (!origin || allowList.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"), false);
+    }
+  },
   credentials: true,
 });
 
