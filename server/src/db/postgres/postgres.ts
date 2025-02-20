@@ -21,11 +21,13 @@ export async function initializePostgres() {
         CREATE TABLE IF NOT EXISTS "user" (
           "id" text not null primary key,
           "name" text not null,
+          "username" text not null unique,
           "email" text not null unique,
           "emailVerified" boolean not null,
           "image" text,
           "createdAt" timestamp not null,
-          "updatedAt" timestamp not null
+          "updatedAt" timestamp not null,
+          "role" text not null default 'user'
         );
       `,
 
@@ -119,6 +121,8 @@ export async function initializePostgres() {
         },
       });
     }
+
+    await sql`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
 
     console.log("Tables created successfully.");
   } catch (err) {

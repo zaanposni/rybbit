@@ -4,10 +4,12 @@ import { Button } from "@/components/ui/button";
 import { authClient } from "../../lib/auth";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { GearSix, User } from "@phosphor-icons/react";
+import { GearSix, User, Users as Users_ } from "@phosphor-icons/react";
 
 import { Input } from "../../components/ui/input";
 import { Account } from "./account/Account";
+import { Users } from "./users/Users";
+import { Settings } from "./settings/settings";
 
 export default function SettingsPage() {
   const session = authClient.useSession();
@@ -36,38 +38,21 @@ export default function SettingsPage() {
             <GearSix size={16} weight="bold" />
             Settings
           </Button>
+          <Button
+            variant={selectedTab === "users" ? "default" : "ghost"}
+            onClick={() => setSelectedTab("users")}
+            className="justify-start"
+          >
+            <Users_ size={16} weight="bold" />
+            Users
+          </Button>
         </div>
         {selectedTab === "account" && session.data?.user && (
           <Account session={session} />
         )}
+        {selectedTab === "users" && <Users />}
+        {selectedTab === "settings" && <Settings />}
       </div>
-      {/* <div className="space-y-6">
-        <div>
-          <h3 className="text-lg font-medium">Settings</h3>
-          <p className="text-sm text-muted-foreground">
-            Manage your analytics preferences and configurations.
-          </p>
-        </div>
-        <Button
-          onClick={async () => {
-            await authClient.signOut();
-            router.push("/login");
-          }}
-        >
-          Signout
-        </Button>
-
-        <div className="flex gap-2 flex-col">
-          <Button>Test</Button>
-          <Button variant={"destructive"}>Test</Button>
-          <Button variant={"accent"}>Test</Button>
-          <Button variant={"warning"}>Test</Button>
-          <Button variant={"ghost"}>Test</Button>
-          <Button variant={"link"}>Test</Button>
-          <Button variant={"outline"}>Test</Button>
-          <Button variant={"secondary"}>Test</Button>
-        </div>
-      </div> */}
     </div>
   );
 }

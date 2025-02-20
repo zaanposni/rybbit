@@ -173,3 +173,18 @@ export function deleteSite(siteId: string) {
     method: "POST",
   });
 }
+
+export type ListUsersResponse = {
+  id: string;
+  name: string;
+  username: string;
+  email: string;
+  emailVerified: boolean;
+  role: string;
+  createdAt: string;
+  updatedAt: string;
+}[];
+
+export function useListUsers() {
+  return useGenericQuery<ListUsersResponse>("list-users");
+}

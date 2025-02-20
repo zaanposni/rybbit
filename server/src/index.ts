@@ -20,12 +20,12 @@ import { getPages } from "./api/getPages.js";
 import { getPageViews } from "./api/getPageViews.js";
 import { getReferrers } from "./api/getReferrers.js";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
-import { initializePostgres, sql } from "./db/postgres/postgres.js";
+import { initializePostgres } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
-import { auth, initAuth } from "./lib/auth.js";
+import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
+import { auth } from "./lib/auth.js";
 import { mapHeaders } from "./lib/betterAuth.js";
-import { allowList } from "./lib/allowedDomains.js";
-import { loadAllowedDomains } from "./lib/allowedDomains.js";
+import { listUsers } from "./api/listUsers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -128,9 +128,11 @@ server.get("/pages", getPages);
 server.get("/referrers", getReferrers);
 server.get("/pageviews", getPageViews);
 
+// Administrative
 server.post("/add-site", addSite);
 server.post("/delete-site/:id", deleteSite);
 server.get("/get-sites", getSites);
+server.get("/list-users", listUsers);
 
 // Track pageview endpoint
 server.post("/track/pageview", trackPageView);

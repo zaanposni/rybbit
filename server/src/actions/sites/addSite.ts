@@ -31,7 +31,6 @@ export async function addSite(
   }
   try {
     await sql`INSERT INTO sites (domain, name, created_by) VALUES (${domain}, ${name}, ${session?.user.id})`;
-
     await loadAllowedDomains();
     return reply.status(200).send();
   } catch (err) {
