@@ -13,5 +13,6 @@ export const loadAllowedDomains = async () => {
     process.env.BASE_URL || "",
     ...domains.map(({ domain }) => `https://${domain}`),
   ];
+  console.log(allowList);
   initAuth(allowList);
 };
