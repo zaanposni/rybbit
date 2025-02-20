@@ -11,6 +11,7 @@ export const sql = postgres({
   database: process.env.POSTGRES_DB,
   username: process.env.POSTGRES_USER,
   password: process.env.POSTGRES_PASSWORD,
+  onnotice: () => {},
 });
 
 export async function initializePostgres() {
