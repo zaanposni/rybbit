@@ -8,7 +8,6 @@ import {
   CardLoader,
   CardTitle,
 } from "@/components/ui/card";
-import { countries } from "countries-list";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { scaleLinear } from "d3-scale";
 import { useMemo, useState } from "react";
@@ -19,17 +18,20 @@ import {
   Sphere,
   ZoomableGroup,
 } from "react-simple-maps";
-
 import { useSingleCol } from "@/hooks/api";
 import React from "react";
 
 const countriesGeoUrl = "/countries.geojson";
 const subdivisionsGeoUrl = "/subdivisions.geojson";
 
-interface TooltipData {
+interface TooltipContent {
   name: string;
+  code: string;
   count: number;
   percentage: number;
+}
+
+interface TooltipPosition {
   x: number;
   y: number;
 }
@@ -50,9 +52,8 @@ export function Map() {
     parameter: "iso_3166_2"
   });
 
-  const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
-  const [showTooltip, setShowTooltip] = useState(false);
-  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
+  const [tooltipContent, setTooltipContent] = useState<TooltipContent | null>(null);
+  const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition>({ x: 0, y: 0 });
   const [mapView, setMapView] = useState<MapView>({
     view: "countries",
     coordinates: [0, 0],
@@ -106,7 +107,7 @@ export function Map() {
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
-    if (tooltipData) {
+    if (tooltipContent) {
       setTooltipPosition({
         x: event.clientX,
         y: event.clientY
@@ -122,7 +123,7 @@ export function Map() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
             {mapView.view === "subdivisions"
-                ? `${mapView.selectedCountryName || mapView.selectedCountryCode} Regions`
+                ? `${mapView.selectedCountryName || mapView.selectedCountryCode}`
                 : "Map"}
           </CardTitle>
           {mapView.view === "subdivisions" && <Button onClick={handleBackToCountries}>Back to World View</Button>}
@@ -185,6 +186,7 @@ export function Map() {
                             }}
                             onClick={() => {
                               if (isCountryView) {
+                                setTooltipContent(null);
                                 handleCountryClick(
                                   geo.properties?.["ADMIN"],
                                   geo.properties?.["ISO_A2"],
@@ -193,24 +195,16 @@ export function Map() {
                                 );
                               }
                             }}
-                            onMouseEnter={(evt: React.MouseEvent) => {
+                            onMouseEnter={() => {
                               const name = isCountryView
                                 ? geo.properties?.["ADMIN"]
                                 : geo.properties?.["name"];
-
-                              setTooltipData({
-                                name,
-                                count,
-                                percentage,
-                                x: evt.clientX,
-                                y: evt.clientY,
-                              });
-                              setShowTooltip(true);
+                              const code = isCountryView
+                                ? geo.properties?.["ISO_A2"]
+                                : geo.properties?.["iso_3166_2"];
+                              setTooltipContent({ name, code, count, percentage });
                             }}
-                            onMouseLeave={() => {
-                              setShowTooltip(false);
-                              setTooltipData(null);
-                            }}
+                            onMouseLeave={() => setTooltipContent(null)}
                           />
                         );
                       }).filter(Boolean)
@@ -218,7 +212,7 @@ export function Map() {
                   </Geographies>
                 </ZoomableGroup>
               </ComposableMap>
-              {tooltipData && showTooltip && (
+              {tooltipContent && (
                 <div
                   className="fixed z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
                   style={{
@@ -229,29 +223,24 @@ export function Map() {
                 >
                   <div className="font-sm flex items-center gap-1">
                     {mapView.view === "countries" &&
-                    tooltipData.name &&
-                    CountryFlags[tooltipData.name as keyof typeof CountryFlags]
+                    tooltipContent.code &&
+                    CountryFlags[tooltipContent.code as keyof typeof CountryFlags]
                         ? React.createElement(
-                            CountryFlags[
-                                tooltipData.name as keyof typeof CountryFlags
-                                ],
-                            {
-                              title:
-                              countries[
-                                  tooltipData.name as keyof typeof countries
-                                  ]?.name,
-                              className: "w-4",
-                            }
+                          CountryFlags[tooltipContent.code as keyof typeof CountryFlags],
+                          {
+                            title: tooltipContent.name,
+                            className: "w-4",
+                          }
                         )
                         : null}
-                    {tooltipData.name}
+                    {tooltipContent.name}
                   </div>
                   <div>
                     <span className="font-bold text-fuchsia-400">
-                      {tooltipData.count.toLocaleString()}
+                      {tooltipContent.count.toLocaleString()}
                     </span>{" "}
                     <span className="text-neutral-300">
-                      ({tooltipData.percentage.toFixed(1)}%) pageviews
+                      ({tooltipContent.percentage.toFixed(1)}%) pageviews
                     </span>
                   </div>
                 </div>
