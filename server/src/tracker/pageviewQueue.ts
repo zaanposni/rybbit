@@ -54,26 +54,32 @@ class PageviewQueue {
     }
 
     // Process each pageview with its geo data
-    const processedPageviews = batch.map((pv) => ({
-      site_id: pv.site_id,
-      timestamp: DateTime.fromISO(pv.timestamp).toFormat("yyyy-MM-dd HH:mm:ss"),
-      session_id: pv.sessionId,
-      user_id: pv.userId,
-      hostname: pv.hostname || "",
-      pathname: pv.pathname || "",
-      querystring: pv.querystring || "",
-      page_title: pv.page_title || "",
-      referrer: pv.referrer || "",
-      browser: pv.ua.browser.name || "",
-      browser_version: pv.ua.browser.major || "",
-      operating_system: pv.ua.os.name || "",
-      operating_system_version: pv.ua.os.version || "",
-      language: pv.language || "",
-      screen_width: pv.screenWidth || 0,
-      screen_height: pv.screenHeight || 0,
-      device_type: getDeviceType(pv.screenWidth, pv.screenHeight, pv.ua),
-      country: geoData?.[pv.ipAddress]?.data?.countryIso || "",
-    }));
+    const processedPageviews = batch.map((pv) => {
+      const countryCode = geoData?.[pv.ipAddress]?.data?.countryIso || "";
+      const regionCode = geoData?.[pv.ipAddress]?.data?.subdivisions?.[0]?.isoCode || "";
+
+      return {
+        site_id: pv.site_id,
+        timestamp: DateTime.fromISO(pv.timestamp).toFormat("yyyy-MM-dd HH:mm:ss"),
+        session_id: pv.sessionId,
+        user_id: pv.userId,
+        hostname: pv.hostname || "",
+        pathname: pv.pathname || "",
+        querystring: pv.querystring || "",
+        page_title: pv.page_title || "",
+        referrer: pv.referrer || "",
+        browser: pv.ua.browser.name || "",
+        browser_version: pv.ua.browser.major || "",
+        operating_system: pv.ua.os.name || "",
+        operating_system_version: pv.ua.os.version || "",
+        language: pv.language || "",
+        screen_width: pv.screenWidth || 0,
+        screen_height: pv.screenHeight || 0,
+        device_type: getDeviceType(pv.screenWidth, pv.screenHeight, pv.ua),
+        country: countryCode,
+        iso_3166_2: countryCode && regionCode ? countryCode + "-" + regionCode : "",
+      }
+    });
 
     console.info("bulk insert: ", processedPageviews.length);
     // Bulk insert into database
