@@ -126,7 +126,7 @@ export function Map() {
                 ? `${mapView.selectedCountryName || mapView.selectedCountryCode}`
                 : "Map"}
           </CardTitle>
-          {mapView.view === "subdivisions" && <Button onClick={handleBackToCountries}>Back to World View</Button>}
+          {mapView.view === "subdivisions" && <Button onClick={handleBackToCountries}>World Map</Button>}
         </CardHeader>
         <CardContent onMouseMove={handleMouseMove}>
           {(mapView.view === "countries" ? countryData?.data : filteredSubdivisionData) ? (
