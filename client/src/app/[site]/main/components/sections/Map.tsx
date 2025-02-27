@@ -54,10 +54,14 @@ export function Map() {
 
   const [position, setPosition] = useState<Position>({ coordinates: [0, 0], zoom: 1 });
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
+  const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
   const [viewOptions, setViewOptions] = useState<MapViewOptions>({
     view: "countries",
     selectedCountry: undefined,
   });
+
+  const activeGeoUrl = viewOptions.view === "countries" ? countriesGeoUrl : subdivisionsGeoUrl;
 
   const filteredSubdivisionData = useMemo(() => {
     if (!subdivisionData?.data || !viewOptions.selectedCountry) return [];
@@ -66,6 +70,7 @@ export function Map() {
       return item.value.startsWith(`${viewOptions.selectedCountry}-`);
     });
   }, [subdivisionData?.data, viewOptions.selectedCountry]);
+
   const colorScale = useMemo(() => {
     if (viewOptions.view === "countries" && !countryData?.data) return () => "#eee";
     if (viewOptions.view === "subdivisions" && !filteredSubdivisionData) return () => "#eee";
@@ -79,8 +84,6 @@ export function Map() {
         .domain([0, maxValue])
         .range(["rgba(232, 121, 249, 0.3)", "rgb(232, 121, 249)"]);
   }, [countryData?.data, filteredSubdivisionData, viewOptions.view]);
-
-  const activeGeoUrl = viewOptions.view === "countries" ? countriesGeoUrl : subdivisionsGeoUrl;
 
   const handleCountryClick = (countryCode: string, longitude: number, latitude: number) => {
     setViewOptions({
@@ -101,9 +104,20 @@ export function Map() {
     setPosition({ coordinates: [0, 0], zoom: 1 });
   };
 
+  const handleMouseMove = (event: React.MouseEvent) => {
+    if (tooltipData) {
+      setTooltipPosition({
+        x: event.clientX,
+        y: event.clientY
+      });
+    }
+  };
+
+  const isLoading = isCountryLoading || isSubdivisionLoading;
+
   return (
       <Card>
-        {(isCountryLoading || isSubdivisionLoading) && <CardLoader />}
+        {isLoading && <CardLoader />}
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
             {viewOptions.view === "subdivisions" && viewOptions.selectedCountry
@@ -112,137 +126,135 @@ export function Map() {
           </CardTitle>
           {viewOptions.view === "subdivisions" && <Button onClick={handleBackToCountries}>Back to World View</Button>}
         </CardHeader>
-        <CardContent>
+        <CardContent onMouseMove={handleMouseMove}>
           {(viewOptions.view === "countries" ? countryData?.data : filteredSubdivisionData) ? (
-              <>
-                <ComposableMap
-                    projection="geoMercator"
-                    projectionConfig={{
-                      rotate: [-10, 0, 0],
-                      scale: viewOptions.view === "countries" ? 120 : 240,
-                    }}
+            <>
+              <ComposableMap
+                projection="geoMercator"
+                projectionConfig={{
+                  rotate: [-10, 0, 0],
+                  scale: viewOptions.view === "countries" ? 120 : 240,
+                }}
+              >
+                <Sphere stroke="hsl(var(--neutral-800))" strokeWidth={0.5} />
+                <ZoomableGroup
+                  zoom={position.zoom}
+                  center={position.coordinates}
                 >
-                  <Sphere stroke="hsl(var(--neutral-800))" strokeWidth={0.5} />
-                  <ZoomableGroup
-                      zoom={position.zoom}
-                      center={position.coordinates}
-                  >
-                    <Geographies key={activeGeoUrl} geography={activeGeoUrl}>
-                      {({ geographies }) =>
-                          geographies.map((geo, index) => {
-                            const isCountryView = viewOptions.view === "countries";
+                  <Geographies key={activeGeoUrl} geography={activeGeoUrl}>
+                    {({ geographies }) =>
+                      geographies.map((geo, index) => {
+                        const isCountryView = viewOptions.view === "countries";
 
-                            // For subdivision view, filter to only show subdivisions of the selected country
-                            if (!isCountryView && viewOptions.selectedCountry) {
-                              const subdivisionCode = geo.properties?.["iso_3166_2"];
-                              if (!subdivisionCode || !subdivisionCode.startsWith(`${viewOptions.selectedCountry}-`)) {
-                                return null;
+                        // For subdivision view, filter to only show subdivisions of the selected country
+                        if (!isCountryView && viewOptions.selectedCountry) {
+                          const subdivisionCode = geo.properties?.["iso_3166_2"];
+                          if (!subdivisionCode || !subdivisionCode.startsWith(`${viewOptions.selectedCountry}-`)) {
+                            return null;
+                          }
+                        }
+
+                        const dataKey = isCountryView ? geo.properties?.["ISO_A2"] : geo.properties?.["iso_3166_2"];
+
+                        const foundData = isCountryView
+                          ? countryData?.data?.find(({ value }) => value === dataKey)
+                          : filteredSubdivisionData.find(({ value }) => value === dataKey);
+
+                        const count = foundData?.count || 0;
+                        const percentage = foundData?.percentage || 0;
+
+                        return (
+                          <Geography
+                            key={`${geo.properties?.["ISO_A2"] || ""}-${geo.properties?.["iso_3166_2"] || ""}-${index}`}
+                            geography={geo}
+                            fill={count > 0 ? colorScale(count) : "rgba(140, 140, 140, 0.5)"}
+                            stroke="hsl(var(--neutral-800))"
+                            strokeWidth={0.5}
+                            style={{
+                              default: {
+                                outline: "none",
+                              },
+                              hover: {
+                                outline: "none",
+                                cursor: isCountryView ? "pointer" : "default",
+                              },
+                              pressed: {
+                                outline: "none",
+                              },
+                            }}
+                            onClick={() => {
+                              if (isCountryView) {
+                                handleCountryClick(
+                                  geo.properties?.["ISO_A2"],
+                                  geo.properties?.["LABEL_X"],
+                                  geo.properties?.["LABEL_Y"]
+                                );
                               }
+                            }}
+                            onMouseEnter={(evt: React.MouseEvent) => {
+                              const name = isCountryView
+                                ? geo.properties?.["ADMIN"]
+                                : geo.properties?.["name"];
+
+                              setTooltipData({
+                                name,
+                                count,
+                                percentage,
+                                x: evt.clientX,
+                                y: evt.clientY,
+                              });
+                              setShowTooltip(true);
+                            }}
+                            onMouseLeave={() => {
+                              setShowTooltip(false);
+                              setTooltipData(null);
+                            }}
+                          />
+                        );
+                      }).filter(Boolean)
+                    }
+                  </Geographies>
+                </ZoomableGroup>
+              </ComposableMap>
+              {tooltipData && showTooltip && (
+                <div
+                  className="fixed z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
+                  style={{
+                    left: tooltipPosition.x + 10,
+                    top: tooltipPosition.y - 10,
+                    transform: "translateY(-100%)"
+                  }}
+                >
+                  <div className="font-sm flex items-center gap-1">
+                    {viewOptions.view === "countries" &&
+                    tooltipData.name &&
+                    CountryFlags[tooltipData.name as keyof typeof CountryFlags]
+                        ? React.createElement(
+                            CountryFlags[
+                                tooltipData.name as keyof typeof CountryFlags
+                                ],
+                            {
+                              title:
+                              countries[
+                                  tooltipData.name as keyof typeof countries
+                                  ]?.name,
+                              className: "w-4",
                             }
-
-                            const dataKey = isCountryView ? geo.properties?.["ISO_A2"] : geo.properties?.["iso_3166_2"];
-
-                            const foundData = isCountryView
-                                ? countryData?.data?.find(({ value }) => value === dataKey)
-                                : filteredSubdivisionData.find(({ value }) => value === dataKey);
-
-                            const count = foundData?.count || 0;
-                            const percentage = foundData?.percentage || 0;
-
-                            return (
-                                <Geography
-                                    key={`${geo.properties?.["ISO_A2"] || ""}-${geo.properties?.["iso_3166_2"] || ""}-${index}`}
-                                    geography={geo}
-                                    fill={
-                                      count > 0
-                                          ? colorScale(count)
-                                          : "rgba(140, 140, 140, 0.5)"
-                                    }
-                                    stroke="hsl(var(--neutral-800))"
-                                    strokeWidth={0.5}
-                                    style={{
-                                      default: {
-                                        outline: "none",
-                                      },
-                                      hover: {
-                                        outline: "none",
-                                        cursor: isCountryView ? "pointer" : "default",
-                                      },
-                                      pressed: {
-                                        outline: "none",
-                                      },
-                                    }}
-                                    onClick={() => {
-                                      if (isCountryView) {
-                                        handleCountryClick(
-                                            geo.properties?.["ISO_A2"],
-                                            geo.properties?.["LABEL_X"],
-                                            geo.properties?.["LABEL_Y"]
-                                        );
-                                      }
-                                    }}
-                                    onMouseEnter={(evt: any) => {
-                                      const { pageX, pageY } = evt;
-                                      const name = isCountryView
-                                          ? geo.properties?.["ADMIN"]
-                                          : geo.properties?.["name"];
-
-                                      setTooltipData({
-                                        name,
-                                        count,
-                                        percentage,
-                                        x: pageX,
-                                        y: pageY,
-                                      });
-                                    }}
-                                    onMouseLeave={() => setTooltipData(null)}
-                                />
-                            );
-                          }).filter(Boolean)
-                      }
-                    </Geographies>
-                  </ZoomableGroup>
-                </ComposableMap>
-                {tooltipData && (
-                    <div
-                        className="absolute pointer-events-none z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm"
-                        style={{
-                          left: `${tooltipData.x}px`,
-                          top: `${tooltipData.y - 10}px`,
-                          transform: "translate(-50%, -100%)",
-                        }}
-                    >
-                      <div className="font-sm flex items-center gap-1">
-                        {viewOptions.view === "countries" &&
-                        CountryFlags[tooltipData.name as keyof typeof CountryFlags]
-                            ? React.createElement(
-                                CountryFlags[
-                                    tooltipData.name as keyof typeof CountryFlags
-                                    ],
-                                {
-                                  title:
-                                  countries[
-                                      tooltipData.name as keyof typeof countries
-                                      ]?.name,
-                                  className: "w-4",
-                                }
-                            )
-                            : null}
-                        {tooltipData.name}
-                      </div>
-                      <>
-                        <div>
+                        )
+                        : null}
+                    {tooltipData.name}
+                  </div>
+                  <div>
                     <span className="font-bold text-fuchsia-400">
                       {tooltipData.count.toLocaleString()}
                     </span>{" "}
-                          <span className="text-neutral-300">
+                    <span className="text-neutral-300">
                       ({tooltipData.percentage.toFixed(1)}%) pageviews
                     </span>
-                        </div>
-                      </>
-                    </div>
-                )}
-              </>
+                  </div>
+                </div>
+              )}
+            </>
           ) : null}
         </CardContent>
       </Card>
