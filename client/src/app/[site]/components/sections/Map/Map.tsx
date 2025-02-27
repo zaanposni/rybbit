@@ -34,12 +34,9 @@ interface TooltipData {
   y: number;
 }
 
-interface MapViewOptions {
+interface ViewData {
   view: "countries" | "subdivisions";
   selectedCountry?: string;
-}
-
-interface Position {
   coordinates: [number, number];
   zoom: number;
 }
@@ -52,30 +49,31 @@ export function Map() {
     parameter: "iso_3166_2"
   });
 
-  const [position, setPosition] = useState<Position>({ coordinates: [0, 0], zoom: 1 });
   const [tooltipData, setTooltipData] = useState<TooltipData | null>(null);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
-  const [viewOptions, setViewOptions] = useState<MapViewOptions>({
+  const [viewData, setViewData] = useState<ViewData>({
     view: "countries",
     selectedCountry: undefined,
+    coordinates: [0, 0],
+    zoom: 1,
   });
 
-  const activeGeoUrl = viewOptions.view === "countries" ? countriesGeoUrl : subdivisionsGeoUrl;
+  const activeGeoUrl = viewData.view === "countries" ? countriesGeoUrl : subdivisionsGeoUrl;
 
   const filteredSubdivisionData = useMemo(() => {
-    if (!subdivisionData?.data || !viewOptions.selectedCountry) return [];
+    if (!subdivisionData?.data || !viewData.selectedCountry) return [];
 
     return subdivisionData.data.filter(item => {
-      return item.value.startsWith(`${viewOptions.selectedCountry}-`);
+      return item.value.startsWith(`${viewData.selectedCountry}-`);
     });
-  }, [subdivisionData?.data, viewOptions.selectedCountry]);
+  }, [subdivisionData?.data, viewData.selectedCountry]);
 
   const colorScale = useMemo(() => {
-    if (viewOptions.view === "countries" && !countryData?.data) return () => "#eee";
-    if (viewOptions.view === "subdivisions" && !filteredSubdivisionData) return () => "#eee";
+    if (viewData.view === "countries" && !countryData?.data) return () => "#eee";
+    if (viewData.view === "subdivisions" && !filteredSubdivisionData) return () => "#eee";
 
-    const dataToUse = viewOptions.view === "countries"
+    const dataToUse = viewData.view === "countries"
         ? countryData?.data
         : filteredSubdivisionData;
 
@@ -83,25 +81,24 @@ export function Map() {
     return scaleLinear<string>()
         .domain([0, maxValue])
         .range(["rgba(232, 121, 249, 0.3)", "rgb(232, 121, 249)"]);
-  }, [countryData?.data, filteredSubdivisionData, viewOptions.view]);
+  }, [countryData?.data, filteredSubdivisionData, viewData.view]);
 
   const handleCountryClick = (countryCode: string, longitude: number, latitude: number) => {
-    setViewOptions({
+    setViewData({
       view: "subdivisions",
       selectedCountry: countryCode,
-    });
-    setPosition({
       coordinates: [longitude, latitude],
       zoom: 4,
     });
   };
 
   const handleBackToCountries = () => {
-    setViewOptions({
+    setViewData({
       view: "countries",
       selectedCountry: undefined,
+      coordinates: [0, 0],
+      zoom: 1,
     });
-    setPosition({ coordinates: [0, 0], zoom: 1 });
   };
 
   const handleMouseMove = (event: React.MouseEvent) => {
@@ -120,36 +117,36 @@ export function Map() {
         {isLoading && <CardLoader />}
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
-            {viewOptions.view === "subdivisions" && viewOptions.selectedCountry
-                ? `${countries[viewOptions.selectedCountry as keyof typeof countries]?.name || viewOptions.selectedCountry} Regions`
+            {viewData.view === "subdivisions" && viewData.selectedCountry
+                ? `${countries[viewData.selectedCountry as keyof typeof countries]?.name || viewData.selectedCountry} Regions`
                 : "Map"}
           </CardTitle>
-          {viewOptions.view === "subdivisions" && <Button onClick={handleBackToCountries}>Back to World View</Button>}
+          {viewData.view === "subdivisions" && <Button onClick={handleBackToCountries}>Back to World View</Button>}
         </CardHeader>
         <CardContent onMouseMove={handleMouseMove}>
-          {(viewOptions.view === "countries" ? countryData?.data : filteredSubdivisionData) ? (
+          {(viewData.view === "countries" ? countryData?.data : filteredSubdivisionData) ? (
             <>
               <ComposableMap
                 projection="geoMercator"
                 projectionConfig={{
                   rotate: [-10, 0, 0],
-                  scale: viewOptions.view === "countries" ? 120 : 240,
+                  scale: viewData.view === "countries" ? 120 : 240,
                 }}
               >
                 <Sphere stroke="hsl(var(--neutral-800))" strokeWidth={0.5} />
                 <ZoomableGroup
-                  zoom={position.zoom}
-                  center={position.coordinates}
+                  zoom={viewData.zoom}
+                  center={viewData.coordinates}
                 >
                   <Geographies key={activeGeoUrl} geography={activeGeoUrl}>
                     {({ geographies }) =>
                       geographies.map((geo, index) => {
-                        const isCountryView = viewOptions.view === "countries";
+                        const isCountryView = viewData.view === "countries";
 
                         // For subdivision view, filter to only show subdivisions of the selected country
-                        if (!isCountryView && viewOptions.selectedCountry) {
+                        if (!isCountryView && viewData.selectedCountry) {
                           const subdivisionCode = geo.properties?.["iso_3166_2"];
-                          if (!subdivisionCode || !subdivisionCode.startsWith(`${viewOptions.selectedCountry}-`)) {
+                          if (!subdivisionCode || !subdivisionCode.startsWith(`${viewData.selectedCountry}-`)) {
                             return null;
                           }
                         }
@@ -226,7 +223,7 @@ export function Map() {
                   }}
                 >
                   <div className="font-sm flex items-center gap-1">
-                    {viewOptions.view === "countries" &&
+                    {viewData.view === "countries" &&
                     tooltipData.name &&
                     CountryFlags[tooltipData.name as keyof typeof CountryFlags]
                         ? React.createElement(
