@@ -31,9 +31,10 @@ export const initializeClickhouse = async () => {
         screen_width UInt16,
         screen_height UInt16,
         device_type LowCardinality(String)
-        ENGINE = MergeTree()
-        PARTITION BY toYYYYMM(timestamp)
-        ORDER BY (timestamp, session_id)
+      )
+      ENGINE = MergeTree()
+      PARTITION BY toYYYYMM(timestamp)
+      ORDER BY (timestamp, session_id)
       `,
   });
 
