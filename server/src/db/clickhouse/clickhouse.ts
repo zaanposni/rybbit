@@ -9,6 +9,7 @@ export const clickhouse = createClient({
 
 export const initializeClickhouse = async () => {
   // Create pageviews table
+  console.info("Trying to create pageviews table");
   await clickhouse.exec({
     query: `
       CREATE TABLE IF NOT EXISTS pageviews (
@@ -38,6 +39,7 @@ export const initializeClickhouse = async () => {
     `,
   });
 
+  console.info("Successfully created pageviews table");
   // Create sessions table
   await clickhouse.exec({
     query: `
