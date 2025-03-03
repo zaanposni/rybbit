@@ -104,11 +104,11 @@ export async function initializePostgres() {
       );
     `;
 
-    const user =
+    const [{ count }]: { count: number }[] =
       await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
-    console.info(user);
-    if (user.length === 0) {
+    console.info(count);
+    if (count === 0) {
       const res = await auth!.api.signUpEmail({
         body: {
           email: "test@test.com",
