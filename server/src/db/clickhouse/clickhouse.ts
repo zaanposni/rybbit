@@ -4,6 +4,7 @@ import { Session } from "../postgres/types.js";
 export const clickhouse = createClient({
   host: process.env.CLICKHOUSE_HOST,
   database: process.env.CLICKHOUSE_DB,
+  password: process.env.CLICKHOUSE_PASSWORD,
 });
 
 export const initializeClickhouse = async () => {
