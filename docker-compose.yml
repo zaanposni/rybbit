@@ -11,6 +11,8 @@ services:
       - clickhouse-data:/var/lib/clickhouse
     environment:
       - CLICKHOUSE_DB=analytics
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=frog
 
   postgres:
     image: postgres:latest
@@ -35,7 +37,7 @@ services:
       - NODE_ENV=production
       - CLICKHOUSE_HOST=http://clickhouse:8123
       - CLICKHOUSE_DB=analytics
-      - CLICKHOUSE_PASSWORD=
+      - CLICKHOUSE_PASSWORD=frog
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=analytics
