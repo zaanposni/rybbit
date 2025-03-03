@@ -107,10 +107,8 @@ export async function initializePostgres() {
     const [{ count }]: { count: number }[] =
       await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
-    console.info(count);
-    console.info(typeof count);
-    if (count === 0) {
-      const res = await auth!.api.signUpEmail({
+    if (Number(count) === 0) {
+      await auth!.api.signUpEmail({
         body: {
           email: "test@test.com",
           username: "admin",
@@ -118,7 +116,6 @@ export async function initializePostgres() {
           password: "admin123",
         },
       });
-      console.info(res);
     }
 
     await sql`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
