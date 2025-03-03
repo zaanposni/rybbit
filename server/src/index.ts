@@ -137,7 +137,7 @@ const start = async () => {
   try {
     console.info("Starting server...");
     // Initialize the database
-    await Promise.allSettled([initializeClickhouse(), initializePostgres()]);
+    await Promise.all([initializeClickhouse(), initializePostgres()]);
     await loadAllowedDomains();
     // Start the server
     await server.listen({ port: 3001, host: "0.0.0.0" });

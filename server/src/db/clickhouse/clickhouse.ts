@@ -10,8 +10,9 @@ export const clickhouse = createClient({
 export const initializeClickhouse = async () => {
   // Create pageviews table
   console.info("Trying to create pageviews table");
-  await clickhouse.exec({
-    query: `
+  try {
+    await clickhouse.exec({
+      query: `
       CREATE TABLE IF NOT EXISTS pageviews (
         site_id Uint16,
         timestamp DateTime,
@@ -32,12 +33,15 @@ export const initializeClickhouse = async () => {
         screen_width UInt16,
         screen_height UInt16,
         device_type LowCardinality(String)
-      )
-      ENGINE = MergeTree()
-      PARTITION BY toYYYYMM(timestamp)
-      ORDER BY (timestamp, session_id)
-    `,
-  });
+        )
+        ENGINE = MergeTree()
+        PARTITION BY toYYYYMM(timestamp)
+        ORDER BY (timestamp, session_id)
+        `,
+    });
+  } catch (error) {
+    console.error("Error creating pageviews table:", error);
+  }
 
   console.info("Successfully created pageviews table");
   // Create sessions table
