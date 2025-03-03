@@ -11,7 +11,7 @@ services:
       - clickhouse-data:/var/lib/clickhouse
     environment:
       - CLICKHOUSE_DB=analytics
-      - ALLOW_EMPTY_PASSWORD=yes
+      # - ALLOW_EMPTY_PASSWORD=yes
 
   postgres:
     image: postgres:latest
