@@ -108,6 +108,7 @@ export async function initializePostgres() {
       await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
     console.info(count);
+    console.info(typeof count);
     if (count === 0) {
       const res = await auth!.api.signUpEmail({
         body: {
