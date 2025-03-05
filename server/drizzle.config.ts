@@ -6,7 +6,7 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    host: "5.78.110.218",
+    host: "postgres",
     port: 5432,
     database: "analytics",
     user: "frog",
