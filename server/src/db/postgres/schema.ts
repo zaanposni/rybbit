@@ -8,6 +8,7 @@ import {
   foreignKey,
   serial,
   unique,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 // User table
@@ -69,6 +70,16 @@ export const activeSessions = pgTable("active_sessions", {
   referrer: text("referrer"),
 });
 
+export const reports = pgTable("reports", {
+  reportId: serial("report_id").primaryKey().notNull(),
+  siteId: integer("site_id").references(() => sites.siteId),
+  userId: text("user_id").references(() => users.id),
+  reportType: text("report_type"),
+  data: jsonb("data"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 // Account table
 export const account = pgTable("account", {
   id: text("id").primaryKey().notNull(),
@@ -108,6 +119,22 @@ export const member = pgTable("member", {
     .notNull()
     .references(() => users.id),
   role: text("role").notNull(),
+  createdAt: timestamp("createdAt").notNull(),
+});
+
+// Invitation table
+export const invitation = pgTable("invitation", {
+  id: text("id").primaryKey().notNull(),
+  email: text("email").notNull(),
+  inviterId: text("inviterId")
+    .notNull()
+    .references(() => users.id),
+  organizationId: text("organizationId")
+    .notNull()
+    .references(() => organization.id),
+  role: text("role").notNull(),
+  status: text("status").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
   createdAt: timestamp("createdAt").notNull(),
 });
 
