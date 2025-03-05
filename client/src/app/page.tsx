@@ -15,7 +15,7 @@ export default function Home() {
       </div>
       <div className="grid grid-cols-3 gap-4 mt-4">
         {sites?.data?.map((site) => (
-          <Link href={`/${site.site_id}`} key={site.site_id}>
+          <Link href={`/${site.siteId}`} key={site.siteId}>
             <div className="flex p-4 rounded-lg bg-neutral-900 text-lg font-semibold gap-2">
               <img
                 className="w-6 mr-1"

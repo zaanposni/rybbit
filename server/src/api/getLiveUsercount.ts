@@ -10,7 +10,7 @@ export const getLiveUsercount = async (
   const result = await db
     .select({ count: count() })
     .from(activeSessions)
-    .where(eq(activeSessions.siteId, site));
+    .where(eq(activeSessions.siteId, Number(site)));
 
   return res.send({ count: result[0].count });
 };

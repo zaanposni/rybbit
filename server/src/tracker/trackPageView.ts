@@ -21,10 +21,22 @@ type TotalPayload = TrackingPayload & {
 
 // Extended type for database active sessions
 type ActiveSession = {
+  session_id: string;
+  site_id: number | null;
   user_id: string;
   pageviews: number;
-  session_id: string;
-  // other fields as needed
+  hostname: string | null;
+  start_time: Date | null;
+  last_activity: Date | null;
+  entry_page: string | null;
+  exit_page: string | null;
+  device_type: string | null;
+  screen_width: number | null;
+  screen_height: number | null;
+  browser: string | null;
+  operating_system: string | null;
+  language: string | null;
+  referrer: string | null;
 };
 
 const getExistingSession = async (
@@ -55,20 +67,28 @@ const updateSession = async (
 
   // Insert new session with Drizzle
   const insertData = {
-    id: crypto.randomUUID(),
-    siteId: pageview.site_id.toString() || "0",
     sessionId: pageview.sessionId,
+    siteId:
+      typeof pageview.site_id === "string"
+        ? parseInt(pageview.site_id, 10)
+        : pageview.site_id,
     userId: pageview.userId,
-    hostname: pageview.hostname || "",
+    hostname: pageview.hostname || null,
     startTime: new Date(pageview.timestamp || Date.now()),
     lastActivity: new Date(pageview.timestamp || Date.now()),
     pageviews: 1,
-    entryPage: pageview.pathname || "",
+    entryPage: pageview.pathname || null,
     deviceType: getDeviceType(
       pageview.screenWidth,
       pageview.screenHeight,
       pageview.ua
     ),
+    screenWidth: pageview.screenWidth || null,
+    screenHeight: pageview.screenHeight || null,
+    browser: pageview.ua.browser.name || null,
+    operatingSystem: pageview.ua.os.name || null,
+    language: pageview.language || null,
+    referrer: pageview.referrer || null,
   };
 
   await db.insert(activeSessions).values(insertData);

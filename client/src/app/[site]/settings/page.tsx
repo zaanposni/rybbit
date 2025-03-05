@@ -13,7 +13,7 @@ export default function SettingsPage() {
   const pathname = usePathname();
 
   const site = sites?.data?.find(
-    (site) => site.site_id === Number(pathname.split("/")[1])
+    (site) => site.siteId === Number(pathname.split("/")[1])
   );
 
   return (

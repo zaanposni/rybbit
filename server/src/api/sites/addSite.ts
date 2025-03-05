@@ -1,10 +1,9 @@
-import { FastifyReply, FastifyRequest } from "fastify";
 import { fromNodeHeaders } from "better-auth/node";
+import { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../../db/postgres/postgres.js";
 import { sites } from "../../db/postgres/schema.js";
 import { loadAllowedDomains } from "../../lib/allowedDomains.js";
 import { auth } from "../../lib/auth.js";
-import { randomUUID } from "crypto";
 
 export async function addSite(
   request: FastifyRequest<{ Body: { domain: string; name: string } }>,
@@ -32,7 +31,6 @@ export async function addSite(
 
   try {
     await db.insert(sites).values({
-      siteId: randomUUID(),
       domain,
       name,
       createdBy: session.user.id,

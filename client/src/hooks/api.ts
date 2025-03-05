@@ -178,12 +178,12 @@ export function useGetOverview(periodTime?: PeriodTime) {
 }
 
 export type GetSitesResponse = {
-  site_id: number;
-  site_name: string;
+  siteId: number;
+  name: string;
   domain: string;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
 }[];
 
 export function useGetSites() {
