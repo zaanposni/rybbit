@@ -1,10 +1,13 @@
 import dotenv from "dotenv";
+import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { auth } from "../../lib/auth.js";
+import * as schema from "./schema.js";
 
 dotenv.config();
 
-export const sql = postgres({
+// Create postgres connection
+const client = postgres({
   host: process.env.POSTGRES_HOST || "postgres",
   port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
   database: process.env.POSTGRES_DB,
@@ -13,10 +16,16 @@ export const sql = postgres({
   onnotice: () => {},
 });
 
+// Create drizzle ORM instance
+export const db = drizzle(client, { schema });
+
+// For compatibility with raw SQL if needed
+export const sql = client;
+
 export async function initializePostgres() {
   try {
     // Phase 1: Create tables with no dependencies
-    await sql`
+    await client`
         CREATE TABLE IF NOT EXISTS "user" (
           "id" text not null primary key,
           "name" text not null,
@@ -30,18 +39,17 @@ export async function initializePostgres() {
         );
       `;
 
-    await sql`
+    await client`
         CREATE TABLE IF NOT EXISTS "verification" (
           "id" text not null primary key,
           "identifier" text not null,
           "value" text not null,
           "expiresAt" timestamp not null,
-          "createdAt" timestamp,
-          "updatedAt" timestamp
+          "createdAt" timestamp
         );
       `;
 
-    await sql`
+    await client`
         CREATE TABLE IF NOT EXISTS active_sessions (
           session_id TEXT PRIMARY KEY,
           site_id INT,
@@ -62,7 +70,7 @@ export async function initializePostgres() {
         );
       `;
 
-    await sql`
+    await client`
         CREATE TABLE IF NOT EXISTS sites (
           site_id SERIAL PRIMARY KEY,
           name TEXT NOT NULL,
@@ -73,7 +81,7 @@ export async function initializePostgres() {
         );
       `;
 
-    await sql`
+    await client`
       CREATE TABLE IF NOT EXISTS "session" (
         "id" text not null primary key,
         "expiresAt" timestamp not null,
@@ -86,7 +94,7 @@ export async function initializePostgres() {
       );
     `;
 
-    await sql`
+    await client`
       CREATE TABLE IF NOT EXISTS "account" (
         "id" text not null primary key,
         "accountId" text not null,
@@ -105,7 +113,7 @@ export async function initializePostgres() {
     `;
 
     const [{ count }]: { count: number }[] =
-      await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
+      await client`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
     if (Number(count) === 0) {
       await auth!.api.signUpEmail({
@@ -118,7 +126,7 @@ export async function initializePostgres() {
       });
     }
 
-    await sql`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
+    await client`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
 
     console.log("Tables created successfully.");
   } catch (err) {

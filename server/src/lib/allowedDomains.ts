@@ -1,4 +1,5 @@
-import { sql } from "../db/postgres/postgres.js";
+import { db, sql } from "../db/postgres/postgres.js";
+import { sites } from "../db/postgres/schema.js";
 import { initAuth } from "./auth.js";
 import dotenv from "dotenv";
 
@@ -20,7 +21,9 @@ export const loadAllowedDomains = async () => {
     // Only query the sites table if it exists
     let domains: { domain: string }[] = [];
     if (tableExists[0].exists) {
-      domains = await sql`SELECT domain FROM sites`;
+      // Use Drizzle to get domains
+      const sitesData = await db.select({ domain: sites.domain }).from(sites);
+      domains = sitesData;
     }
 
     allowList = [

@@ -2,8 +2,10 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { TrackingPayload } from "../types.js";
 import { getUserId, getDeviceType, getIpAddress } from "../utils.js";
 import crypto from "crypto";
-import { sql } from "../db/postgres/postgres.js";
+import { db, sql } from "../db/postgres/postgres.js";
+import { activeSessions } from "../db/postgres/schema.js";
 import UAParser, { UAParser as userAgentParser } from "ua-parser-js";
+import { eq } from "drizzle-orm";
 
 import { Pageview } from "../db/clickhouse/types.js";
 import { pageviewQueue } from "./pageviewQueue.js";
@@ -17,8 +19,19 @@ type TotalPayload = TrackingPayload & {
   ipAddress: string;
 };
 
-const getExistingSession = async (userId: string): Promise<Pageview | null> => {
-  const [existingSession] = await sql<Pageview[]>`
+// Extended type for database active sessions
+type ActiveSession = {
+  user_id: string;
+  pageviews: number;
+  session_id: string;
+  // other fields as needed
+};
+
+const getExistingSession = async (
+  userId: string
+): Promise<ActiveSession | null> => {
+  // We need to use the raw SQL query here since we're selecting into a specific type
+  const [existingSession] = await sql<ActiveSession[]>`
     SELECT * FROM active_sessions WHERE user_id = ${userId}
   `;
   return existingSession;
@@ -26,41 +39,39 @@ const getExistingSession = async (userId: string): Promise<Pageview | null> => {
 
 const updateSession = async (
   pageview: TotalPayload,
-  existingSession: Pageview | null
+  existingSession: ActiveSession | null
 ) => {
   if (existingSession) {
-    await sql`
-      UPDATE active_sessions SET last_activity = ${pageview.timestamp}, pageviews = pageviews + 1 WHERE user_id = ${pageview.userId}
-    `;
+    // Update session with Drizzle
+    await db
+      .update(activeSessions)
+      .set({
+        lastActivity: new Date(pageview.timestamp),
+        pageviews: (existingSession.pageviews || 0) + 1,
+      })
+      .where(eq(activeSessions.userId, pageview.userId));
     return;
   }
 
-  const inserts = {
-    site_id: pageview.site_id || 0,
-    session_id: pageview.sessionId,
-    user_id: pageview.userId,
+  // Insert new session with Drizzle
+  const insertData = {
+    id: crypto.randomUUID(),
+    siteId: pageview.site_id.toString() || "0",
+    sessionId: pageview.sessionId,
+    userId: pageview.userId,
     hostname: pageview.hostname || "",
-    start_time: pageview.timestamp || "",
-    last_activity: pageview.timestamp || "",
+    startTime: new Date(pageview.timestamp || Date.now()),
+    lastActivity: new Date(pageview.timestamp || Date.now()),
     pageviews: 1,
-    entry_page: pageview.pathname || "",
-    // exit_page: pageview.pathname,
-    device_type: getDeviceType(
+    entryPage: pageview.pathname || "",
+    deviceType: getDeviceType(
       pageview.screenWidth,
       pageview.screenHeight,
       pageview.ua
     ),
-    screen_width: pageview.screenWidth || 0,
-    screen_height: pageview.screenHeight || 0,
-    browser: pageview.ua.browser.name || "",
-    operating_system: pageview.ua.os.name || "",
-    language: pageview.language || "",
-    referrer: pageview.referrer || "",
   };
 
-  await sql`
-    INSERT INTO active_sessions ${sql(inserts)}
-  `;
+  await db.insert(activeSessions).values(insertData);
 };
 
 export async function trackPageView(
