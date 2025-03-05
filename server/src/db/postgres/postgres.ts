@@ -40,7 +40,7 @@ export async function initializePostgres() {
         body: {
           email: "admin@example.com",
           username: "admin",
-          password: "password",
+          password: "admin123",
           name: "Admin User",
         },
       });
