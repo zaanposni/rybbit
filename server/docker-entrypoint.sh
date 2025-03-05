@@ -6,7 +6,7 @@ set -e
 
 # Run migrations explicitly using the npm script
 echo "Running database migrations...."
-npm run db:migrate
+# npm run db:migrate
 
 # Start the application
 echo "Starting application..."
