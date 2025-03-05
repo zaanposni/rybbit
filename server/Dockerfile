@@ -23,8 +23,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install PostgreSQL client and curl for health checks
-RUN apk add --no-cache postgresql-client curl
+# Install PostgreSQL client for migrations
+RUN apk add --no-cache postgresql-client
 
 # Copy built application and dependencies
 COPY --from=builder /app/package*.json ./
