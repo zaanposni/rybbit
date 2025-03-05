@@ -14,7 +14,7 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Generate initial migrations if possible
+# Generate migrations (but don't run them)
 RUN mkdir -p /app/drizzle
 RUN npx drizzle-kit generate || echo "Skipping migration generation during build"
 

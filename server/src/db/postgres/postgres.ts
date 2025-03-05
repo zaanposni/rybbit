@@ -3,7 +3,6 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { auth } from "../../lib/auth.js";
 import * as schema from "./schema.js";
-import { runMigrations } from "./migrate.js";
 
 dotenv.config();
 
@@ -27,14 +26,8 @@ export async function initializePostgres() {
   try {
     console.log("Initializing PostgreSQL database...");
 
-    // Run migrations using the shared function from migrate.ts
-    const migrationsSuccess = await runMigrations("./drizzle");
-
-    if (!migrationsSuccess) {
-      console.warn(
-        "Migrations may not have completed successfully, but continuing anyway"
-      );
-    }
+    // Assume migrations have been run manually with 'npm run db:migrate'
+    // No automatic migrations during application startup
 
     // Check if admin user exists, if not create one
     const [{ count }]: { count: number }[] =
