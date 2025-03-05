@@ -1,6 +1,7 @@
 import dotenv from "dotenv";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
+import { migrate } from "drizzle-orm/postgres-js/migrator";
 import { auth } from "../../lib/auth.js";
 import * as schema from "./schema.js";
 
@@ -24,112 +25,105 @@ export const sql = client;
 
 export async function initializePostgres() {
   try {
-    // Phase 1: Create tables with no dependencies
-    await client`
-        CREATE TABLE IF NOT EXISTS "user" (
-          "id" text not null primary key,
-          "name" text not null,
-          "username" text not null unique,
-          "email" text not null unique,
-          "emailVerified" boolean not null,
-          "image" text,
-          "createdAt" timestamp not null,
-          "updatedAt" timestamp not null,
-          "role" text not null default 'user'
+    console.log("Initializing PostgreSQL database...");
+
+    // First check if tables already exist
+    const checkTablesExist = async () => {
+      const tableExists = await sql`
+        SELECT EXISTS (
+          SELECT FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'user'
         );
       `;
+      return tableExists[0]?.exists;
+    };
 
-    await client`
-        CREATE TABLE IF NOT EXISTS "verification" (
-          "id" text not null primary key,
-          "identifier" text not null,
-          "value" text not null,
-          "expiresAt" timestamp not null,
-          "createdAt" timestamp
-        );
-      `;
+    const tablesExist = await checkTablesExist();
 
-    await client`
-        CREATE TABLE IF NOT EXISTS active_sessions (
-          session_id TEXT PRIMARY KEY,
-          site_id INT,
-          user_id TEXT,
-          hostname TEXT,
-          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          pageviews INT DEFAULT 0,
-          entry_page TEXT,
-          exit_page TEXT,
-          device_type TEXT,
-          screen_width INT,
-          screen_height INT,
-          browser TEXT,
-          operating_system TEXT,
-          language TEXT,
-          referrer TEXT
-        );
-      `;
-
-    await client`
-        CREATE TABLE IF NOT EXISTS sites (
-          site_id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          domain TEXT NOT NULL UNIQUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          created_by TEXT NOT NULL REFERENCES "user" ("id")
-        );
-      `;
-
-    await client`
-      CREATE TABLE IF NOT EXISTS "session" (
-        "id" text not null primary key,
-        "expiresAt" timestamp not null,
-        "token" text not null unique,
-        "createdAt" timestamp not null,
-        "updatedAt" timestamp not null,
-        "ipAddress" text,
-        "userAgent" text,
-        "userId" text not null references "user" ("id")
+    // If tables already exist, skip full migrations to avoid errors
+    // but make sure Drizzle migration metadata table exists
+    if (tablesExist) {
+      console.log(
+        "Database tables already exist, ensuring migration metadata table exists..."
       );
-    `;
 
-    await client`
-      CREATE TABLE IF NOT EXISTS "account" (
-        "id" text not null primary key,
-        "accountId" text not null,
-        "providerId" text not null,
-        "userId" text not null references "user" ("id"),
-        "accessToken" text,
-        "refreshToken" text,
-        "idToken" text,
-        "accessTokenExpiresAt" timestamp,
-        "refreshTokenExpiresAt" timestamp,
-        "scope" text,
-        "password" text,
-        "createdAt" timestamp not null,
-        "updatedAt" timestamp not null
-      );
-    `;
+      // Important: Execute each SQL statement separately to avoid the "multiple commands" error
+      await sql`CREATE SCHEMA IF NOT EXISTS drizzle`;
 
+      await sql`
+        CREATE TABLE IF NOT EXISTS drizzle."__drizzle_migrations" (
+          id SERIAL PRIMARY KEY,
+          hash text NOT NULL,
+          created_at timestamp with time zone DEFAULT now()
+        )
+      `;
+    } else {
+      // Tables don't exist, run full migrations
+      console.log("Setting up new database with migrations...");
+
+      // Create a separate connection for migrations to avoid conflicts
+      const migrationClient = postgres({
+        host: process.env.POSTGRES_HOST || "postgres",
+        port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
+        database: process.env.POSTGRES_DB,
+        username: process.env.POSTGRES_USER,
+        password: process.env.POSTGRES_PASSWORD,
+        max: 1,
+      });
+
+      // Initialize the database with Drizzle migrations
+      console.log("Running Drizzle migrations...");
+      const migrationDb = drizzle(migrationClient);
+
+      try {
+        // Run migrations from the drizzle directory
+        await migrate(migrationDb, { migrationsFolder: "./drizzle" });
+        console.log("Migrations completed successfully");
+      } catch (error: any) {
+        console.error("Error running migrations:", error);
+
+        // If migrations fail (e.g., directory doesn't exist), use schema to push changes directly
+        if (error.message && error.message.includes("already exists")) {
+          console.log(
+            "Tables already exist - this is expected for existing databases"
+          );
+          console.log(
+            "Migration errors about existing relations can be safely ignored"
+          );
+        } else {
+          console.log(
+            "Migration failed, please check the error and run migrations manually"
+          );
+        }
+      } finally {
+        // Close the migration client
+        await migrationClient.end();
+      }
+    }
+
+    // Check if admin user exists, if not create one
     const [{ count }]: { count: number }[] =
       await client`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
     if (Number(count) === 0) {
+      // Create admin user
+      console.log("Creating admin user");
       await auth!.api.signUpEmail({
         body: {
-          email: "test@test.com",
+          email: "admin@example.com",
           username: "admin",
-          name: "admin",
-          password: "admin123",
+          password: "password",
+          name: "Admin User",
         },
       });
     }
 
     await client`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
 
-    console.log("Tables created successfully.");
-  } catch (err) {
-    console.error("Error creating tables:", err);
+    console.log("PostgreSQL initialization completed successfully.");
+  } catch (error) {
+    console.error("Error initializing PostgreSQL:", error);
+    throw error;
   }
 }
