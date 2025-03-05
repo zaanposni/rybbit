@@ -25,7 +25,7 @@ export function DeleteSite({
       isOpen={isOpen}
       setIsOpen={setIsOpen}
       onConfirm={async () => {
-        await deleteSite(site.site_id);
+        await deleteSite(site.siteId);
         refetch();
         router.push("/");
       }}
