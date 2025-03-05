@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-slim AS builder
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
@@ -17,11 +17,6 @@ RUN npm run build
 # Generate initial migrations if possible
 RUN mkdir -p /app/drizzle
 RUN npx drizzle-kit generate || echo "Skipping migration generation during build"
-
-# Production image
-FROM node:20-slim
-
-WORKDIR /app
 
 # Copy built application and dependencies
 COPY --from=builder /app/package*.json ./
