@@ -33,6 +33,7 @@ COPY --from=builder /app/drizzle ./drizzle
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/docker-entrypoint.sh /docker-entrypoint.sh
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/public ./public
 
 # Make the entrypoint executable
 RUN chmod +x /docker-entrypoint.sh
