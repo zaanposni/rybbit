@@ -5,7 +5,7 @@ set -e
 # and dependency conditions in the docker-compose.yml file
 
 # Run migrations explicitly using the npm script
-echo "Running database migrations..."
+echo "Running database migrations...."
 npm run db:migrate
 
 # Start the application
