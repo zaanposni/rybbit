@@ -6,9 +6,13 @@ import * as schema from "./schema.js";
 
 dotenv.config();
 
-// For migrations
-async function main() {
-  console.log("Running migrations...");
+/**
+ * Run database migrations
+ * @param migrationsPath Path to migrations folder
+ * @returns Promise that resolves when migrations are complete
+ */
+export async function runMigrations(migrationsPath: string = "./drizzle") {
+  console.log("Running database migrations...");
 
   const migrationClient = postgres({
     host: process.env.POSTGRES_HOST || "postgres",
@@ -23,16 +27,6 @@ async function main() {
   const db = drizzle(migrationClient, { schema });
 
   try {
-    // First check if tables already exist
-    const tableCheck = await migrationClient`
-      SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
-        AND table_name = 'user'
-      );
-    `;
-    const tablesExist = tableCheck[0]?.exists;
-
     // Create drizzle schema if it doesn't exist
     await migrationClient`CREATE SCHEMA IF NOT EXISTS drizzle;`;
 
@@ -45,23 +39,26 @@ async function main() {
       );
     `;
 
-    if (tablesExist) {
-      console.log("Tables already exist - checking for new migrations only");
-    }
+    // Always run migrations, Drizzle will skip already applied ones
+    console.log(
+      "Running all migrations - Drizzle will skip already applied ones"
+    );
 
     // This will run migrations on the database, skipping the ones already applied
     try {
-      await migrate(db, { migrationsFolder: "./drizzle" });
+      await migrate(db, { migrationsFolder: migrationsPath });
       console.log("Migrations completed!");
+      return true; // Return success
     } catch (err: any) {
       // If error contains relation already exists, tables likely exist but not in drizzle metadata
       if (err.message && err.message.includes("already exists")) {
         console.log(
-          "Tables already exist but not tracked by drizzle. This is expected for existing databases."
+          "Some tables already exist but not tracked by drizzle. This is expected for existing databases."
         );
         console.log(
           "You can safely ignore these errors if your database is already set up."
         );
+        return true; // Consider this a success case
       } else {
         // Other errors should be reported
         throw err;
@@ -70,11 +67,23 @@ async function main() {
   } catch (e) {
     console.error("Migration failed!");
     console.error(e);
-    process.exit(1);
+    return false; // Return failure
   } finally {
     // Don't forget to close the connection
     await migrationClient.end();
   }
 }
 
-main();
+// Only run migrations directly if this module is executed directly
+if (import.meta.url === `file://${process.argv[1]}`) {
+  runMigrations()
+    .then((success) => {
+      if (!success) {
+        process.exit(1);
+      }
+    })
+    .catch((err) => {
+      console.error("Unhandled error in migrations:", err);
+      process.exit(1);
+    });
+}
