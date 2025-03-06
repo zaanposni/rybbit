@@ -2,7 +2,6 @@ import { authClient } from "@/lib/auth";
 import {
   Card,
   CardContent,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "../../../components/ui/card";
@@ -12,6 +11,8 @@ import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import { ChangePassword } from "./ChangePassword";
 import { DeleteAccount } from "./DeleteAccount";
+import { toast } from "sonner";
+import { changeUsername, changeEmail } from "@/hooks/api";
 
 export function Account({
   session,
@@ -20,10 +21,71 @@ export function Account({
 }) {
   const [username, setUsername] = useState(session.data?.user.username ?? "");
   const [email, setEmail] = useState(session.data?.user.email ?? "");
+  const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
 
-  const hasChanges =
-    username !== session.data?.user.username ||
-    email !== session.data?.user.email;
+  const handleUsernameUpdate = async () => {
+    if (!username) {
+      toast.error("Username cannot be empty");
+      return;
+    }
+
+    try {
+      setIsUpdatingUsername(true);
+      const response = await changeUsername(username);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update username");
+      }
+
+      toast.success("Username updated successfully");
+
+      // Reload the page to refresh the session
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating username:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update username"
+      );
+    } finally {
+      setIsUpdatingUsername(false);
+    }
+  };
+
+  const handleEmailUpdate = async () => {
+    if (!email) {
+      toast.error("Email cannot be empty");
+      return;
+    }
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    try {
+      setIsUpdatingEmail(true);
+      const response = await changeEmail(email);
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || "Failed to update email");
+      }
+
+      toast.success("Email updated successfully");
+
+      // Reload the page to refresh the session
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating email:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update email"
+      );
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-4">
@@ -31,37 +93,80 @@ export function Account({
         <CardHeader>
           <CardTitle className="text-xl">Account</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="username">Username</Label>
-            <Input
-              className="w-60"
-              id="username"
-              value={username}
-              onChange={({ target }) => setUsername(target.value)}
-            />
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Username</h4>
+            <p className="text-xs text-neutral-500">
+              Update your username displayed across the platform
+            </p>
+            <div className="flex space-x-2">
+              <Input
+                id="username"
+                value={username}
+                onChange={({ target }) => setUsername(target.value)}
+                placeholder="username"
+              />
+              <Button
+                variant="outline"
+                onClick={handleUsernameUpdate}
+                disabled={
+                  isUpdatingUsername || username === session.data?.user.username
+                }
+              >
+                {isUpdatingUsername ? "Updating..." : "Update"}
+              </Button>
+            </div>
           </div>
-          <div className="grid w-full items-center gap-1.5">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              className="w-60"
-              id="email"
-              type="email"
-              value={email}
-              onChange={({ target }) => setEmail(target.value)}
-            />
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Email</h4>
+            <p className="text-xs text-neutral-500">
+              Update your email address for account notifications
+            </p>
+            <div className="flex space-x-2">
+              <Input
+                id="email"
+                type="email"
+                value={email}
+                onChange={({ target }) => setEmail(target.value)}
+                placeholder="email@example.com"
+              />
+              <Button
+                variant="outline"
+                onClick={handleEmailUpdate}
+                disabled={isUpdatingEmail || email === session.data?.user.email}
+              >
+                {isUpdatingEmail ? "Updating..." : "Update"}
+              </Button>
+            </div>
           </div>
         </CardContent>
-        <CardFooter className="flex justify-end">
-          <Button variant={"accent"} disabled={!hasChanges}>
-            Save Changes
-          </Button>
-        </CardFooter>
       </Card>
-      <Card className="p-2 pt-6">
-        <CardContent className="flex flex-col gap-4">
-          <ChangePassword />
-          <DeleteAccount />
+
+      <Card className="p-2">
+        <CardHeader>
+          <CardTitle className="text-xl">Security</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium">Password</h4>
+            <p className="text-xs text-neutral-500">
+              Change your account password
+            </p>
+            <div className="w-[200px]">
+              <ChangePassword />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <h4 className="text-sm font-medium text-red-500">Danger Zone</h4>
+            <p className="text-xs text-neutral-500">
+              Permanently delete your account and all associated data
+            </p>
+            <div className="w-[200px]">
+              <DeleteAccount />
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>

@@ -29,8 +29,10 @@ type GroupedSession = {
   country: string;
   firstTimestamp: string;
   lastTimestamp: string;
+  duration: number; // Duration in seconds
   pageviews: {
     pathname: string;
+    querystring: string;
     title: string;
     timestamp: string;
     referrer: string;
@@ -105,9 +107,6 @@ ORDER BY timestamp ASC
         country,
       } = pageview;
 
-      // Construct full URL from pathname and querystring
-      const url = querystring ? `${pathname}?${querystring}` : pathname;
-
       if (!sessions[session_id]) {
         sessions[session_id] = {
           session_id,
@@ -117,6 +116,7 @@ ORDER BY timestamp ASC
           country,
           firstTimestamp: timestamp,
           lastTimestamp: timestamp,
+          duration: 0, // Initialize duration
           pageviews: [],
         };
       }
@@ -129,10 +129,11 @@ ORDER BY timestamp ASC
         sessions[session_id].lastTimestamp = timestamp;
       }
 
-      // Add pageview
+      // Add pageview with separate pathname and querystring
       sessions[session_id].pageviews.push({
-        pathname: url,
-        title: page_title || url,
+        pathname,
+        querystring,
+        title: page_title,
         timestamp,
         referrer,
       });
@@ -144,12 +145,21 @@ ORDER BY timestamp ASC
       );
     });
 
-    // Convert to array and sort by most recent session
-    const groupedSessions = Object.values(sessions).sort(
-      (a, b) =>
-        new Date(b.lastTimestamp).getTime() -
-        new Date(a.lastTimestamp).getTime()
-    );
+    // Calculate duration for each session and convert to array
+    const groupedSessions = Object.values(sessions)
+      .map((session) => {
+        // Calculate duration in seconds
+        const firstTime = new Date(session.firstTimestamp).getTime();
+        const lastTime = new Date(session.lastTimestamp).getTime();
+        session.duration = Math.round((lastTime - firstTime) / 1000);
+
+        return session;
+      })
+      .sort(
+        (a, b) =>
+          new Date(b.lastTimestamp).getTime() -
+          new Date(a.lastTimestamp).getTime()
+      );
 
     return res.send({ data: groupedSessions });
   } catch (error) {

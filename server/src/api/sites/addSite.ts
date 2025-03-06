@@ -1,10 +1,9 @@
-import { FastifyReply } from "fastify";
-
-import { FastifyRequest } from "fastify";
-import { auth } from "../../lib/auth.js";
 import { fromNodeHeaders } from "better-auth/node";
-import { sql } from "../../db/postgres/postgres.js";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { db } from "../../db/postgres/postgres.js";
+import { sites } from "../../db/postgres/schema.js";
 import { loadAllowedDomains } from "../../lib/allowedDomains.js";
+import { auth } from "../../lib/auth.js";
 
 export async function addSite(
   request: FastifyRequest<{ Body: { domain: string; name: string } }>,
@@ -29,8 +28,14 @@ export async function addSite(
   if (!session?.user.id) {
     return reply.status(500).send({ error: "Could not find user id" });
   }
+
   try {
-    await sql`INSERT INTO sites (domain, name, created_by) VALUES (${domain}, ${name}, ${session?.user.id})`;
+    await db.insert(sites).values({
+      domain,
+      name,
+      createdBy: session.user.id,
+    });
+
     await loadAllowedDomains();
     return reply.status(200).send();
   } catch (err) {

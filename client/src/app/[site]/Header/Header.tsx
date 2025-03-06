@@ -1,10 +1,11 @@
 "use client";
-import { Circle } from "@phosphor-icons/react";
-import Link from "next/link";
 import { useStore } from "@/lib/store";
+import { Circle } from "@phosphor-icons/react";
+import { ChartBarDecreasing, ChartLine, Radio, User } from "lucide-react";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SiteSettings } from "../../../components/SiteSettings/SiteSettings";
 import { useGetLiveUsercount, useGetSites } from "../../../hooks/api";
-import { ChartBarDecreasing, ChartLine, Radio, User, Zap } from "lucide-react";
 
 export function Header() {
   const { data } = useGetLiveUsercount();
@@ -13,7 +14,7 @@ export function Header() {
   const pathname = usePathname();
 
   const site = sites?.data?.find(
-    (site) => site.site_id === Number(pathname.split("/")[1])
+    (site) => site.siteId === Number(pathname.split("/")[1])
   );
 
   // Check which tab is active based on the current path
@@ -41,6 +42,7 @@ export function Header() {
         <div className="flex items-center gap-1 text-base text-neutral-600 dark:text-neutral-400">
           <Circle size={12} weight="fill" color="hsl(var(--green-500))" />
           {data?.count} users online
+          <SiteSettings siteId={site?.siteId ?? 0} />
         </div>
       </div>
       <div className="flex space-x-2">
@@ -88,7 +90,7 @@ function TabButton({
   return (
     <Link href={href} className="focus:outline-none">
       <button
-        className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+        className={`px-3 py-2 rounded-lg font-sm transition-colors ${
           active
             ? "bg-neutral-800 text-white  hover:bg-neutral-800/75 "
             : "text-neutral-400 hover:text-white hover:bg-neutral-800/50"

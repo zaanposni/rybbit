@@ -16,35 +16,44 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { round } from "lodash";
-import { ReactNode } from "react";
+import { ReactNode, useMemo } from "react";
 import { addFilter, FilterParameter } from "../../../../lib/store";
 import { formatter } from "../../../../lib/utils";
 import { SquareArrowOutUpRight } from "lucide-react";
+import { SingleColResponse, useSingleCol } from "../../../../hooks/api";
 
-export function StandardCard<T extends { percentage: number; count: number }>({
+export function StandardCard({
   title,
-  data,
   getKey,
   getLabel,
   getValue,
   getLink,
-  isFetching,
   filterParameter,
 }: {
   title: string;
-  data:
-    | {
-        data?: T[];
-        error?: string;
-      }
-    | undefined;
   isFetching?: boolean;
-  getKey: (item: T) => string;
-  getLabel: (item: T) => ReactNode;
-  getValue: (item: T) => string;
-  getLink?: (item: T) => string;
+  getKey: (item: SingleColResponse) => string;
+  getLabel: (item: SingleColResponse) => ReactNode;
+  getValue: (item: SingleColResponse) => string;
+  getLink?: (item: SingleColResponse) => string;
   filterParameter: FilterParameter;
 }) {
+  const { data, isFetching } = useSingleCol({
+    parameter: filterParameter,
+  });
+
+  const { data: previousData, isFetching: previousIsFetching } = useSingleCol({
+    parameter: filterParameter,
+    periodTime: "previous",
+  });
+
+  const previousDataMap = useMemo(() => {
+    return previousData?.data?.reduce((acc, curr) => {
+      acc[getKey(curr)] = curr;
+      return acc;
+    }, {} as Record<string, SingleColResponse>);
+  }, [previousData]);
+
   const ratio = data?.data?.[0]?.percentage
     ? 100 / data?.data?.[0]?.percentage
     : 1;
@@ -63,7 +72,7 @@ export function StandardCard<T extends { percentage: number; count: number }>({
             onClick={() =>
               addFilter({
                 parameter: filterParameter,
-                value: getValue(e),
+                value: [getValue(e)],
                 type: "equals",
               })
             }
@@ -93,6 +102,20 @@ export function StandardCard<T extends { percentage: number; count: number }>({
                   {round(e.percentage, 1)}%
                 </div>
                 <div>{formatter(e.count)}</div>
+                {/* <div>
+                  {previousDataMap?.[getKey(e)]?.percentage ? (
+                    <div className="text-sm flex gap-2">
+                      <div>
+                        {round(
+                          e.percentage -
+                            (previousDataMap?.[getKey(e)]?.percentage || 0),
+                          1
+                        )}
+                        %
+                      </div>
+                    </div>
+                  ) : null}
+                </div> */}
               </div>
             </div>
           </div>
@@ -114,7 +137,7 @@ export function StandardCard<T extends { percentage: number; count: number }>({
                     onClick={() =>
                       addFilter({
                         parameter: filterParameter,
-                        value: getValue(e),
+                        value: [getValue(e)],
                         type: "equals",
                       })
                     }

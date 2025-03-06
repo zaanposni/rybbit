@@ -6,12 +6,15 @@ import cron from "node-cron";
 import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
+import { changeEmail } from "./api/changeEmail.js";
+import { changeUsername } from "./api/changeUsername.js";
 import { getLiveUsercount } from "./api/getLiveUsercount.js";
 import { getOverview } from "./api/getOverview.js";
 import { getOverviewBucketed } from "./api/getOverviewBucketed.js";
 import { getSingleCol } from "./api/getSingleCol.js";
 import { listUsers } from "./api/listUsers.js";
 import { addSite } from "./api/sites/addSite.js";
+import { changeSiteDomain } from "./api/sites/changeSiteDomain.js";
 import { deleteSite } from "./api/sites/deleteSite.js";
 import { getSiteHasData } from "./api/sites/getSiteHasData.js";
 import { getSites } from "./api/sites/getSites.js";
@@ -38,8 +41,6 @@ const server = Fastify({
   maxParamLength: 1500,
   trustProxy: true,
 });
-
-await loadAllowedDomains();
 
 server.register(cors, {
   origin: (origin, callback) => {
@@ -127,10 +128,15 @@ server.get("/user/:userId/sessions", getUserSessions);
 
 // Administrative
 server.post("/add-site", addSite);
+server.post("/change-site-domain", changeSiteDomain);
 server.post("/delete-site/:id", deleteSite);
 server.get("/get-sites", getSites);
 server.get("/list-users", listUsers);
 server.post("/create-account", createAccount);
+
+// User management
+server.post("/change-username", changeUsername);
+server.post("/change-email", changeEmail);
 
 // Track pageview endpoint
 server.post("/track/pageview", trackPageView);
@@ -139,7 +145,8 @@ const start = async () => {
   try {
     console.info("Starting server...");
     // Initialize the database
-    await Promise.allSettled([initializeClickhouse(), initializePostgres()]);
+    await Promise.all([initializeClickhouse(), initializePostgres()]);
+    await loadAllowedDomains();
     // Start the server
     await server.listen({ port: 3001, host: "0.0.0.0" });
     cron.schedule("*/60 * * * * *", () => {

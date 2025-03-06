@@ -15,12 +15,14 @@ const buttonVariants = cva(
           "bg-neutral-100 text-neutral-900 shadow-sm hover:bg-neutral-100/80 dark:bg-neutral-50 dark:text-neutral-800 dark:hover:bg-neutral-50/90",
         accent:
           "bg-neutral-500 text-neutral-900 shadow-sm hover:bg-neutral-500/80 dark:bg-fuchsia-600 dark:text-neutral-50 dark:hover:bg-fuchsia-600/90",
+        success:
+          "bg-green-500 text-neutral-50 shadow-sm hover:bg-green-500/90 dark:bg-green-900 dark:text-neutral-50 dark:hover:bg-green-900/90",
         destructive:
           "bg-red-500 text-neutral-50 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:text-neutral-50 dark:hover:bg-red-900/90",
         warning:
           "bg-yellow-500 text-neutral-900 shadow-sm hover:bg-yellow-500/90 dark:bg-yellow-600 dark:text-neutral-50 dark:hover:bg-yellow-600/90",
         outline:
-          "border border-neutral-200 bg-white shadow-sm hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-650 dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
+          "border border-neutral-200 bg-white shadow-sm hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-700 dark:bg-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
         ghost:
           "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
         link: "text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-50",

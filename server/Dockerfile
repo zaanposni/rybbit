@@ -1,14 +1,46 @@
 # syntax=docker/dockerfile:1
 
-FROM node:22-alpine
+FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-COPY ["package.json", "package-lock.json*", "./"]
+# Install dependencies
+COPY package*.json ./
+RUN npm ci
 
-RUN npm install
-
+# Copy source code
 COPY . .
+
+# Build the application
 RUN npm run build
 
-CMD [ "npm", "start" ]
+# Generate migrations (but don't run them)
+RUN mkdir -p /app/drizzle
+RUN npx drizzle-kit generate || echo "Skipping migration generation during build"
+
+# Runtime image
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install PostgreSQL client for migrations
+RUN apk add --no-cache postgresql-client
+
+# Copy built application and dependencies
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/drizzle ./drizzle
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/docker-entrypoint.sh /docker-entrypoint.sh
+COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
+COPY --from=builder /app/public ./public
+
+# Make the entrypoint executable
+RUN chmod +x /docker-entrypoint.sh
+
+# Expose the API port
+EXPOSE 3001
+
+# Use our custom entrypoint script
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["node", "dist/index.js"]

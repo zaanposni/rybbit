@@ -77,22 +77,22 @@ const getOptions = (time: Time) => {
 
     return (
       <SelectContent>
-        {timeRangeLength <= 7 && (
+        {timeRangeLength <= 30 && (
           <SelectItem size="sm" value="hour">
             Hour
           </SelectItem>
         )}
-        {timeRangeLength <= 31 && timeRangeLength > 1 && (
+        {timeRangeLength > 1 && (
           <SelectItem size="sm" value="day">
             Day
           </SelectItem>
         )}
-        {timeRangeLength >= 28 && timeRangeLength <= 180 && (
+        {timeRangeLength >= 28 && (
           <SelectItem size="sm" value="week">
             Week
           </SelectItem>
         )}
-        {timeRangeLength >= 60 && timeRangeLength <= 365 && (
+        {timeRangeLength >= 60 && (
           <SelectItem size="sm" value="month">
             Month
           </SelectItem>

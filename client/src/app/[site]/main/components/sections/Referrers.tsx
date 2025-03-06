@@ -1,17 +1,13 @@
 "use client";
 
-import { useSingleCol } from "@/hooks/api";
 import { StandardCard } from "../../../components/shared/StandardCard";
 
 export function Referrers() {
-  const { data, isFetching } = useSingleCol({ parameter: "referrer" });
   return (
     <StandardCard
       filterParameter="referrer"
       title="Referrers"
-      data={data}
       getKey={(e) => e.value}
-      isFetching={isFetching}
       getLink={(e) => `https://${e.value}`}
       getLabel={(e) => (
         <div className="flex items-center">

@@ -8,15 +8,9 @@ import {
   DropdownMenuTrigger,
 } from "../../../../../components/ui/dropdown-menu";
 import { FilterParameter, FilterType } from "../../../../../lib/store";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { sleep } from "../../../../../lib/utils";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../../../../../components/ui/select";
+import { cn } from "../../../../../lib/utils";
 import { ValueFilter } from "./ValueFilter";
 
 const FilterOptions: { label: string; value: FilterParameter }[] = [
@@ -25,8 +19,16 @@ const FilterOptions: { label: string; value: FilterParameter }[] = [
     value: "pathname",
   },
   {
+    label: "Page Title",
+    value: "page_title",
+  },
+  {
     label: "Query",
     value: "querystring",
+  },
+  {
+    label: "Referrer",
+    value: "referrer",
   },
   {
     label: "Country",
@@ -53,14 +55,6 @@ const FilterOptions: { label: string; value: FilterParameter }[] = [
     value: "browser",
   },
   {
-    label: "Referrer",
-    value: "referrer",
-  },
-  {
-    label: "Page Title",
-    value: "page_title",
-  },
-  {
     label: "Language",
     value: "language",
   },
@@ -77,14 +71,42 @@ export function NewFilterButton() {
 
   const [open, setOpen] = useState(false);
 
+  const onClose = async () => {
+    setOpen(false);
+    await sleep(100);
+    setSelectedFilter(null);
+    setSelectedOperator("equals");
+  };
+
+  const operatorOptions: { label: string; value: FilterType }[] =
+    useMemo(() => {
+      if (
+        selectedFilter?.value === "referrer" ||
+        selectedFilter?.value === "page_title" ||
+        selectedFilter?.value === "language" ||
+        selectedFilter?.value === "country" ||
+        selectedFilter?.value === "region" ||
+        selectedFilter?.value === "city" ||
+        selectedFilter?.value === "querystring"
+      ) {
+        return [
+          { label: "Is", value: "equals" },
+          { label: "Is not", value: "not_equals" },
+          { label: "Contains", value: "contains" },
+          { label: "Not contains", value: "not_contains" },
+        ];
+      }
+      return [
+        { label: "Is", value: "equals" },
+        { label: "Is not", value: "not_equals" },
+      ];
+    }, []);
+
   return (
     <DropdownMenu
-      onOpenChange={async (isOpen) => {
+      onOpenChange={(isOpen) => {
         if (!isOpen) {
-          setOpen(false);
-          await sleep(100);
-          setSelectedFilter(null);
-          setSelectedOperator("equals");
+          onClose();
         }
       }}
       open={open}
@@ -103,28 +125,30 @@ export function NewFilterButton() {
         {selectedFilter ? (
           <div className="flex flex-col gap-2 p-2">
             <div>{selectedFilter.label}</div>
-            <div className="flex items-center gap-2 text-sm">
-              <Select
-                onValueChange={(value) =>
-                  setSelectedOperator(value as FilterType)
-                }
-                value={selectedOperator}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="equals">Is</SelectItem>
-                  <SelectItem value="not_equals">Is not</SelectItem>
-                  <SelectItem value="contains">Contains</SelectItem>
-                  <SelectItem value="not_contains">Not contains</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex flex-col items-center gap-2 text-sm">
+              <div className="flex w-full rounded-md overflow-hidden">
+                {operatorOptions.map((option) => (
+                  <Button
+                    key={option.value}
+                    type="button"
+                    variant={"default"}
+                    className={cn(
+                      "flex-1 rounded-none text-xs h-8 border-neutral-700 transition-[background-color,color]",
+                      selectedOperator === option.value
+                        ? "bg-neutral-900 text-white dark:bg-neutral-750"
+                        : "bg-white text-neutral-700 hover:bg-neutral-100 dark:bg-neutral-850 dark:text-neutral-300  dark:hover:text-neutral-100"
+                    )}
+                    onClick={() => setSelectedOperator(option.value)}
+                  >
+                    {option.label}
+                  </Button>
+                ))}
+              </div>
 
               <ValueFilter
                 parameter={selectedFilter.value}
                 type={selectedOperator}
-                onComplete={() => setOpen(false)}
+                onComplete={() => onClose()}
               />
             </div>
           </div>

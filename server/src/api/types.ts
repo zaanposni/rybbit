@@ -15,7 +15,7 @@ export type FilterParameter =
 
 export type Filter = {
   parameter: FilterParameter;
-  value: string;
+  value: string[];
   type: FilterType;
 };
 

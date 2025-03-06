@@ -6,7 +6,7 @@ const OS_TO_LOGO: Record<string, string> = {
   Android: "Android.svg",
   android: "Android.svg",
   Linux: "Tux.svg",
-  macOS: "macOS.png",
+  macOS: "macOS.svg",
   iOS: "Apple.svg",
   "Chrome OS": "Chrome.svg",
   Ubuntu: "Ubuntu.svg",

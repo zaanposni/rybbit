@@ -1,11 +1,13 @@
-import postgres from "postgres";
-import { Session } from "./types.js";
 import dotenv from "dotenv";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { auth } from "../../lib/auth.js";
+import * as schema from "./schema.js";
 
 dotenv.config();
 
-export const sql = postgres({
+// Create postgres connection
+const client = postgres({
   host: process.env.POSTGRES_HOST || "postgres",
   port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
   database: process.env.POSTGRES_DB,
@@ -14,119 +16,41 @@ export const sql = postgres({
   onnotice: () => {},
 });
 
+// Create drizzle ORM instance
+export const db = drizzle(client, { schema });
+
+// For compatibility with raw SQL if needed
+export const sql = client;
+
 export async function initializePostgres() {
   try {
-    // Phase 1: Create tables with no dependencies
-    await Promise.all([
-      sql`
-        CREATE TABLE IF NOT EXISTS "user" (
-          "id" text not null primary key,
-          "name" text not null,
-          "username" text not null unique,
-          "email" text not null unique,
-          "emailVerified" boolean not null,
-          "image" text,
-          "createdAt" timestamp not null,
-          "updatedAt" timestamp not null,
-          "role" text not null default 'user'
-        );
-      `,
+    console.log("Initializing PostgreSQL database...");
 
-      sql`
-        CREATE TABLE IF NOT EXISTS "verification" (
-          "id" text not null primary key,
-          "identifier" text not null,
-          "value" text not null,
-          "expiresAt" timestamp not null,
-          "createdAt" timestamp,
-          "updatedAt" timestamp
-        );
-      `,
+    // Assume migrations have been run manually with 'npm run db:migrate'
+    // No automatic migrations during application startup
 
-      sql<Session[]>`
-        CREATE TABLE IF NOT EXISTS active_sessions (
-          session_id TEXT PRIMARY KEY,
-          site_id INT,
-          user_id TEXT,
-          hostname TEXT,
-          start_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          last_activity TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          pageviews INT DEFAULT 0,
-          entry_page TEXT,
-          exit_page TEXT,
-          device_type TEXT,
-          screen_width INT,
-          screen_height INT,
-          browser TEXT,
-          operating_system TEXT,
-          language TEXT,
-          referrer TEXT
-        );
-      `,
+    // Check if admin user exists, if not create one
+    const [{ count }]: { count: number }[] =
+      await client`SELECT count(*) FROM "user" WHERE username = 'admin'`;
 
-      sql`
-        CREATE TABLE IF NOT EXISTS sites (
-          site_id SERIAL PRIMARY KEY,
-          name TEXT NOT NULL,
-          domain TEXT NOT NULL UNIQUE,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          created_by TEXT NOT NULL REFERENCES "user" ("id")
-        );
-      `,
-    ]);
-
-    // Phase 2: Create tables with foreign key dependencies
-    await Promise.all([
-      sql`
-        CREATE TABLE IF NOT EXISTS "session" (
-          "id" text not null primary key,
-          "expiresAt" timestamp not null,
-          "token" text not null unique,
-          "createdAt" timestamp not null,
-          "updatedAt" timestamp not null,
-          "ipAddress" text,
-          "userAgent" text,
-          "userId" text not null references "user" ("id")
-        );
-      `,
-
-      sql`
-        CREATE TABLE IF NOT EXISTS "account" (
-          "id" text not null primary key,
-          "accountId" text not null,
-          "providerId" text not null,
-          "userId" text not null references "user" ("id"),
-          "accessToken" text,
-          "refreshToken" text,
-          "idToken" text,
-          "accessTokenExpiresAt" timestamp,
-          "refreshTokenExpiresAt" timestamp,
-          "scope" text,
-          "password" text,
-          "createdAt" timestamp not null,
-          "updatedAt" timestamp not null
-        );
-      `,
-    ]);
-
-    const user =
-      await sql`SELECT count(*) FROM "user" WHERE username = 'admin'`;
-    if (user.length === 0) {
-      auth!.api.signUpEmail({
+    if (Number(count) === 0) {
+      // Create admin user
+      console.log("Creating admin user");
+      await auth!.api.signUpEmail({
         body: {
-          email: "test@test.com",
+          email: "admin@example.com",
           username: "admin",
-          name: "admin",
           password: "admin123",
+          name: "Admin User",
         },
       });
     }
 
-    await sql`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
+    await client`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
 
-    console.log("Tables created successfully.");
-  } catch (err) {
-    console.error("Error creating tables:", err);
+    console.log("PostgreSQL initialization completed successfully.");
+  } catch (error) {
+    console.error("Error initializing PostgreSQL:", error);
+    throw error;
   }
 }

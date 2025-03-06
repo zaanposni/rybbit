@@ -27,7 +27,7 @@ export function NoData({
             </div>
             <CodeSnippet
               language="HTML"
-              code={`<script\n    src="${BACKEND_URL}/script.js"\n    site-id="${siteMetadata?.site_id}"\n    defer\n/>`}
+              code={`<script\n    src="${BACKEND_URL}/script.js"\n    site-id="${siteMetadata?.siteId}"\n    defer\n/>`}
             />
           </div>
         </CardContent>

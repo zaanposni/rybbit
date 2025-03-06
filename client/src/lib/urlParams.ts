@@ -1,0 +1,238 @@
+import { useSearchParams, usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+import { DateTime } from "luxon";
+import { Filter, Time, TimeBucket, StatType, useStore } from "./store";
+import React from "react";
+
+// Serialize store state to URL parameters
+export const serializeStateToUrl = (
+  time: Time,
+  bucket: TimeBucket,
+  selectedStat: StatType,
+  filters: Filter[]
+): URLSearchParams => {
+  const params = new URLSearchParams();
+
+  // Serialize time
+  params.set("timeMode", time.mode);
+  if (time.mode === "day") {
+    params.set("day", time.day);
+  } else if (time.mode === "range") {
+    params.set("startDate", time.startDate);
+    params.set("endDate", time.endDate);
+    if (time.wellKnown) {
+      params.set("wellKnown", time.wellKnown);
+    }
+  } else if (time.mode === "week") {
+    params.set("week", time.week);
+  } else if (time.mode === "month") {
+    params.set("month", time.month);
+  } else if (time.mode === "year") {
+    params.set("year", time.year);
+  }
+
+  // Serialize bucket
+  params.set("bucket", bucket);
+
+  // Serialize selectedStat
+  params.set("stat", selectedStat);
+
+  // Serialize filters
+  if (filters.length > 0) {
+    params.set("filters", JSON.stringify(filters));
+  }
+
+  return params;
+};
+
+// Deserialize URL parameters to store state
+export const deserializeUrlToState = (
+  searchParams: URLSearchParams
+): {
+  time: Time | null;
+  bucket: TimeBucket | null;
+  selectedStat: StatType | null;
+  filters: Filter[] | null;
+} => {
+  const result = {
+    time: null as Time | null,
+    bucket: null as TimeBucket | null,
+    selectedStat: null as StatType | null,
+    filters: null as Filter[] | null,
+  };
+
+  // Deserialize time
+  const timeMode = searchParams.get("timeMode") as Time["mode"] | null;
+  if (timeMode) {
+    if (timeMode === "day") {
+      const day = searchParams.get("day");
+      if (day) {
+        result.time = { mode: "day", day };
+      }
+    } else if (timeMode === "range") {
+      const startDate = searchParams.get("startDate");
+      const endDate = searchParams.get("endDate");
+      if (startDate && endDate) {
+        const wellKnown = searchParams.get("wellKnown") as
+          | "Last 3 days"
+          | "Last 7 days"
+          | "Last 14 days"
+          | "Last 30 days"
+          | "Last 60 days"
+          | undefined;
+        result.time = {
+          mode: "range",
+          startDate,
+          endDate,
+          wellKnown,
+        };
+      }
+    } else if (timeMode === "week") {
+      const week = searchParams.get("week");
+      if (week) {
+        result.time = { mode: "week", week };
+      }
+    } else if (timeMode === "month") {
+      const month = searchParams.get("month");
+      if (month) {
+        result.time = { mode: "month", month };
+      }
+    } else if (timeMode === "year") {
+      const year = searchParams.get("year");
+      if (year) {
+        result.time = { mode: "year", year };
+      }
+    } else if (timeMode === "all-time") {
+      result.time = { mode: "all-time" };
+    }
+  }
+
+  // Deserialize bucket with validation
+  const bucketParam = searchParams.get("bucket");
+  if (bucketParam) {
+    // Validate that it's a valid TimeBucket value
+    const validBuckets: TimeBucket[] = [
+      "minute",
+      "five_minutes",
+      "ten_minutes",
+      "fifteen_minutes",
+      "hour",
+      "day",
+      "week",
+      "month",
+      "year",
+    ];
+
+    if (validBuckets.includes(bucketParam as TimeBucket)) {
+      result.bucket = bucketParam as TimeBucket;
+    }
+  }
+
+  // Deserialize selectedStat
+  const stat = searchParams.get("stat") as StatType | null;
+  if (stat) {
+    result.selectedStat = stat;
+  }
+
+  // Deserialize filters
+  const filtersStr = searchParams.get("filters");
+  if (filtersStr) {
+    try {
+      result.filters = JSON.parse(filtersStr);
+    } catch (e) {
+      console.error("Failed to parse filters from URL", e);
+    }
+  }
+
+  return result;
+};
+
+// Hook to sync store state with URL
+export const useSyncStateWithUrl = () => {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+  const {
+    time,
+    bucket,
+    selectedStat,
+    filters,
+    setTime,
+    setBucket,
+    setSelectedStat,
+    setFilters,
+    site,
+  } = useStore();
+
+  // Use a ref to track if we've already loaded from URL
+  // This prevents overriding user changes if the effect re-runs
+  const initializedFromUrlRef = React.useRef(false);
+
+  // Initialize from URL params after site is set
+  // This fixes the issue where setSite would override URL params
+  useEffect(() => {
+    // Only proceed if site has been set and we haven't initialized yet
+    if (!site || initializedFromUrlRef.current) return;
+
+    const state = deserializeUrlToState(searchParams);
+    let needsUpdate = false;
+
+    // Process time first without changing bucket
+    if (state.time) {
+      setTime(state.time, false); // Don't change bucket
+      needsUpdate = true;
+    }
+
+    // Process bucket separately to ensure it's not overridden by setTime
+    if (state.bucket) {
+      setBucket(state.bucket);
+      needsUpdate = true;
+    }
+
+    if (state.selectedStat) {
+      setSelectedStat(state.selectedStat);
+      needsUpdate = true;
+    }
+
+    if (state.filters) {
+      setFilters(state.filters);
+      needsUpdate = true;
+    }
+
+    // If we updated the state from URL, also update the previousTime
+    // but make sure not to change the bucket again
+    if (needsUpdate && state.time) {
+      // Force a recalculation of the previousTime by setting the time again
+      // But explicitly tell it not to change the bucket
+      setTime(state.time, false);
+    }
+
+    // Mark that we've initialized from URL
+    initializedFromUrlRef.current = true;
+  }, [searchParams, site, setTime, setBucket, setSelectedStat, setFilters]); // Added all dependencies
+
+  // Update URL when state changes
+  useEffect(() => {
+    // Don't update URL if site hasn't been set yet
+    if (!site) return;
+
+    const params = serializeStateToUrl(time, bucket, selectedStat, filters);
+    const newSearch = params.toString();
+
+    // Only update if the search params have changed to avoid infinite loops
+    const currentSearch = searchParams.toString();
+    if (newSearch !== currentSearch) {
+      // Replace the current URL with the new one to avoid adding to history
+      router.replace(`${pathname}?${newSearch}`);
+    }
+  }, [
+    time,
+    bucket,
+    selectedStat,
+    filters,
+    pathname,
+    router,
+    site,
+    searchParams,
+  ]); // Added searchParams
+};

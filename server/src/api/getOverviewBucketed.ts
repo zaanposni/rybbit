@@ -50,25 +50,86 @@ function getTimeStatementFill(
     ) STEP INTERVAL ${bucketIntervalMap[bucket]}`;
 }
 
-type TimeBucket = "hour" | "day" | "week" | "month";
+const getQuery = ({
+  startDate,
+  endDate,
+  timezone,
+  bucket,
+  site,
+  filters,
+  past24Hours,
+}: {
+  startDate: string;
+  endDate: string;
+  timezone: string;
+  bucket: TimeBucket;
+  site: string;
+  filters: string;
+  past24Hours: boolean;
+}) => {
+  if (past24Hours) {
+    return `SELECT
+    session_stats.time AS time,
+    session_stats.sessions,
+    session_stats.pages_per_session,
+    session_stats.bounce_rate * 100 AS bounce_rate,
+    session_stats.session_duration,
+    page_stats.pageviews,
+    page_stats.users
+FROM
+(
+    /* ————— SESSION STATS ————— */
+    SELECT
+        ${TimeBucketToFn[bucket]}(toTimeZone(start_time, '${timezone}')) AS time,
+        COUNT() AS sessions,
+        AVG(pages_in_session) AS pages_per_session,
+        sumIf(1, pages_in_session = 1) / COUNT() AS bounce_rate,
+        AVG(end_time - start_time) AS session_duration
+    FROM
+    (
+        /* One row per session */
+        SELECT
+            session_id,
+            MIN(timestamp) AS start_time,
+            MAX(timestamp) AS end_time,
+            COUNT(*) AS pages_in_session
+        FROM pageviews
+        WHERE
+            site_id = ${site}
+            AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
+            AND timestamp < toTimeZone(now('${timezone}'), 'UTC')
+        GROUP BY session_id
+    )
+    GROUP BY time
+    ORDER BY time WITH FILL
+      FROM toTimeZone(${TimeBucketToFn[bucket]}(now('${timezone}') - INTERVAL 1 DAY), 'UTC')
+      TO   toTimeZone(${TimeBucketToFn[bucket]}(now('${timezone}')), 'UTC')
+      STEP INTERVAL 1 HOUR
+) AS session_stats
 
-type getOverviewBucketed = { time: string; pageviews: number }[];
+FULL JOIN
+(
+    /* ————— PAGE STATS ————— */
+    SELECT
+        ${TimeBucketToFn[bucket]}(toTimeZone(timestamp, '${timezone}')) AS time,
+        COUNT(*) AS pageviews,
+        COUNT(DISTINCT user_id) AS users
+    FROM pageviews
+    WHERE
+        site_id = ${site}
+        -- Past 24 hours in LA time
+        AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
+        AND timestamp < toTimeZone(now('${timezone}'), 'UTC')
+    GROUP BY time
+    ORDER BY time WITH FILL
+      FROM toTimeZone(${TimeBucketToFn[bucket]}(now('${timezone}') - INTERVAL 1 DAY), 'UTC')
+      TO   toTimeZone(${TimeBucketToFn[bucket]}(now('${timezone}')), 'UTC')
+      STEP INTERVAL 1 HOUR
+) AS page_stats
 
-export async function getOverviewBucketed(
-  {
-    query: { startDate, endDate, timezone, bucket, site, filters },
-  }: FastifyRequest<{
-    Querystring: {
-      startDate: string;
-      endDate: string;
-      timezone: string;
-      bucket: TimeBucket;
-      site: string;
-      filters: string;
-    };
-  }>,
-  res: FastifyReply
-) {
+USING time
+ORDER BY time;`;
+  }
   const isAllTime = !startDate && !endDate;
   const filterStatement = getFilterStatement(filters);
 
@@ -132,6 +193,39 @@ FULL JOIN
 ) AS page_stats
 USING time
 ORDER BY time`;
+
+  return query;
+};
+
+type TimeBucket = "hour" | "day" | "week" | "month";
+
+type getOverviewBucketed = { time: string; pageviews: number }[];
+
+export async function getOverviewBucketed(
+  {
+    query: { startDate, endDate, timezone, bucket, site, filters, past24Hours },
+  }: FastifyRequest<{
+    Querystring: {
+      startDate: string;
+      endDate: string;
+      timezone: string;
+      bucket: TimeBucket;
+      site: string;
+      filters: string;
+      past24Hours?: boolean;
+    };
+  }>,
+  res: FastifyReply
+) {
+  const query = getQuery({
+    startDate,
+    endDate,
+    timezone,
+    bucket,
+    site,
+    filters,
+    past24Hours: past24Hours ?? false,
+  });
 
   try {
     const result = await clickhouse.query({

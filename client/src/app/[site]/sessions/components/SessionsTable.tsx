@@ -1,18 +1,18 @@
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   createColumnHelper,
   flexRender,
   getCoreRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import Avatar from "boring-avatars";
 import { DateTime } from "luxon";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef } from "react";
 import { getCountryName } from "../../../../lib/utils";
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../components/shared/icons/OperatingSystem";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import { useParams } from "next/navigation";
 
 type Session = {
   session_id: string;
@@ -57,6 +57,7 @@ export default function SessionsTable({
   isFetchingNextPage,
 }: SessionsTableProps) {
   const { site } = useParams();
+  const router = useRouter();
 
   // Reference for the scroll container
   const tableContainerRef = useRef<HTMLDivElement>(null);
@@ -97,15 +98,13 @@ export default function SessionsTable({
         header: "User",
         cell: (info) => {
           const userId = info.getValue();
-          return userId ? (
-            <Link
-              href={`/${site}/user/${userId}`}
-              className="text-blue-400 hover:text-blue-300 hover:underline"
-            >
-              {userId}
-            </Link>
-          ) : (
-            "Unknown"
+          return (
+            <Avatar
+              name={userId}
+              colors={["#2c2b4b", "#a75293", "#9c7a9d", "#9ddacb", "#f8dcb4"]}
+              variant="beam"
+              size={30}
+            />
           );
         },
       }),
@@ -123,12 +122,15 @@ export default function SessionsTable({
       }),
       columnHelper.accessor("country", {
         header: "Country",
-        cell: (info) => (
-          <div className="flex items-center gap-2">
-            <CountryFlag country={info.getValue() || "Unknown"} />
-            {getCountryName(info.getValue() || "Unknown")}
-          </div>
-        ),
+        cell: (info) =>
+          info.getValue() ? (
+            <div className="flex items-center gap-2">
+              <CountryFlag country={info.getValue() || "Unknown"} />
+              {getCountryName(info.getValue() || "Unknown")}
+            </div>
+          ) : (
+            "-"
+          ),
       }),
       columnHelper.accessor("browser", {
         header: "Browser",
@@ -209,15 +211,26 @@ export default function SessionsTable({
               </td>
             </tr>
           ) : (
-            table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-neutral-850 bg-neutral-900">
-                {row.getVisibleCells().map((cell) => (
-                  <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))
+            table.getRowModel().rows.map((row) => {
+              return (
+                <tr
+                  key={row.id}
+                  className="hover:bg-neutral-850 bg-neutral-900 cursor-pointer"
+                  onClick={() =>
+                    router.push(`/${site}/user/${row.original.user_id}`)
+                  }
+                >
+                  {row.getVisibleCells().map((cell) => (
+                    <td key={cell.id} className="px-4 py-3 whitespace-nowrap">
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })
           )}
         </tbody>
       </table>

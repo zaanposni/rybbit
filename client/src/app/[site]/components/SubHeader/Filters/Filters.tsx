@@ -1,4 +1,3 @@
-import { countries } from "countries-list";
 import { X } from "lucide-react";
 import {
   Filter,
@@ -8,8 +7,8 @@ import {
   updateFilter,
   useStore,
 } from "../../../../../lib/store";
-import { NewFilterButton } from "./NewFilterButton";
 import { getCountryName } from "../../../../../lib/utils";
+import { NewFilterButton } from "./NewFilterButton";
 
 function getParameterNameLabel(parameter: FilterParameter) {
   switch (parameter) {
@@ -24,11 +23,17 @@ function getParameterNameLabel(parameter: FilterParameter) {
     case "referrer":
       return "Referrer";
     case "pathname":
-      return "Page";
+      return "Path";
     case "page_title":
       return "Page Title";
     case "querystring":
       return "Query String";
+    case "language":
+      return "Language";
+    case "city":
+      return "City";
+    case "region":
+      return "Region";
     default:
       return parameter;
   }
@@ -48,12 +53,19 @@ const filterTypeToLabel = (type: FilterType) => {
 };
 
 function getParameterValueLabel(filter: Filter) {
-  switch (filter.parameter) {
-    case "country":
-      return getCountryName(filter.value as string);
-    default:
-      return filter.value;
+  const formatValue = (value: string) => {
+    if (filter.parameter === "country") {
+      return getCountryName(value);
+    }
+    return value;
+  };
+
+  if (filter.value.length === 1) {
+    return formatValue(filter.value[0]);
   }
+
+  // For multiple values, format them and join with commas
+  return filter.value.map(formatValue).join(", ");
 }
 
 export function Filters() {

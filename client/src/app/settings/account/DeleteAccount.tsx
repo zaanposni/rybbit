@@ -1,85 +1,69 @@
 import { useState } from "react";
 import { Button } from "../../../components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "../../../components/ui/dialog";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../../../components/ui/alert-dialog";
 import { authClient } from "../../../lib/auth";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-} from "../../../components/ui/alert";
-import { AlertCircle } from "lucide-react";
+import { AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 export function DeleteAccount() {
-  const [open, setOpen] = useState(false);
-  const [error, setError] = useState("");
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const handleSubmit = async () => {
-    setError("");
-
+  const handleAccountDeletion = async () => {
     try {
+      setIsDeleting(true);
       const response = await authClient.deleteUser({});
 
       if (response.error) {
-        setError(String(response.error.message));
+        toast.error(`Failed to delete account: ${response.error.message}`);
         return;
       }
 
-      setOpen(false);
+      toast.success("Account successfully deleted");
+      // The user will be redirected to the login page by the auth system
     } catch (error) {
-      setError(String(error));
+      toast.error(`Failed to delete account: ${error}`);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
   return (
-    <div>
-      <Dialog
-        open={open}
-        onOpenChange={(isOpen) => {
-          setOpen(isOpen);
-          setError("");
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button variant={"destructive"}>Delete Account</Button>
-        </DialogTrigger>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Delete Your Account</DialogTitle>
-            <DialogDescription>This action cannot be undone.</DialogDescription>
-          </DialogHeader>
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertTitle>Error Changing Password</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          <DialogFooter>
-            <Button
-              type="submit"
-              onClick={() => setOpen(false)}
-              variant={"ghost"}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              variant={"destructive"}
-            >
-              Delete Account
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </div>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" className="w-full">
+          <AlertTriangle className="h-4 w-4 mr-2" />
+          Delete Account
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogDescription>
+            This action cannot be undone. This will permanently delete your
+            account and remove all of your data from our servers.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={handleAccountDeletion}
+            disabled={isDeleting}
+            variant="destructive"
+          >
+            {isDeleting ? "Deleting..." : "Yes, delete my account"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }

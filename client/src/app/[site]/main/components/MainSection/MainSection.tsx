@@ -8,14 +8,14 @@ import { PreviousChart } from "./PreviousChart";
 import { useStore } from "../../../../../lib/store";
 
 export function MainSection() {
-  const { selectedStat, time } = useStore();
+  const { selectedStat, time, site } = useStore();
 
-  const { data, isFetching, error } = useGetOverviewBucketed();
+  const { data, isFetching, error } = useGetOverviewBucketed({ site });
   const {
     data: previousData,
     isFetching: isPreviousFetching,
     error: previousError,
-  } = useGetOverviewBucketed("previous");
+  } = useGetOverviewBucketed({ periodTime: "previous", site });
   const { isFetching: isOverviewFetching } = useGetOverview();
   const { isFetching: isOverviewFetchingPrevious } = useGetOverview("previous");
 

@@ -11,14 +11,21 @@ services:
       - clickhouse-data:/var/lib/clickhouse
     environment:
       - CLICKHOUSE_DB=analytics
-      - ALLOW_EMPTY_PASSWORD=yes
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=frog
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 3s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   postgres:
     image: postgres:latest
     container_name: postgres
     environment:
       POSTGRES_USER: frog
-      POSTGRES_PASSWORD: admin
+      POSTGRES_PASSWORD: frog
       POSTGRES_DB: analytics
     ports:
       - "5432:5432"
@@ -36,19 +43,19 @@ services:
       - NODE_ENV=production
       - CLICKHOUSE_HOST=http://clickhouse:8123
       - CLICKHOUSE_DB=analytics
+      - CLICKHOUSE_PASSWORD=frog
       - POSTGRES_HOST=postgres
       - POSTGRES_PORT=5432
       - POSTGRES_DB=analytics
       - POSTGRES_USER=frog
-      - POSTGRES_PASSWORD=admin
+      - POSTGRES_PASSWORD=frog
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
       - BASE_URL=${BASE_URL}
     depends_on:
-      - clickhouse
-      - postgres
-    # volumes:
-      # - ./server:/app
-      # - /app/node_modules
+      clickhouse:
+        condition: service_healthy
+      postgres:
+        condition: service_started
 
   client:
     container_name: client
@@ -61,11 +68,6 @@ services:
       - "3002:3002"
     environment:
       - NODE_ENV=production
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - POSTGRES_DB=analytics
-      - POSTGRES_USER=frog
-      - POSTGRES_PASSWORD=admin
       - NEXT_PUBLIC_BACKEND_URL=${BASE_URL}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
     depends_on:

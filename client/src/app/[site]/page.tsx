@@ -1,17 +1,16 @@
 "use client";
+
 import { useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
 
+// This is a simple fallback page that should never be seen
+// All redirects should be handled by the middleware
 export default function SiteRedirect() {
-  const router = useRouter();
-  const params = useParams();
-  const siteId = params.site;
-
-  useEffect(() => {
-    if (siteId) {
-      router.replace(`/${siteId}/main`);
-    }
-  }, [siteId, router]);
-
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+        <p className="mt-4">Redirecting...</p>
+      </div>
+    </div>
+  );
 }

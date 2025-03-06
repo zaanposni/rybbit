@@ -26,6 +26,7 @@ import {
 import { FilterParameter, addFilter } from "../../../../../lib/store";
 
 import { useSingleCol } from "../../../../../hooks/api";
+import { MultiSelect } from "../../../../../components/MultiSelect";
 
 interface ValueFilterProps {
   parameter: FilterParameter;
@@ -36,11 +37,13 @@ interface ValueFilterProps {
 }
 
 export function ValueFilter({ parameter, type, onComplete }: ValueFilterProps) {
-  const { data, isLoading } = useSingleCol({ parameter, limit: 1000 });
+  const { data, isLoading } = useSingleCol({
+    parameter,
+    limit: 1000,
+    useFilters: false,
+  });
 
-  const [open, setOpen] = useState(false);
-
-  const [value, setValue] = useState("");
+  const [selectedValues, setSelectedValues] = useState<string[]>([]);
 
   const suggestions = useMemo(() => {
     return (
@@ -62,19 +65,19 @@ export function ValueFilter({ parameter, type, onComplete }: ValueFilterProps) {
     );
   }, [data]);
 
-  const handleSelect = (currentValue: string) => {
-    setValue(currentValue);
-    setOpen(false);
+  const handleChange = (selected: any) => {
+    const values = selected.map((item: { value: string }) => item.value);
+    setSelectedValues(values);
   };
 
   const handleApply = () => {
-    if (parameter && type && value.trim()) {
+    if (parameter && type && selectedValues.length > 0) {
       addFilter({
         parameter,
         type,
-        value: value.trim(),
+        value: selectedValues,
       });
-      setValue("");
+      setSelectedValues([]);
       if (onComplete) {
         onComplete();
       }
@@ -82,48 +85,19 @@ export function ValueFilter({ parameter, type, onComplete }: ValueFilterProps) {
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            variant="outline"
-            role="combobox"
-            aria-expanded={open}
-            className="min-w-[200px] justify-between text-left font-normal"
-          >
-            {value || "Select value..."}
-            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="p-0" align="start">
-          <Command>
-            <CommandInput
-              placeholder="Search values..."
-              value={value}
-              onValueChange={setValue}
-              className="h-9"
-            />
-            <CommandList>
-              <CommandEmpty>No matching results</CommandEmpty>
-              <CommandGroup>
-                {suggestions.map((suggestion) => (
-                  <CommandItem
-                    key={suggestion.value}
-                    value={suggestion.value}
-                    onSelect={handleSelect}
-                  >
-                    {suggestion.label}
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-
-      <Button size="sm" onClick={handleApply}>
-        <Plus className="h-4 w-4 mr-1" />
-        Add
+    <div className="flex flex-col gap-2">
+      <MultiSelect
+        options={suggestions}
+        onChange={handleChange}
+        placeholder="Select values..."
+        isLoading={isLoading}
+      />
+      <Button
+        onClick={handleApply}
+        disabled={selectedValues.length === 0}
+        className="mt-2"
+      >
+        Apply Filter
       </Button>
     </div>
   );

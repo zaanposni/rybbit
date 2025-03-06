@@ -41,7 +41,7 @@ export function SubHeader() {
   const pathname = usePathname();
 
   const site = sites?.data?.find(
-    (site) => site.site_id === Number(pathname.slice(1))
+    (site) => site.siteId === Number(pathname.slice(1))
   );
 
   return (

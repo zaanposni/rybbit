@@ -25,17 +25,23 @@ export function useGetLiveUsercount() {
 
 type PeriodTime = "current" | "previous";
 
+export type SingleColResponse = {
+  value: string;
+  count: number;
+  percentage: number;
+};
+
 export function useSingleCol({
   parameter,
   limit = 10000,
   periodTime,
+  useFilters = true,
 }: {
   parameter: FilterParameter;
   limit?: number;
   periodTime?: PeriodTime;
-}): UseQueryResult<
-  APIResponse<{ value: string; count: number; percentage: number }[]>
-> {
+  useFilters?: boolean;
+}): UseQueryResult<APIResponse<SingleColResponse[]>> {
   const { time, previousTime, site, filters } = useStore();
   const timeToUse = periodTime === "previous" ? previousTime : time;
   const { startDate, endDate } = getStartAndEndDate(timeToUse);
@@ -49,9 +55,9 @@ export function useSingleCol({
           startDate ? `startDate=${startDate}&` : ""
         }${
           endDate ? `endDate=${endDate}&` : ""
-        }timezone=${timezone}&site=${site}&parameter=${parameter}&filters=${JSON.stringify(
-          filters
-        )}${limit ? `&limit=${limit}` : ""}`
+        }timezone=${timezone}&site=${site}&parameter=${parameter}${
+          limit ? `&limit=${limit}` : ""
+        }${useFilters ? `&filters=${JSON.stringify(filters)}` : ""}`
       ).then((res) => res.json());
     },
     staleTime: Infinity,
@@ -126,16 +132,30 @@ export type GetOverviewBucketedResponse = {
   users: number;
 }[];
 
-export function useGetOverviewBucketed(
-  periodTime?: PeriodTime
-): UseQueryResult<APIResponse<GetOverviewBucketedResponse>> {
-  const { time, previousTime, bucket, site, filters } = useStore();
+export function useGetOverviewBucketed({
+  periodTime,
+  past24Hours,
+  site,
+}: {
+  periodTime?: PeriodTime;
+  past24Hours?: boolean;
+  site?: number | string;
+}): UseQueryResult<APIResponse<GetOverviewBucketedResponse>> {
+  const { time, previousTime, bucket, filters } = useStore();
+
   const timeToUse = periodTime === "previous" ? previousTime : time;
 
   const { startDate, endDate } = getStartAndEndDate(timeToUse);
 
   return useQuery({
-    queryKey: ["overview-bucketed", timeToUse, bucket, site, filters],
+    queryKey: [
+      "overview-bucketed",
+      timeToUse,
+      bucket,
+      site,
+      filters,
+      past24Hours,
+    ],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       return authedFetch(
@@ -145,7 +165,7 @@ export function useGetOverviewBucketed(
           endDate ? `endDate=${endDate}&` : ""
         }timezone=${timezone}&bucket=${bucket}&site=${site}&filters=${JSON.stringify(
           filters
-        )}`
+        )}${past24Hours ? `&past24Hours=${past24Hours}` : ""}`
       ).then((res) => res.json());
     },
     placeholderData: (_, query: any) => {
@@ -176,12 +196,12 @@ export function useGetOverview(periodTime?: PeriodTime) {
 }
 
 export type GetSitesResponse = {
-  site_id: number;
-  site_name: string;
+  siteId: number;
+  name: string;
   domain: string;
-  created_at: string;
-  updated_at: string;
-  created_by: string;
+  createdAt: string;
+  updatedAt: string;
+  createdBy: string;
 }[];
 
 export function useGetSites() {
@@ -207,8 +227,45 @@ export function deleteSite(siteId: number) {
   });
 }
 
+export function changeSiteDomain(siteId: number, newDomain: string) {
+  return authedFetch(`${BACKEND_URL}/change-site-domain`, {
+    method: "POST",
+    body: JSON.stringify({
+      siteId,
+      newDomain,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
 export function useSiteHasData(siteId: string) {
   return useGenericQuery<boolean>(`site-has-data/${siteId}`);
+}
+
+export function changeUsername(newUsername: string) {
+  return authedFetch(`${BACKEND_URL}/change-username`, {
+    method: "POST",
+    body: JSON.stringify({
+      newUsername,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+export function changeEmail(newEmail: string) {
+  return authedFetch(`${BACKEND_URL}/change-email`, {
+    method: "POST",
+    body: JSON.stringify({
+      newEmail,
+    }),
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 }
 
 // Updated type for grouped sessions from the API
@@ -220,8 +277,10 @@ export type UserSessionsResponse = {
   country: string;
   firstTimestamp: string;
   lastTimestamp: string;
+  duration: number; // Duration in seconds
   pageviews: {
     pathname: string;
+    querystring: string;
     title: string;
     timestamp: string;
     referrer: string;

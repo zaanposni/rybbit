@@ -24,17 +24,11 @@ export default function MainPage() {
 }
 
 function MainPageContent({ site }: { site: string }) {
-  const { data: siteHasData, isLoading } = useSiteHasData(site);
-
   const { siteMetadata, isLoading: isLoadingSiteMetadata } =
     useGetSiteMetadata(site);
 
-  if (isLoadingSiteMetadata || isLoading || !siteMetadata) {
+  if (isLoadingSiteMetadata || !siteMetadata) {
     return null;
-  }
-
-  if (!siteHasData?.data && !isLoading && !isLoadingSiteMetadata) {
-    return <NoData siteMetadata={siteMetadata} />;
   }
 
   return (

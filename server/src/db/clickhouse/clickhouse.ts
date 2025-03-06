@@ -4,6 +4,7 @@ import { Session } from "../postgres/types.js";
 export const clickhouse = createClient({
   host: process.env.CLICKHOUSE_HOST,
   database: process.env.CLICKHOUSE_DB,
+  password: process.env.CLICKHOUSE_PASSWORD,
 });
 
 export const initializeClickhouse = async () => {
@@ -34,7 +35,7 @@ export const initializeClickhouse = async () => {
       ENGINE = MergeTree()
       PARTITION BY toYYYYMM(timestamp)
       ORDER BY (timestamp, session_id)
-    `,
+      `,
   });
 
   // Create sessions table
