@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, useMapEvent } from "react-leaflet";
 import { useSingleCol } from "@/hooks/api";
 import { Layer } from "leaflet";
-import { Feature } from "geojson";
+import { Feature, GeoJsonObject } from "geojson";
 import "leaflet/dist/leaflet.css";
 
 const countriesGeoUrl = "/countries.geojson";
@@ -33,6 +33,14 @@ export function Map() {
     parameter: "iso_3166_2"
   });
 
+  const [dataVersion, setDataVersion] = useState<number>(0);
+
+  useEffect(() => {
+    if (countryData || subdivisionData) {
+      setDataVersion((prev) => prev + 1);
+    }
+  }, [countryData, subdivisionData]);
+
   const [tooltipContent, setTooltipContent] = useState<TooltipContent | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition>({ x: 0, y: 0 });
   const [mapView, setMapView] = useState<"countries" | "subdivisions">("countries");
@@ -49,8 +57,8 @@ export function Map() {
       .range(["rgba(232, 121, 249, 0.3)", "rgb(232, 121, 249)"]);
   }, [countryData?.data, subdivisionData?.data, mapView]);
 
-  const [countriesGeoData, setCountriesGeoData] = useState(null);
-  const [subdivisionsGeoData, setSubdivisionsGeoData] = useState(null);
+  const [countriesGeoData, setCountriesGeoData] = useState<GeoJsonObject | null>(null);
+  const [subdivisionsGeoData, setSubdivisionsGeoData] = useState<GeoJsonObject | null>(null);
 
   useEffect(() => {
     fetch(countriesGeoUrl)
@@ -61,7 +69,7 @@ export function Map() {
       .then(setSubdivisionsGeoData);
   }, []);
 
-  const geoStyle = (feature: Feature | undefined) => {
+  const handleStyle = (feature: Feature | undefined) => {
     const isCountryView = mapView === "countries";
     const dataKey = isCountryView
       ? feature?.properties?.["ISO_A2"]
@@ -77,7 +85,7 @@ export function Map() {
     };
   };
 
-  const onEachFeature = (feature: Feature, layer: Layer) => {
+  const handleEachFeature = (feature: Feature, layer: Layer) => {
     layer.on({
       mouseover: () => {
         // @ts-ignore
@@ -108,7 +116,7 @@ export function Map() {
     });
   };
 
-  function MapEventHandler() {
+  const MapEventHandler = () => {
     const map = useMapEvent("zoomend", () => {
       const newMapView = map.getZoom() >= 4 ? "subdivisions" : "countries";
       if (newMapView !== mapView) {
@@ -117,7 +125,7 @@ export function Map() {
       }
     });
     return null;
-  }
+  };
 
   const isLoading = isCountryLoading || isSubdivisionLoading;
 
@@ -153,10 +161,20 @@ export function Map() {
           >
             <MapEventHandler />
             {mapView === "countries" && countriesGeoData && (
-              <GeoJSON data={countriesGeoData} style={geoStyle} onEachFeature={onEachFeature} />
+              <GeoJSON
+                key={`countries-${dataVersion}`}
+                data={countriesGeoData}
+                style={handleStyle}
+                onEachFeature={handleEachFeature}
+              />
             )}
             {mapView === "subdivisions" && subdivisionsGeoData && (
-              <GeoJSON data={subdivisionsGeoData} style={geoStyle} onEachFeature={onEachFeature} />
+              <GeoJSON
+                key={`subdivisions-${dataVersion}`}
+                data={subdivisionsGeoData}
+                style={handleStyle}
+                onEachFeature={handleEachFeature}
+              />
             )}
           </MapContainer>
         )}
