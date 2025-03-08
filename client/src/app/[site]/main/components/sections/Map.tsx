@@ -103,7 +103,7 @@ export function Map() {
         layer.setStyle({
           fillOpacity: 0.2,
         });
-        setTooltipContent(null)
+        setTooltipContent(null);
       },
     });
   };
@@ -142,9 +142,14 @@ export function Map() {
             preferCanvas={true}
             attributionControl={false}
             zoomControl={false}
-            center={[0, 0]}
+            center={[40, 3]}
             zoom={1}
-            style={{ height: "400px", background: "none", cursor: "default", outline: "none" }}
+            style={{
+              height: "400px",
+              background: "none",
+              cursor: "default",
+              outline: "none",
+            }}
           >
             <MapEventHandler />
             {mapView === "countries" && countriesGeoData && (
