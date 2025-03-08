@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardLoader, CardTitle } from "@/components/ui/card";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { scaleLinear } from "d3-scale";
-import React, {useEffect, useMemo, useState} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { GeoJSON, MapContainer, useMapEvent } from "react-leaflet";
 import { useSingleCol } from "@/hooks/api";
 import { Layer } from "leaflet";
@@ -82,7 +82,7 @@ export function Map() {
       mouseover: () => {
         // @ts-ignore
         layer.setStyle({
-          fillOpacity: 0.7,
+          fillOpacity: 0.5,
         });
         const isCountryView = mapView === "countries";
         const name = isCountryView
@@ -157,11 +157,11 @@ export function Map() {
         )}
         {tooltipContent && (
           <div
-            className="fixed z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
+            className="fixed z-50 bg-neutral-1000 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
             style={{
-              left: tooltipPosition.x + 10,
+              left: tooltipPosition.x,
               top: tooltipPosition.y - 10,
-              transform: "translateY(-100%)",
+              transform: "translate(-50%, -100%)",
             }}
           >
             <div className="font-sm flex items-center gap-1">
