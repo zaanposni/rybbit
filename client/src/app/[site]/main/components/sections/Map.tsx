@@ -1,25 +1,14 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardLoader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardLoader, CardTitle } from "@/components/ui/card";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { scaleLinear } from "d3-scale";
-import { useMemo, useState } from "react";
-import {
-  ComposableMap,
-  Geographies,
-  Geography,
-  Sphere,
-  ZoomableGroup,
-} from "react-simple-maps";
+import React, {useEffect, useMemo, useState} from "react";
+import { GeoJSON, MapContainer, useMapEvent } from "react-leaflet";
 import { useSingleCol } from "@/hooks/api";
-import React from "react";
+import { Layer } from "leaflet";
+import { Feature } from "geojson";
+import "leaflet/dist/leaflet.css";
 
 const countriesGeoUrl = "/countries.geojson";
 const subdivisionsGeoUrl = "/subdivisions.geojson";
@@ -36,14 +25,6 @@ interface TooltipPosition {
   y: number;
 }
 
-interface MapView {
-  view: "countries" | "subdivisions";
-  coordinates: [number, number];
-  zoom: number;
-  selectedCountryName?: string;
-  selectedCountryCode?: string;
-}
-
 export function Map() {
   const { data: countryData, isLoading: isCountryLoading } = useSingleCol({
     parameter: "country"
@@ -54,200 +35,150 @@ export function Map() {
 
   const [tooltipContent, setTooltipContent] = useState<TooltipContent | null>(null);
   const [tooltipPosition, setTooltipPosition] = useState<TooltipPosition>({ x: 0, y: 0 });
-  const [mapView, setMapView] = useState<MapView>({
-    view: "countries",
-    coordinates: [0, 0],
-    zoom: 1,
-    selectedCountryName: undefined,
-    selectedCountryCode: undefined,
-  });
-
-  const activeGeoUrl = mapView.view === "countries" ? countriesGeoUrl : subdivisionsGeoUrl;
-
-  const filteredSubdivisionData = useMemo(() => {
-    if (!subdivisionData?.data || !mapView.selectedCountryCode) return [];
-
-    return subdivisionData.data.filter(item => {
-      return item.value.startsWith(`${mapView.selectedCountryCode}-`);
-    });
-  }, [subdivisionData?.data, mapView.selectedCountryCode]);
+  const [mapView, setMapView] = useState<"countries" | "subdivisions">("countries");
 
   const colorScale = useMemo(() => {
-    if (mapView.view === "countries" && !countryData?.data) return () => "#eee";
-    if (mapView.view === "subdivisions" && !filteredSubdivisionData) return () => "#eee";
+    if (mapView === "countries" && !countryData?.data) return () => "#eee";
+    if (mapView === "subdivisions" && !subdivisionData?.data) return () => "#eee";
 
-    const dataToUse = mapView.view === "countries"
-        ? countryData?.data
-        : filteredSubdivisionData;
+    const dataToUse = mapView === "countries" ? countryData?.data : subdivisionData?.data;
 
     const maxValue = Math.max(...(dataToUse?.map((d) => d.count) || [0]));
     return scaleLinear<string>()
-        .domain([0, maxValue])
-        .range(["rgba(232, 121, 249, 0.3)", "rgb(232, 121, 249)"]);
-  }, [countryData?.data, filteredSubdivisionData, mapView.view]);
+      .domain([0, maxValue])
+      .range(["rgba(232, 121, 249, 0.3)", "rgb(232, 121, 249)"]);
+  }, [countryData?.data, subdivisionData?.data, mapView]);
 
-  const handleCountryClick = (countryName: string, countryCode: string, longitude: number, latitude: number) => {
-    setMapView({
-      view: "subdivisions",
-      coordinates: [longitude, latitude],
-      zoom: 4,
-      selectedCountryName: countryName,
-      selectedCountryCode: countryCode,
+  const [countriesGeoData, setCountriesGeoData] = useState(null);
+  const [subdivisionsGeoData, setSubdivisionsGeoData] = useState(null);
+
+  useEffect(() => {
+    fetch(countriesGeoUrl)
+      .then((res) => res.json())
+      .then(setCountriesGeoData);
+    fetch(subdivisionsGeoUrl)
+      .then((res) => res.json())
+      .then(setSubdivisionsGeoData);
+  }, []);
+
+  const geoStyle = (feature: Feature | undefined) => {
+    const isCountryView = mapView === "countries";
+    const dataKey = isCountryView
+      ? feature?.properties?.["ISO_A2"]
+      : feature?.properties?.["iso_3166_2"];
+    const foundData = isCountryView
+      ? countryData?.data?.find(({ value }: any) => value === dataKey)
+      : subdivisionData?.data.find(({ value }: any) => value === dataKey);
+    const count = foundData?.count || 0;
+    return {
+      color: count > 0 ? colorScale(count) : "rgba(140, 140, 140, 0.5)",
+      weight: 0.5,
+      fill: true,
+    };
+  };
+
+  const onEachFeature = (feature: Feature, layer: Layer) => {
+    layer.on({
+      mouseover: () => {
+        const isCountryView = mapView === "countries";
+        const name = isCountryView
+          ? feature.properties?.["ADMIN"]
+          : feature.properties?.["name"];
+        const code = isCountryView
+          ? feature.properties?.["ISO_A2"]
+          : feature.properties?.["iso_3166_2"];
+        const foundData = isCountryView
+          ? countryData?.data?.find(({ value }: any) => value === code)
+          : subdivisionData?.data.find(({ value }: any) => value === code);
+        const count = foundData?.count || 0;
+        const percentage = foundData?.percentage || 0;
+        setTooltipContent({ name, code, count, percentage });
+      },
+      mouseout: () => setTooltipContent(null),
     });
   };
 
-  const handleBackToCountries = () => {
-    setMapView({
-      view: "countries",
-      coordinates: [0, 0],
-      zoom: 1,
-      selectedCountryName: undefined,
-      selectedCountryCode: undefined,
+  function MapEventHandler() {
+    const map = useMapEvent("zoomend", () => {
+      const newMapView = map.getZoom() >= 4 ? "subdivisions" : "countries";
+      if (newMapView !== mapView) {
+        setMapView(newMapView);
+        setTooltipContent(null);
+      }
     });
-  };
-
-  const handleMouseMove = (event: React.MouseEvent) => {
-    if (tooltipContent) {
-      setTooltipPosition({
-        x: event.clientX,
-        y: event.clientY
-      });
-    }
-  };
+    return null;
+  }
 
   const isLoading = isCountryLoading || isSubdivisionLoading;
 
   return (
-      <Card>
-        {isLoading && <CardLoader />}
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>
-            {mapView.view === "subdivisions"
-                ? `${mapView.selectedCountryName || mapView.selectedCountryCode}`
-                : "Map"}
-          </CardTitle>
-          {mapView.view === "subdivisions" && <Button onClick={handleBackToCountries}>World Map</Button>}
-        </CardHeader>
-        <CardContent onMouseMove={handleMouseMove}>
-          {(mapView.view === "countries" ? countryData?.data : filteredSubdivisionData) ? (
-            <>
-              <ComposableMap
-                projection="geoMercator"
-                projectionConfig={{
-                  rotate: [-10, 0, 0],
-                  scale: mapView.view === "countries" ? 120 : 240,
-                }}
-              >
-                <Sphere stroke="hsl(var(--neutral-800))" strokeWidth={0.5} />
-                <ZoomableGroup
-                  zoom={mapView.zoom}
-                  center={mapView.coordinates}
-                >
-                  <Geographies key={activeGeoUrl} geography={activeGeoUrl}>
-                    {({ geographies }) =>
-                      geographies.map((geo, index) => {
-                        const isCountryView = mapView.view === "countries";
-
-                        // For subdivision view, filter to only show subdivisions of the selected country
-                        if (!isCountryView && mapView.selectedCountryCode) {
-                          const subdivisionCode = geo.properties?.["iso_3166_2"];
-                          if (!subdivisionCode || !subdivisionCode.startsWith(`${mapView.selectedCountryCode}-`)) {
-                            return null;
-                          }
-                        }
-
-                        const dataKey = isCountryView ? geo.properties?.["ISO_A2"] : geo.properties?.["iso_3166_2"];
-
-                        const foundData = isCountryView
-                          ? countryData?.data?.find(({ value }) => value === dataKey)
-                          : filteredSubdivisionData.find(({ value }) => value === dataKey);
-
-                        const count = foundData?.count || 0;
-                        const percentage = foundData?.percentage || 0;
-
-                        return (
-                          <Geography
-                            key={`${geo.properties?.["ISO_A2"] || ""}-${geo.properties?.["iso_3166_2"] || ""}-${index}`}
-                            geography={geo}
-                            fill={count > 0 ? colorScale(count) : "rgba(140, 140, 140, 0.5)"}
-                            stroke="hsl(var(--neutral-800))"
-                            strokeWidth={0.5}
-                            style={{
-                              default: {
-                                outline: "none",
-                              },
-                              hover: {
-                                outline: "none",
-                                cursor: isCountryView ? "pointer" : "default",
-                              },
-                              pressed: {
-                                outline: "none",
-                              },
-                            }}
-                            onClick={() => {
-                              if (isCountryView) {
-                                setTooltipContent(null);
-                                handleCountryClick(
-                                  geo.properties?.["ADMIN"],
-                                  geo.properties?.["ISO_A2"],
-                                  geo.properties?.["LABEL_X"],
-                                  geo.properties?.["LABEL_Y"]
-                                );
-                              }
-                            }}
-                            onMouseEnter={() => {
-                              const name = isCountryView
-                                ? geo.properties?.["ADMIN"]
-                                : geo.properties?.["name"];
-                              const code = isCountryView
-                                ? geo.properties?.["ISO_A2"]
-                                : geo.properties?.["iso_3166_2"];
-                              setTooltipContent({ name, code, count, percentage });
-                            }}
-                            onMouseLeave={() => setTooltipContent(null)}
-                          />
-                        );
-                      }).filter(Boolean)
-                    }
-                  </Geographies>
-                </ZoomableGroup>
-              </ComposableMap>
-              {tooltipContent && (
-                <div
-                  className="fixed z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
-                  style={{
-                    left: tooltipPosition.x + 10,
-                    top: tooltipPosition.y - 10,
-                    transform: "translateY(-100%)"
-                  }}
-                >
-                  <div className="font-sm flex items-center gap-1">
-                    {mapView.view === "countries" &&
-                    tooltipContent.code &&
-                    CountryFlags[tooltipContent.code as keyof typeof CountryFlags]
-                        ? React.createElement(
-                          CountryFlags[tooltipContent.code as keyof typeof CountryFlags],
-                          {
-                            title: tooltipContent.name,
-                            className: "w-4",
-                          }
-                        )
-                        : null}
-                    {tooltipContent.name}
-                  </div>
-                  <div>
-                    <span className="font-bold text-fuchsia-400">
-                      {tooltipContent.count.toLocaleString()}
-                    </span>{" "}
-                    <span className="text-neutral-300">
-                      ({tooltipContent.percentage.toFixed(1)}%) pageviews
-                    </span>
-                  </div>
-                </div>
-              )}
-            </>
-          ) : null}
-        </CardContent>
-      </Card>
+    <Card>
+      {isLoading && <CardLoader />}
+      <CardHeader>
+        <CardTitle>Map</CardTitle>
+      </CardHeader>
+      <CardContent
+        onMouseMove={(e) => {
+          if (tooltipContent) {
+            setTooltipPosition({
+              x: e.clientX,
+              y: e.clientY,
+            });
+          }
+        }}
+      >
+        {(countriesGeoData || subdivisionsGeoData) && (
+          <MapContainer
+            preferCanvas={true}
+            attributionControl={false}
+            zoomControl={false}
+            center={[0, 0]}
+            zoom={1}
+            style={{ height: "400px", width: "100%", background: "none", cursor: "default" }}
+          >
+            <MapEventHandler />
+            {mapView === "countries" && countriesGeoData && (
+              <GeoJSON data={countriesGeoData} style={geoStyle} onEachFeature={onEachFeature} />
+            )}
+            {mapView === "subdivisions" && subdivisionsGeoData && (
+              <GeoJSON data={subdivisionsGeoData} style={geoStyle} onEachFeature={onEachFeature} />
+            )}
+          </MapContainer>
+        )}
+        {tooltipContent && (
+          <div
+            className="fixed z-50 bg-neutral-800 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
+            style={{
+              left: tooltipPosition.x + 10,
+              top: tooltipPosition.y - 10,
+              transform: "translateY(-100%)",
+            }}
+          >
+            <div className="font-sm flex items-center gap-1">
+              {mapView === "countries" &&
+              tooltipContent.code &&
+              CountryFlags[tooltipContent.code as keyof typeof CountryFlags]
+                ? React.createElement(
+                  CountryFlags[tooltipContent.code as keyof typeof CountryFlags],
+                  {
+                    title: tooltipContent.name,
+                    className: "w-4",
+                  }
+                )
+                : null}
+              {tooltipContent.name}
+            </div>
+            <div>
+              <span className="font-bold text-fuchsia-400">
+                {tooltipContent.count.toLocaleString()}
+              </span>{" "}
+              <span className="text-neutral-300">
+                ({tooltipContent.percentage.toFixed(1)}%) pageviews
+              </span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
