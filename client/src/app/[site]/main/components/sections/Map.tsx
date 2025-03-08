@@ -80,6 +80,10 @@ export function Map() {
   const onEachFeature = (feature: Feature, layer: Layer) => {
     layer.on({
       mouseover: () => {
+        // @ts-ignore
+        layer.setStyle({
+          fillOpacity: 0.7,
+        });
         const isCountryView = mapView === "countries";
         const name = isCountryView
           ? feature.properties?.["ADMIN"]
@@ -94,7 +98,13 @@ export function Map() {
         const percentage = foundData?.percentage || 0;
         setTooltipContent({ name, code, count, percentage });
       },
-      mouseout: () => setTooltipContent(null),
+      mouseout: () => {
+        // @ts-ignore
+        layer.setStyle({
+          fillOpacity: 0.2,
+        });
+        setTooltipContent(null)
+      },
     });
   };
 
@@ -134,7 +144,7 @@ export function Map() {
             zoomControl={false}
             center={[0, 0]}
             zoom={1}
-            style={{ height: "400px", width: "100%", background: "none", cursor: "default" }}
+            style={{ height: "400px", background: "none", cursor: "default", outline: "none" }}
           >
             <MapEventHandler />
             {mapView === "countries" && countriesGeoData && (
