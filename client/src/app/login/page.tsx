@@ -4,18 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertCircle } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { authClient } from "../../lib/auth";
-import { userStore } from "../../lib/userStore";
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import Link from "next/link";
+import { authClient } from "../../lib/auth";
 import { IS_CLOUD } from "../../lib/const";
-import { capitalize } from "lodash";
+import { userStore } from "../../lib/userStore";
 
 export default function Page() {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>();
@@ -27,36 +26,19 @@ export default function Page() {
 
     setError("");
     try {
-      if (IS_CLOUD) {
-        const { data, error } = await authClient.signIn.email({
-          email: username,
-          password,
+      const { data, error } = await authClient.signIn.email({
+        email,
+        password,
+      });
+      if (data?.user) {
+        userStore.setState({
+          user: data.user,
         });
-        if (data?.user) {
-          userStore.setState({
-            user: data.user,
-          });
-          router.push("/");
-        }
+        router.push("/");
+      }
 
-        if (error) {
-          setError(error.message);
-        }
-      } else {
-        const { data, error } = await authClient.signIn.username({
-          username,
-          password,
-        });
-        if (data?.user) {
-          userStore.setState({
-            user: data.user,
-          });
-          router.push("/");
-        }
-
-        if (error) {
-          setError(error.message);
-        }
+      if (error) {
+        setError(error.message);
       }
     } catch (error) {
       setError(String(error));
@@ -77,8 +59,6 @@ export default function Page() {
     }
   };
 
-  const label = IS_CLOUD ? "email" : "username";
-
   return (
     <div className="flex justify-center items-center h-screen w-full">
       <Card className="w-full max-w-sm">
@@ -91,14 +71,14 @@ export default function Page() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor={label}>{capitalize(label)}</Label>
+                <Label htmlFor={"email"}>Email</Label>
                 <Input
-                  id={label}
-                  type={label}
-                  placeholder={label}
+                  id={"email"}
+                  type={"email"}
+                  placeholder={"email"}
                   required
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
