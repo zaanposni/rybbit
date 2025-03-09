@@ -47,6 +47,11 @@ export let auth: AuthType | null = betterAuth({
   deleteUser: {
     enabled: true,
   },
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
   plugins: pluginList,
   trustedOrigins: ["http://localhost:3002"],
   advanced: {
@@ -98,6 +103,11 @@ export function initAuth(allowedOrigins: string[]) {
     // },
     deleteUser: {
       enabled: true,
+    },
+    user: {
+      deleteUser: {
+        enabled: true,
+      },
     },
     plugins: pluginList,
     trustedOrigins: allowedOrigins,
