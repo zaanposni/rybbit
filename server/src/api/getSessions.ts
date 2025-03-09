@@ -5,6 +5,7 @@ import {
   getTimeStatement,
   processResults,
 } from "./utils.js";
+import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 type GetSessionsResponse = {
   session_id: string;
@@ -32,11 +33,15 @@ export interface GetSessionsRequest {
 }
 
 export async function getSessions(
-  {
-    query: { startDate, endDate, timezone, site, filters, page },
-  }: FastifyRequest<GetSessionsRequest>,
+  req: FastifyRequest<GetSessionsRequest>,
   res: FastifyReply
 ) {
+  const { startDate, endDate, timezone, site, filters, page } = req.query;
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
   const filterStatement = getFilterStatement(filters);
 
   const query = `

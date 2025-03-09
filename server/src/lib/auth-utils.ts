@@ -1,7 +1,7 @@
 import { FastifyRequest } from "fastify";
 import { auth } from "./auth.js";
 import { sites, member } from "../db/postgres/schema.js";
-import { SQL, inArray, eq } from "drizzle-orm";
+import { inArray, eq } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 
 export function mapHeaders(headers: any) {
@@ -52,4 +52,12 @@ export async function getSitesUserHasAccessTo(req: FastifyRequest) {
     console.error("Error getting sites user has access to:", error);
     return [];
   }
+}
+
+export async function getUserHasAccessToSite(
+  req: FastifyRequest,
+  siteId: string
+) {
+  const sites = await getSitesUserHasAccessTo(req);
+  return sites.some((site) => site.siteId === Number(siteId));
 }

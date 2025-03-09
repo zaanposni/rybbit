@@ -5,6 +5,7 @@ import {
   getTimeStatement,
   processResults,
 } from "./utils.js";
+import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 const TimeBucketToFn = {
   minute: "toStartOfMinute",
@@ -205,9 +206,7 @@ type TimeBucket = "hour" | "day" | "week" | "month";
 type getOverviewBucketed = { time: string; pageviews: number }[];
 
 export async function getOverviewBucketed(
-  {
-    query: { startDate, endDate, timezone, bucket, site, filters, past24Hours },
-  }: FastifyRequest<{
+  req: FastifyRequest<{
     Querystring: {
       startDate: string;
       endDate: string;
@@ -220,6 +219,14 @@ export async function getOverviewBucketed(
   }>,
   res: FastifyReply
 ) {
+  const { startDate, endDate, timezone, bucket, site, filters, past24Hours } =
+    req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
   const query = getQuery({
     startDate,
     endDate,
