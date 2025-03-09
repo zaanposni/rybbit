@@ -243,12 +243,13 @@ export function useGetSites() {
   return useGenericQuery<GetSitesResponse>("get-sites");
 }
 
-export function addSite(domain: string, name: string) {
+export function addSite(domain: string, name: string, organizationId: string) {
   return authedFetch(`${BACKEND_URL}/add-site`, {
     method: "POST",
     body: JSON.stringify({
       domain,
       name,
+      organizationId,
     }),
     headers: {
       "Content-Type": "application/json",

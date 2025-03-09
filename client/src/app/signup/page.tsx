@@ -43,7 +43,7 @@ export default function SignupPage() {
         userStore.setState({
           user: data.user,
         });
-        router.push("/create-organization");
+        router.push("/");
       }
 
       if (error) {
@@ -62,7 +62,7 @@ export default function SignupPage() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/create-organization",
+        callbackURL: "/",
       });
     } catch (error) {
       setError(String(error));
