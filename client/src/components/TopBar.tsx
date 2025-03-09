@@ -1,29 +1,21 @@
 "use client";
 
-import { GearSix } from "@phosphor-icons/react/dist/ssr";
+import { User } from "@phosphor-icons/react";
 import Link from "next/link";
-import { ThemeToggle } from "./ThemeToggle";
-import {
-  NavigationMenu,
-  NavigationMenuContent,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  NavigationMenuTrigger,
-  navigationMenuTriggerStyle,
-} from "./ui/navigation-menu";
+import { useRouter } from "next/navigation";
+import { authClient } from "../lib/auth";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { authClient } from "../lib/auth";
-import { Button } from "./ui/button";
-import { User } from "@phosphor-icons/react";
-import { useRouter } from "next/navigation";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+} from "./ui/navigation-menu";
 
 export function TopBar() {
   const session = authClient.useSession();

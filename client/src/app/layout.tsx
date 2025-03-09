@@ -59,7 +59,9 @@ export default function RootLayout({
         ></script>
         <ThemeProvider>
           <QueryProvider>
-            {pathname === "/login" || pathname === "/signup" ? (
+            {pathname === "/login" ||
+            pathname === "/signup" ||
+            pathname === "/create-organization" ? (
               <div className="min-h-full flex items-center justify-center">
                 {children}
               </div>
