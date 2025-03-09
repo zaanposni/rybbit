@@ -29,7 +29,12 @@ export default function RootLayout({
   const pathname = usePathname();
 
   useEffect(() => {
-    if (!isPending && !user && !publicRoutes.includes(pathname)) {
+    if (
+      !isPending &&
+      !user &&
+      !publicRoutes.includes(pathname) &&
+      pathname !== "/signup"
+    ) {
       redirect("/login");
     }
   }, [isPending, user, pathname]);
@@ -54,7 +59,7 @@ export default function RootLayout({
         ></script>
         <ThemeProvider>
           <QueryProvider>
-            {pathname === "/login" ? (
+            {pathname === "/login" || pathname === "/signup" ? (
               <div className="min-h-full flex items-center justify-center">
                 {children}
               </div>

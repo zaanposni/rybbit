@@ -1,4 +1,7 @@
 import { authClient } from "@/lib/auth";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Button } from "../../../components/ui/button";
 import {
   Card,
   CardContent,
@@ -6,13 +9,9 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import { useState } from "react";
-import { Button } from "../../../components/ui/button";
 import { ChangePassword } from "./ChangePassword";
 import { DeleteAccount } from "./DeleteAccount";
-import { toast } from "sonner";
-import { changeUsername, changeEmail } from "@/hooks/api";
+import { IS_CLOUD } from "../../../lib/const";
 
 export function Account({
   session,
@@ -21,8 +20,38 @@ export function Account({
 }) {
   const [username, setUsername] = useState(session.data?.user.username ?? "");
   const [email, setEmail] = useState(session.data?.user.email ?? "");
+  const [name, setName] = useState(session.data?.user.name ?? "");
   const [isUpdatingUsername, setIsUpdatingUsername] = useState(false);
   const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+  const [isUpdatingName, setIsUpdatingName] = useState(false);
+
+  const handleNameUpdate = async () => {
+    if (!name) {
+      toast.error("Name cannot be empty");
+      return;
+    }
+
+    try {
+      setIsUpdatingName(true);
+      const response = await authClient.updateUser({
+        name,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to update name");
+      }
+
+      toast.success("Name updated successfully");
+      window.location.reload();
+    } catch (error) {
+      console.error("Error updating name:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update name"
+      );
+    } finally {
+      setIsUpdatingName(false);
+    }
+  };
 
   const handleUsernameUpdate = async () => {
     if (!username) {
@@ -32,11 +61,12 @@ export function Account({
 
     try {
       setIsUpdatingUsername(true);
-      const response = await changeUsername(username);
+      const response = await authClient.updateUser({
+        username,
+      });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update username");
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to update username");
       }
 
       toast.success("Username updated successfully");
@@ -66,11 +96,12 @@ export function Account({
 
     try {
       setIsUpdatingEmail(true);
-      const response = await changeEmail(email);
+      const response = await authClient.changeEmail({
+        newEmail: email,
+      });
 
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || "Failed to update email");
+      if (response.error) {
+        throw new Error(response.error.message || "Failed to update email");
       }
 
       toast.success("Email updated successfully");
@@ -94,29 +125,54 @@ export function Account({
           <CardTitle className="text-xl">Account</CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <h4 className="text-sm font-medium">Username</h4>
-            <p className="text-xs text-neutral-500">
-              Update your username displayed across the platform
-            </p>
-            <div className="flex space-x-2">
-              <Input
-                id="username"
-                value={username}
-                onChange={({ target }) => setUsername(target.value)}
-                placeholder="username"
-              />
-              <Button
-                variant="outline"
-                onClick={handleUsernameUpdate}
-                disabled={
-                  isUpdatingUsername || username === session.data?.user.username
-                }
-              >
-                {isUpdatingUsername ? "Updating..." : "Update"}
-              </Button>
+          {IS_CLOUD ? (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Name</h4>
+              <p className="text-xs text-neutral-500">
+                Update your name displayed across the platform
+              </p>
+              <div className="flex space-x-2">
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={({ target }) => setName(target.value)}
+                  placeholder="name"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleNameUpdate}
+                  disabled={isUpdatingName || name === session.data?.user.name}
+                >
+                  {isUpdatingName ? "Updating..." : "Update"}
+                </Button>
+              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-2">
+              <h4 className="text-sm font-medium">Username</h4>
+              <p className="text-xs text-neutral-500">
+                Update your username displayed across the platform
+              </p>
+              <div className="flex space-x-2">
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={({ target }) => setUsername(target.value)}
+                  placeholder="username"
+                />
+                <Button
+                  variant="outline"
+                  onClick={handleUsernameUpdate}
+                  disabled={
+                    isUpdatingUsername ||
+                    username === session.data?.user.username
+                  }
+                >
+                  {isUpdatingUsername ? "Updating..." : "Update"}
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2">
             <h4 className="text-sm font-medium">Email</h4>

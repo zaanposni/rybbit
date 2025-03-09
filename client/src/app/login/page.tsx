@@ -10,6 +10,9 @@ import { authClient } from "../../lib/auth";
 import { userStore } from "../../lib/userStore";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import Link from "next/link";
+import { IS_CLOUD } from "../../lib/const";
+import { capitalize } from "lodash";
 
 export default function Page() {
   const [username, setUsername] = useState("");
@@ -24,26 +27,57 @@ export default function Page() {
 
     setError("");
     try {
-      const { data, error } = await authClient.signIn.username({
-        username,
-        password,
-      });
-      if (data?.user) {
-        userStore.setState({
-          user: data.user,
+      if (IS_CLOUD) {
+        const { data, error } = await authClient.signIn.email({
+          email: username,
+          password,
         });
-        router.push("/");
-      }
+        if (data?.user) {
+          userStore.setState({
+            user: data.user,
+          });
+          router.push("/");
+        }
 
-      if (error) {
-        setError(error.message);
+        if (error) {
+          setError(error.message);
+        }
+      } else {
+        const { data, error } = await authClient.signIn.username({
+          username,
+          password,
+        });
+        if (data?.user) {
+          userStore.setState({
+            user: data.user,
+          });
+          router.push("/");
+        }
+
+        if (error) {
+          setError(error.message);
+        }
       }
     } catch (error) {
       setError(String(error));
-    } finally {
-      setIsLoading(false);
+    }
+    setIsLoading(false);
+  };
+
+  const handleSocialSignIn = async (
+    provider: "google" | "github" | "twitter"
+  ) => {
+    try {
+      await authClient.signIn.social({
+        provider,
+        callbackURL: "/",
+      });
+    } catch (error) {
+      setError(String(error));
     }
   };
+
+  const label = IS_CLOUD ? "email" : "username";
 
   return (
     <div className="flex justify-center items-center h-screen w-full">
@@ -57,11 +91,11 @@ export default function Page() {
           <form onSubmit={handleSubmit}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="username">Username</Label>
+                <Label htmlFor={label}>{capitalize(label)}</Label>
                 <Input
-                  id="username"
-                  type="username"
-                  placeholder="username"
+                  id={label}
+                  type={label}
+                  placeholder={label}
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
@@ -89,12 +123,56 @@ export default function Page() {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
+
+              {IS_CLOUD && (
+                <>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSocialSignIn("google")}
+                    >
+                      Google
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSocialSignIn("github")}
+                    >
+                      GitHub
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => handleSocialSignIn("twitter")}
+                    >
+                      X (Twitter)
+                    </Button>
+                  </div>
+                </>
+              )}
+
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
                   <AlertTitle>Error Logging In</AlertTitle>
                   <AlertDescription>{error}</AlertDescription>
                 </Alert>
+              )}
+
+              {IS_CLOUD && (
+                <div className="text-center text-sm">
+                  Don't have an account?{" "}
+                  <Link href="/signup" className="underline">
+                    Sign up
+                  </Link>
+                </div>
               )}
             </div>
           </form>

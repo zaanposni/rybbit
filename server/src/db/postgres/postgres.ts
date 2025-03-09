@@ -44,6 +44,9 @@ export async function initializePostgres() {
           name: "Admin User",
         },
       });
+
+      // Organization is automatically created by the organization plugin
+      // with the autoCreateOrganization option
     }
 
     await client`UPDATE "user" SET "role" = 'admin' WHERE username = 'admin'`;
