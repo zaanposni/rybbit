@@ -6,12 +6,13 @@ import cron from "node-cron";
 import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
-import { changeEmail } from "./api/changeEmail.js";
-import { changeUsername } from "./api/changeUsername.js";
+import { createAccount } from "./api/createAccount.js";
 import { getLiveUsercount } from "./api/getLiveUsercount.js";
 import { getOverview } from "./api/getOverview.js";
 import { getOverviewBucketed } from "./api/getOverviewBucketed.js";
+import { getSessions } from "./api/getSessions.js";
 import { getSingleCol } from "./api/getSingleCol.js";
+import { getUserSessions } from "./api/getUserSessions.js";
 import { listUsers } from "./api/listUsers.js";
 import { addSite } from "./api/sites/addSite.js";
 import { changeSiteDomain } from "./api/sites/changeSiteDomain.js";
@@ -25,9 +26,6 @@ import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
 import { auth } from "./lib/auth.js";
 import { mapHeaders } from "./lib/betterAuth.js";
 import { trackPageView } from "./tracker/trackPageView.js";
-import { createAccount } from "./api/createAccount.js";
-import { getSessions } from "./api/getSessions.js";
-import { getUserSessions } from "./api/getUserSessions.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -133,10 +131,6 @@ server.post("/delete-site/:id", deleteSite);
 server.get("/get-sites", getSites);
 server.get("/list-users", listUsers);
 server.post("/create-account", createAccount);
-
-// User management
-server.post("/change-username", changeUsername);
-server.post("/change-email", changeEmail);
 
 // Track pageview endpoint
 server.post("/track/pageview", trackPageView);

@@ -279,30 +279,6 @@ export function useSiteHasData(siteId: string) {
   return useGenericQuery<boolean>(`site-has-data/${siteId}`);
 }
 
-export function changeUsername(newUsername: string) {
-  return authedFetch(`${BACKEND_URL}/change-username`, {
-    method: "POST",
-    body: JSON.stringify({
-      newUsername,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-}
-
-export function changeEmail(newEmail: string) {
-  return authedFetch(`${BACKEND_URL}/change-email`, {
-    method: "POST",
-    body: JSON.stringify({
-      newEmail,
-    }),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-}
-
 // Updated type for grouped sessions from the API
 export type UserSessionsResponse = {
   session_id: string;
