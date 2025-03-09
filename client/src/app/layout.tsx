@@ -58,9 +58,7 @@ export default function RootLayout({
           src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/ping.js"
         ></script>
         <QueryProvider>
-          {pathname === "/login" ||
-          pathname === "/signup" ||
-          pathname === "/create-organization" ? (
+          {pathname === "/login" || pathname === "/signup" ? (
             <div className="min-h-full flex items-center justify-center">
               {children}
             </div>
