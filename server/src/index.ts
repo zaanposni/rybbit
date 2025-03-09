@@ -26,6 +26,7 @@ import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
 import { auth } from "./lib/auth.js";
 import { mapHeaders } from "./lib/auth-utils.js";
 import { trackPageView } from "./tracker/trackPageView.js";
+import { listOrganizationMembers } from "./api/listOrganizationMembers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -131,6 +132,10 @@ server.post("/delete-site/:id", deleteSite);
 server.get("/get-sites", getSites);
 server.get("/list-users", listUsers);
 server.post("/create-account", createAccount);
+server.get(
+  "/list-organization-members/:organizationId",
+  listOrganizationMembers
+);
 
 // Track pageview endpoint
 server.post("/track/pageview", trackPageView);
