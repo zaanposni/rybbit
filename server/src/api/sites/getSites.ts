@@ -1,11 +1,9 @@
-import { FastifyReply } from "fastify";
-import { FastifyRequest } from "fastify";
-import { db } from "../../db/postgres/postgres.js";
-import { sites } from "../../db/postgres/schema.js";
+import { FastifyReply, FastifyRequest } from "fastify";
+import { getSitesUserHasAccessTo } from "../../lib/auth-utils.js";
 
-export async function getSites(_: FastifyRequest, reply: FastifyReply) {
+export async function getSites(req: FastifyRequest, reply: FastifyReply) {
   try {
-    const sitesData = await db.select().from(sites);
+    const sitesData = await getSitesUserHasAccessTo(req);
     return reply.status(200).send({ data: sitesData });
   } catch (err) {
     return reply.status(500).send({ error: String(err) });

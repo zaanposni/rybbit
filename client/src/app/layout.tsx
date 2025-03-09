@@ -40,7 +40,7 @@ export default function RootLayout({
   }, [isPending, user, pathname]);
 
   return (
-    <html lang="en" className="h-full dark" suppressHydrationWarning>
+    <html lang="en" className="h-full dark">
       <body
         className={`${inter.className} h-full bg-background text-foreground`}
       >
@@ -57,24 +57,22 @@ export default function RootLayout({
           defer
           src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/ping.js"
         ></script>
-        <ThemeProvider>
-          <QueryProvider>
-            {pathname === "/login" ||
-            pathname === "/signup" ||
-            pathname === "/create-organization" ? (
-              <div className="min-h-full flex items-center justify-center">
-                {children}
-              </div>
-            ) : (
-              <div className="min-h-full">
-                <TopBar />
-                <main className="flex min-h-screen flex-col items-center p-4">
-                  <div className="w-full max-w-6xl">{children}</div>
-                </main>
-              </div>
-            )}
-          </QueryProvider>
-        </ThemeProvider>
+        <QueryProvider>
+          {pathname === "/login" ||
+          pathname === "/signup" ||
+          pathname === "/create-organization" ? (
+            <div className="min-h-full flex items-center justify-center">
+              {children}
+            </div>
+          ) : (
+            <div className="min-h-full">
+              <TopBar />
+              <main className="flex min-h-screen flex-col items-center p-4">
+                <div className="w-full max-w-6xl">{children}</div>
+              </main>
+            </div>
+          )}
+        </QueryProvider>
       </body>
     </html>
   );

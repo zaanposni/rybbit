@@ -2,10 +2,15 @@
 
 import { SiteCard } from "../components/SiteCard";
 import { useGetSites } from "../hooks/api";
+import { authClient } from "../lib/auth";
 import { AddSite } from "./components/AddSite";
 
 export default function Home() {
   const { data: sites } = useGetSites();
+
+  const { data: organizations } = authClient.useListOrganizations();
+
+  const organization = organizations?.[0];
 
   return (
     <div className="flex min-h-screen flex-col pt-1">

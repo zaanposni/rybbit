@@ -24,7 +24,7 @@ import { initializePostgres } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
 import { auth } from "./lib/auth.js";
-import { mapHeaders } from "./lib/betterAuth.js";
+import { mapHeaders } from "./lib/auth-utils.js";
 import { trackPageView } from "./tracker/trackPageView.js";
 
 const __filename = fileURLToPath(import.meta.url);
