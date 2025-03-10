@@ -89,14 +89,15 @@ export default function Home() {
             />
           );
         })}
-        {(!sites?.data || sites.data.length === 0) && (
-          <Card className="col-span-full p-6 flex flex-col items-center text-center">
-            <CardTitle className="mb-2 text-xl">No websites yet</CardTitle>
-            <CardDescription>
-              Add your first website to start tracking analytics
-            </CardDescription>
-          </Card>
-        )}
+        {(!sites?.data || sites.data.length === 0) &&
+          !userOrganizations.isPending && (
+            <Card className="col-span-full p-6 flex flex-col items-center text-center">
+              <CardTitle className="mb-2 text-xl">No websites yet</CardTitle>
+              <CardDescription>
+                Add your first website to start tracking analytics
+              </CardDescription>
+            </Card>
+          )}
       </div>
     </div>
   );
