@@ -10,8 +10,8 @@ import { Layer } from "leaflet";
 import { Feature, GeoJsonObject } from "geojson";
 import "leaflet/dist/leaflet.css";
 
-const countriesGeoUrl = "/countries.geojson";
-const subdivisionsGeoUrl = "/subdivisions.geojson";
+const countriesGeoUrl = "/countries.json";
+const subdivisionsGeoUrl = "/subdivisions.json";
 
 interface TooltipContent {
   name: string;
