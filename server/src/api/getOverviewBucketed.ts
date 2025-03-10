@@ -5,6 +5,7 @@ import {
   getTimeStatement,
   processResults,
 } from "./utils.js";
+import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 const TimeBucketToFn = {
   minute: "toStartOfMinute",
@@ -67,6 +68,8 @@ const getQuery = ({
   filters: string;
   past24Hours: boolean;
 }) => {
+  const filterStatement = getFilterStatement(filters);
+
   if (past24Hours) {
     return `SELECT
     session_stats.time AS time,
@@ -96,6 +99,7 @@ FROM
         FROM pageviews
         WHERE
             site_id = ${site}
+            ${filterStatement}
             AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
             AND timestamp < toTimeZone(now('${timezone}'), 'UTC')
         GROUP BY session_id
@@ -117,6 +121,7 @@ FULL JOIN
     FROM pageviews
     WHERE
         site_id = ${site}
+        ${filterStatement}
         -- Past 24 hours in LA time
         AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
         AND timestamp < toTimeZone(now('${timezone}'), 'UTC')
@@ -131,7 +136,6 @@ USING time
 ORDER BY time;`;
   }
   const isAllTime = !startDate && !endDate;
-  const filterStatement = getFilterStatement(filters);
 
   const query = `SELECT
     session_stats.time AS time,
@@ -202,9 +206,7 @@ type TimeBucket = "hour" | "day" | "week" | "month";
 type getOverviewBucketed = { time: string; pageviews: number }[];
 
 export async function getOverviewBucketed(
-  {
-    query: { startDate, endDate, timezone, bucket, site, filters, past24Hours },
-  }: FastifyRequest<{
+  req: FastifyRequest<{
     Querystring: {
       startDate: string;
       endDate: string;
@@ -217,6 +219,14 @@ export async function getOverviewBucketed(
   }>,
   res: FastifyReply
 ) {
+  const { startDate, endDate, timezone, bucket, site, filters, past24Hours } =
+    req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
   const query = getQuery({
     startDate,
     endDate,

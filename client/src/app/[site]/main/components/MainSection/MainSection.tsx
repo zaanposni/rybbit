@@ -16,8 +16,11 @@ export function MainSection() {
     isFetching: isPreviousFetching,
     error: previousError,
   } = useGetOverviewBucketed({ periodTime: "previous", site });
-  const { isFetching: isOverviewFetching } = useGetOverview();
-  const { isFetching: isOverviewFetchingPrevious } = useGetOverview("previous");
+  const { isFetching: isOverviewFetching } = useGetOverview({ site });
+  const { isFetching: isOverviewFetchingPrevious } = useGetOverview({
+    site,
+    periodTime: "previous",
+  });
 
   const maxOfDataAndPreviousData = Math.max(
     Math.max(...(data?.data?.map((d) => d[selectedStat]) ?? [])),

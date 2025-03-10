@@ -14,22 +14,48 @@ import {
 import { authClient } from "../../../lib/auth";
 import { AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
-
+import { Input } from "../../../components/ui/input";
+import { Label } from "../../../components/ui/label";
+import { useRouter } from "next/navigation";
 export function DeleteAccount() {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isOpen, setIsOpen] = useState(false);
+  const [passwordError, setPasswordError] = useState("");
+  const router = useRouter();
 
   const handleAccountDeletion = async () => {
+    if (!password) {
+      setPasswordError("Password is required to delete your account");
+      return;
+    }
+
     try {
       setIsDeleting(true);
-      const response = await authClient.deleteUser({});
+      setPasswordError("");
+      const response = await authClient.deleteUser({
+        password,
+      });
 
       if (response.error) {
-        toast.error(`Failed to delete account: ${response.error.message}`);
+        toast.error(
+          `Failed to delete account: ${
+            response.error.message || "Unknown error"
+          }`
+        );
+        if (
+          response.error.message &&
+          response.error.message.toLowerCase().includes("password")
+        ) {
+          setPasswordError("Incorrect password");
+        }
         return;
       }
 
       toast.success("Account successfully deleted");
-      // The user will be redirected to the login page by the auth system
+      setIsOpen(false);
+
+      router.push("/login");
     } catch (error) {
       toast.error(`Failed to delete account: ${error}`);
     } finally {
@@ -37,30 +63,66 @@ export function DeleteAccount() {
     }
   };
 
+  const handleClose = () => {
+    setIsOpen(false);
+    setPassword("");
+    setPasswordError("");
+  };
+
   return (
-    <AlertDialog>
+    <AlertDialog open={isOpen} onOpenChange={setIsOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="w-full">
-          <AlertTriangle className="h-4 w-4 mr-2" />
+        <Button
+          variant="destructive"
+          className="w-full"
+          onClick={() => setIsOpen(true)}
+        >
           Delete Account
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <AlertTriangle className="h-5 w-5" color="hsl(var(--red-500))" />
+            Delete your account?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete your
-            account and remove all of your data from our servers.
+            account and remove all your data from our servers.
           </AlertDialogDescription>
         </AlertDialogHeader>
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleAccountDeletion}
+
+        <div className="py-1">
+          <Label htmlFor="password" className="text-sm font-medium">
+            Enter your password to confirm
+          </Label>
+          <Input
+            id="password"
+            type="password"
+            placeholder="Enter your password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className={`mt-1 ${passwordError ? "border-red-500" : ""}`}
             disabled={isDeleting}
+          />
+          {passwordError && (
+            <p className="text-sm text-red-500 mt-1">{passwordError}</p>
+          )}
+        </div>
+
+        <AlertDialogFooter>
+          <AlertDialogCancel onClick={handleClose} disabled={isDeleting}>
+            Cancel
+          </AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => {
+              e.preventDefault();
+              handleAccountDeletion();
+            }}
             variant="destructive"
+            disabled={isDeleting}
           >
-            {isDeleting ? "Deleting..." : "Yes, delete my account"}
+            {isDeleting ? "Deleting..." : "Delete Account"}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

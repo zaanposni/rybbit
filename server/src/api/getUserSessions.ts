@@ -5,6 +5,7 @@ import {
   getTimeStatement,
   processResults,
 } from "./utils.js";
+import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 // Individual pageview type
 type Pageview = {
@@ -53,12 +54,17 @@ export interface GetUserSessionsRequest {
 }
 
 export async function getUserSessions(
-  {
-    query: { startDate, endDate, timezone, site, filters },
-    params: { userId },
-  }: FastifyRequest<GetUserSessionsRequest>,
+  req: FastifyRequest<GetUserSessionsRequest>,
   res: FastifyReply
 ) {
+  const { startDate, endDate, timezone, site, filters } = req.query;
+  const userId = req.params.userId;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
   const filterStatement = getFilterStatement(filters);
 
   const query = `

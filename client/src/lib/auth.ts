@@ -1,7 +1,7 @@
 import {
-  usernameClient,
   adminClient,
   organizationClient,
+  usernameClient,
 } from "better-auth/client/plugins";
 import { createAuthClient } from "better-auth/react";
 
@@ -11,4 +11,5 @@ export const authClient = createAuthClient({
   fetchOptions: {
     credentials: "include",
   },
+  socialProviders: ["google", "github", "twitter"],
 });

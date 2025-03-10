@@ -8,14 +8,14 @@ import { GearSix, User, Users as Users_ } from "@phosphor-icons/react";
 
 import { Input } from "../../components/ui/input";
 import { Account } from "./account/Account";
-import { Users } from "./users/Users";
+import { Organizations } from "./organizations/Organizations";
 import { Settings } from "./settings/settings";
 
 export default function SettingsPage() {
   const session = authClient.useSession();
   const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<
-    "account" | "settings" | "users"
+    "account" | "settings" | "organizations"
   >("account");
 
   return (
@@ -39,18 +39,18 @@ export default function SettingsPage() {
             Settings
           </Button>
           <Button
-            variant={selectedTab === "users" ? "default" : "ghost"}
-            onClick={() => setSelectedTab("users")}
+            variant={selectedTab === "organizations" ? "default" : "ghost"}
+            onClick={() => setSelectedTab("organizations")}
             className="justify-start"
           >
             <Users_ size={16} weight="bold" />
-            Users
+            Organizations
           </Button>
         </div>
         {selectedTab === "account" && session.data?.user && (
           <Account session={session} />
         )}
-        {selectedTab === "users" && <Users />}
+        {selectedTab === "organizations" && <Organizations />}
         {selectedTab === "settings" && <Settings />}
       </div>
     </div>

@@ -4,11 +4,34 @@ import dotenv from "dotenv";
 import pg from "pg";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { db } from "../db/postgres/postgres.js";
+import { IS_CLOUD } from "./const.js";
 import * as schema from "../db/postgres/schema.js";
+import { eq } from "drizzle-orm";
 
 dotenv.config();
 
 type AuthType = ReturnType<typeof betterAuth> | null;
+
+const pluginList = IS_CLOUD
+  ? [
+      admin(),
+      organization({
+        // Allow users to create organizations
+        allowUserToCreateOrganization: true,
+        // Set the creator role to owner
+        creatorRole: "owner",
+      }),
+    ]
+  : [
+      username(),
+      admin(),
+      organization({
+        // Allow users to create organizations
+        allowUserToCreateOrganization: true,
+        // Set the creator role to owner
+        creatorRole: "owner",
+      }),
+    ];
 
 export let auth: AuthType | null = betterAuth({
   basePath: "/auth",
@@ -25,7 +48,12 @@ export let auth: AuthType | null = betterAuth({
   deleteUser: {
     enabled: true,
   },
-  plugins: [username(), admin(), organization()],
+  user: {
+    deleteUser: {
+      enabled: true,
+    },
+  },
+  plugins: pluginList,
   trustedOrigins: ["http://localhost:3002"],
   advanced: {
     useSecureCookies: process.env.NODE_ENV === "production", // don't mark Secure in dev
@@ -35,7 +63,6 @@ export let auth: AuthType | null = betterAuth({
     },
   },
 });
-
 export function initAuth(allowedOrigins: string[]) {
   auth = betterAuth({
     basePath: "/auth",
@@ -58,17 +85,89 @@ export function initAuth(allowedOrigins: string[]) {
     },
     emailAndPassword: {
       enabled: true,
+      // Disable email verification for now
+      requireEmailVerification: false,
     },
+    // socialProviders: {
+    //   google: {
+    //     clientId: process.env.GOOGLE_CLIENT_ID!,
+    //     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    //   },
+    //   github: {
+    //     clientId: process.env.GITHUB_CLIENT_ID!,
+    //     clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+    //   },
+    //   twitter: {
+    //     clientId: process.env.TWITTER_CLIENT_ID!,
+    //     clientSecret: process.env.TWITTER_CLIENT_SECRET!,
+    //   },
+    // },
     deleteUser: {
       enabled: true,
     },
-    plugins: [username(), admin(), organization()],
+    user: {
+      deleteUser: {
+        enabled: true,
+        // Add a hook to run before deleting a user
+        // i dont think this works
+        beforeDelete: async (user) => {
+          // Delete all memberships for this user first
+          console.log(
+            `Cleaning up memberships for user ${user.id} before deletion`
+          );
+          try {
+            // Delete member records for this user
+            await db
+              .delete(schema.member)
+              .where(eq(schema.member.userId, user.id));
+
+            console.log(`Successfully removed memberships for user ${user.id}`);
+          } catch (error) {
+            console.error(
+              `Error removing memberships for user ${user.id}:`,
+              error
+            );
+            throw error; // Re-throw to prevent user deletion if cleanup fails
+          }
+        },
+      },
+    },
+    plugins: pluginList,
     trustedOrigins: allowedOrigins,
     advanced: {
-      useSecureCookies: process.env.NODE_ENV === "production", // don't mark Secure in dev
+      useSecureCookies: process.env.NODE_ENV === "production",
       defaultCookieAttributes: {
         sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
         path: "/",
+      },
+    },
+    // Use database hooks to create an organization after user signup
+    databaseHooks: {
+      user: {
+        create: {
+          after: async (user) => {
+            // Create an organization for the new user
+            console.info(user);
+            // if (auth) {
+            //   try {
+            //     const orgName = user.name || user.username || "My Organization";
+            //     await auth.api.organization.createOrganization({
+            //       body: {
+            //         name: orgName,
+            //       },
+            //       headers: {
+            //         "x-user-id": user.id,
+            //       },
+            //     });
+            //   } catch (error) {
+            //     console.error(
+            //       "Error creating organization for new user:",
+            //       error
+            //     );
+            //   }
+            // }
+          },
+        },
       },
     },
   });

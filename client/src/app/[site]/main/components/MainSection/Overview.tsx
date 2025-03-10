@@ -89,14 +89,15 @@ const Stat = ({
 };
 
 export function Overview() {
+  const { site } = useStore();
   const {
     data: overviewData,
     isFetching: isOverviewFetching,
     isLoading: isOverviewLoading,
     error: overviewError,
-  } = useGetOverview();
+  } = useGetOverview({ site });
   const { data: overviewDataPrevious, isLoading: isOverviewLoadingPrevious } =
-    useGetOverview("previous");
+    useGetOverview({ site, periodTime: "previous" });
 
   const isLoading = isOverviewLoading || isOverviewLoadingPrevious;
 

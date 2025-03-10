@@ -7,6 +7,7 @@ import {
   getTimeStatement,
   processResults,
 } from "./utils.js";
+import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 type GetSingleColResponse = {
   value: string;
@@ -15,11 +16,17 @@ type GetSingleColResponse = {
 }[];
 
 export async function getSingleCol(
-  {
-    query: { startDate, endDate, timezone, site, filters, parameter, limit },
-  }: FastifyRequest<GenericRequest>,
+  req: FastifyRequest<GenericRequest>,
   res: FastifyReply
 ) {
+  const { startDate, endDate, timezone, site, filters, parameter, limit } =
+    req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
   const filterStatement = getFilterStatement(filters);
 
   const query = `

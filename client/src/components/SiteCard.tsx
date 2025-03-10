@@ -1,8 +1,9 @@
+import { useGetOverview, useGetOverviewBucketed } from "@/hooks/api";
+import { ArrowRight } from "lucide-react";
 import Link from "next/link";
-import { SiteSettings } from "./SiteSettings/SiteSettings";
 import { SiteSessionChart } from "./SiteSessionChart";
-import { Activity, Users } from "lucide-react";
-import { useGetOverviewBucketed } from "@/hooks/api";
+import { SiteSettings } from "./SiteSettings/SiteSettings";
+import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 interface SiteCardProps {
@@ -16,72 +17,112 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
     site: siteId,
   });
 
-  const totalSessions = data?.data?.reduce(
-    (acc, curr) => acc + curr.sessions,
-    0
-  );
+  const { data: overviewData, isLoading: isOverviewLoading } = useGetOverview({
+    site: siteId,
+    past24Hours: true,
+  });
 
-  const totalUsers = data?.data?.reduce((acc, curr) => acc + curr.users, 0);
+  const hasData = (overviewData?.data?.sessions || 0) > 0;
 
-  if (isLoading) {
+  if (isLoading || isOverviewLoading) {
     return (
-      <div className="flex flex-col rounded-lg bg-neutral-900 p-4" key={siteId}>
-        <div className="flex justify-between items-center mb-3">
-          <div className="flex gap-2 items-center">
-            <img
-              className="w-6 mr-1"
-              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=48`}
-              alt={domain}
-            />
-            <span className="text-lg font-semibold truncate">{domain}</span>
+      <div
+        className="flex flex-col rounded-lg bg-neutral-900/70 p-5 border border-neutral-800 shadow-lg transition-all duration-300"
+        key={siteId}
+      >
+        <div className="flex justify-between items-center mb-4">
+          <div className="flex gap-3 items-center">
+            <Skeleton className="w-6 h-6 rounded" />
+            <Skeleton className="h-6 w-40" />
           </div>
+          <Skeleton className="h-8 w-8 rounded" />
         </div>
-        <Skeleton className="h-[100px] w-full bg-neutral-950 mb-3" />
-        <div className="grid grid-cols-2 gap-2">
-          <Skeleton className="h-12 bg-neutral-800" />
-          <Skeleton className="h-12 bg-neutral-800" />
+
+        <div className="relative mt-1 mb-1 rounded-md p-2 overflow-hidden">
+          <Skeleton className="h-[110px] w-full rounded-md" />
+        </div>
+
+        <div className="grid grid-cols-3 gap-2 mt-4">
+          <div className="flex flex-col gap-1 items-center bg-neutral-800/30 rounded-md p-3">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-10 rounded mt-1" />
+          </div>
+
+          <div className="flex flex-col gap-1 items-center bg-neutral-800/30 rounded-md p-3">
+            <Skeleton className="h-3 w-16 rounded" />
+            <Skeleton className="h-6 w-10 rounded mt-1" />
+          </div>
+
+          <div className="flex items-center justify-center">
+            <Skeleton className="h-[38px] w-full rounded" />
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col rounded-lg bg-neutral-900 p-4">
-      <div className="flex justify-between items-center mb-3">
-        <Link href={`/${siteId}`} className="hover:underline">
-          <div className="flex gap-2 items-center">
-            <img
-              className="w-6 mr-1"
-              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=48`}
-              alt={domain}
-            />
-            <span className="text-lg font-semibold truncate">{domain}</span>
-          </div>
+    <div className="flex flex-col rounded-lg bg-neutral-900/70 p-5 border border-neutral-800 shadow-lg hover:shadow-xl hover:border-neutral-700 transition-all duration-300 hover:translate-y-[-2px]">
+      <div className="flex justify-between items-center mb-4">
+        <Link
+          href={`/${siteId}`}
+          className="group flex gap-3 items-center hover:text-blue-400 transition-colors duration-200"
+        >
+          <img
+            className="w-6 h-6"
+            src={`https://www.google.com/s2/favicons?domain=${domain}&sz=64`}
+            alt={domain}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src =
+                "https://placehold.co/48/374151/FFFFFF?text=" +
+                domain.charAt(0).toUpperCase();
+            }}
+          />
+          <span className="text-lg font-medium truncate group-hover:underline transition-all">
+            {domain}
+          </span>
         </Link>
         <SiteSettings siteId={siteId} />
       </div>
 
-      <div className="mt-2">
-        <SiteSessionChart data={data?.data ?? []} height={100} />
+      <div className="relative mt-1 mb-1 rounded-md p-2 overflow-hidden">
+        <SiteSessionChart data={data?.data ?? []} height={110} />
+        {!hasData && (
+          <div className="absolute inset-0 flex items-center justify-center bg-neutral-900/70 backdrop-blur-sm">
+            <span className="text-sm text-neutral-400">No data available</span>
+          </div>
+        )}
       </div>
 
-      <div className="grid grid-cols-2 gap-2 mt-3 text-sm">
-        <div className="flex items-center gap-2">
-          <Activity size={16} className="text-blue-400" />
-          <div>
-            <div className="text-gray-400">Sessions</div>
-            <div className="font-semibold">
-              {totalSessions?.toLocaleString()}
-            </div>
+      <div className="grid grid-cols-3 gap-2 mt-4">
+        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-3 hover:bg-neutral-800 transition-colors">
+          <div className="text-xs text-neutral-400">Sessions</div>
+          <div className="font-semibold text-lg">
+            {overviewData?.data?.sessions?.toLocaleString() || "0"}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Users size={16} className="text-green-400" />
-          <div>
-            <div className="text-gray-400">Users</div>
-            <div className="font-semibold">{totalUsers?.toLocaleString()}</div>
+
+        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-3 hover:bg-neutral-800 transition-colors">
+          <div className="text-xs text-neutral-400">Users</div>
+          <div className="font-semibold text-lg">
+            {overviewData?.data?.users?.toLocaleString() || "0"}
           </div>
         </div>
+
+        <Link href={`/${siteId}`} className="flex items-center justify-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full h-full border-neutral-700 bg-neutral-800/50 hover:bg-neutral-800 hover:text-blue-400 transition-all"
+          >
+            <span className="mr-1">Details</span>
+            <ArrowRight
+              size={14}
+              className="transition-transform group-hover:translate-x-0.5"
+            />
+          </Button>
+        </Link>
       </div>
     </div>
   );
