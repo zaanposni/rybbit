@@ -14,10 +14,6 @@ COPY . .
 # Build the application
 RUN npm run build
 
-# Generate migrations (but don't run them)
-RUN mkdir -p /app/drizzle
-RUN npx drizzle-kit generate || echo "Skipping migration generation during build"
-
 # Runtime image
 FROM node:20-alpine
 
@@ -34,6 +30,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/docker-entrypoint.sh /docker-entrypoint.sh
 COPY --from=builder /app/drizzle.config.ts ./drizzle.config.ts
 COPY --from=builder /app/public ./public
+COPY --from=builder /app/src ./src
 
 # Make the entrypoint executable
 RUN chmod +x /docker-entrypoint.sh
