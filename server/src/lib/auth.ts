@@ -33,21 +33,84 @@ const pluginList = IS_CLOUD
           enabled: true,
           plans: [
             {
-              id: "basic",
-              priceId: "price_1R0w56DFVprnAny2n2QzYdsi",
-              name: "Basic",
+              priceId: "price_1R0w5uDFVprnAny2T2AGF2sK",
+              name: "basic100k",
               interval: "month",
               limits: {
-                events: 100000,
+                events: 100_000,
               },
             },
             {
-              id: "pro",
-              priceId: "price_1R0w5uDFVprnAny2T2AGF2sK",
-              name: "Pro",
+              priceId: "price_1R1HMYDFVprnAny22gdVMAXn",
+              name: "basic250k",
               interval: "month",
               limits: {
-                events: 100000,
+                events: 250_000,
+              },
+            },
+            {
+              name: "basic500k",
+              priceId: "price_1R1HMjDFVprnAny2R5TT0GUh",
+              interval: "month",
+              limits: {
+                events: 500_000,
+              },
+            },
+            {
+              name: "basic1m",
+              priceId: "price_1R1HN1DFVprnAny22tCqrJej",
+              interval: "month",
+              limits: {
+                events: 1_000_000,
+              },
+            },
+            {
+              name: "basic2m",
+              priceId: "price_1R1HNFDFVprnAny2V0pTK8wE",
+              interval: "month",
+              limits: {
+                events: 2_000_000,
+              },
+            },
+
+            {
+              name: "pro100k",
+              priceId: "price_1R1H8WDFVprnAny25HLUxxGP",
+              interval: "month",
+              limits: {
+                events: 100_000,
+              },
+            },
+            {
+              name: "pro250k",
+              priceId: "price_1R1HRGDFVprnAny2ESGsBq3o",
+              interval: "month",
+              limits: {
+                events: 250_000,
+              },
+            },
+            {
+              name: "pro500k",
+              priceId: "price_1R1HRPDFVprnAny2glHnoioo",
+              interval: "month",
+              limits: {
+                events: 500_000,
+              },
+            },
+            {
+              name: "pro1m",
+              priceId: "price_1R1HS3DFVprnAny23VqEV8Oe",
+              interval: "month",
+              limits: {
+                events: 1_000_000,
+              },
+            },
+            {
+              name: "pro2m",
+              priceId: "price_1R1HSBDFVprnAny2ltDOb2pP",
+              interval: "month",
+              limits: {
+                events: 2_000_000,
               },
             },
           ],
