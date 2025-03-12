@@ -403,13 +403,13 @@ export type Subscription = {
   stripeCustomerId?: string;
   stripeSubscriptionId?: string;
   trialStart?: Date;
-  trialEnd: string | null | Date;
+  trialEnd?: string | null | Date;
   createdAt?: Date;
   updatedAt?: Date;
-  cancelAt: string | null;
+  cancelAt?: string | null;
   canceledAt?: Date | null;
-  currentPeriodStart?: string;
-  currentPeriodEnd: string;
+  periodStart?: Date | string;
+  periodEnd?: Date | string;
   cancelAtPeriodEnd: boolean;
   referenceId?: string;
   limits?: {

@@ -1,6 +1,6 @@
 export const STRIPE_PRICES = [
   {
-    priceId: "price_1R0w5uDFVprnAny2T2AGF2sK",
+    priceId: "price_1R1fIVDFVprnAny2yJtRRPBm",
     price: 19,
     name: "basic100k",
     interval: "month",
@@ -9,7 +9,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HMYDFVprnAny22gdVMAXn",
+    priceId: "price_1R1fKJDFVprnAny2mfiBjkAQ",
     price: 29,
     name: "basic250k",
     interval: "month",
@@ -18,7 +18,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HMjDFVprnAny2R5TT0GUh",
+    priceId: "price_1R1fQlDFVprnAny2WwNdiRgT",
     price: 49,
     name: "basic500k",
     interval: "month",
@@ -28,7 +28,7 @@ export const STRIPE_PRICES = [
   },
   {
     id: "basic1m",
-    priceId: "price_1R1HN1DFVprnAny22tCqrJej",
+    priceId: "price_1R1fR2DFVprnAny28tPEQAwh",
     price: 69,
     name: "basic1m",
     interval: "month",
@@ -37,7 +37,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HNFDFVprnAny2V0pTK8wE",
+    priceId: "price_1R1fRMDFVprnAny24AMo0Vuu",
     price: 99,
     name: "basic2m",
     interval: "month",
@@ -47,7 +47,7 @@ export const STRIPE_PRICES = [
   },
 
   {
-    priceId: "price_1R1H8WDFVprnAny25HLUxxGP",
+    priceId: "price_1R1fRmDFVprnAny27gL7XFCY",
     price: 39,
     name: "pro100k",
     interval: "month",
@@ -56,7 +56,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HRGDFVprnAny2ESGsBq3o",
+    priceId: "price_1R1fSADFVprnAny2d7d4tXTs",
     price: 59,
     name: "pro250k",
     interval: "month",
@@ -65,7 +65,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HRPDFVprnAny2glHnoioo",
+    priceId: "price_1R1fSkDFVprnAny2MzBvhPKs",
     price: 99,
     name: "pro500k",
     interval: "month",
@@ -74,7 +74,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HS3DFVprnAny23VqEV8Oe",
+    priceId: "price_1R1fTMDFVprnAny2IdeB1bLV",
     price: 139,
     name: "pro1m",
     interval: "month",
@@ -83,7 +83,7 @@ export const STRIPE_PRICES = [
     },
   },
   {
-    priceId: "price_1R1HSBDFVprnAny2ltDOb2pP",
+    priceId: "price_1R1fTXDFVprnAny2JBLVtkIU",
     price: 199,
     name: "pro2m",
     interval: "month",

@@ -33,7 +33,7 @@ const pluginList = IS_CLOUD
           enabled: true,
           plans: [
             {
-              priceId: "price_1R0w5uDFVprnAny2T2AGF2sK",
+              priceId: "price_1R1fIVDFVprnAny2yJtRRPBm",
               name: "basic100k",
               interval: "month",
               limits: {
@@ -41,7 +41,7 @@ const pluginList = IS_CLOUD
               },
             },
             {
-              priceId: "price_1R1HMYDFVprnAny22gdVMAXn",
+              priceId: "price_1R1fKJDFVprnAny2mfiBjkAQ",
               name: "basic250k",
               interval: "month",
               limits: {
@@ -50,7 +50,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "basic500k",
-              priceId: "price_1R1HMjDFVprnAny2R5TT0GUh",
+              priceId: "price_1R1fQlDFVprnAny2WwNdiRgT",
               interval: "month",
               limits: {
                 events: 500_000,
@@ -58,7 +58,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "basic1m",
-              priceId: "price_1R1HN1DFVprnAny22tCqrJej",
+              priceId: "price_1R1fR2DFVprnAny28tPEQAwh",
               interval: "month",
               limits: {
                 events: 1_000_000,
@@ -66,7 +66,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "basic2m",
-              priceId: "price_1R1HNFDFVprnAny2V0pTK8wE",
+              priceId: "price_1R1fRMDFVprnAny24AMo0Vuu",
               interval: "month",
               limits: {
                 events: 2_000_000,
@@ -75,7 +75,7 @@ const pluginList = IS_CLOUD
 
             {
               name: "pro100k",
-              priceId: "price_1R1H8WDFVprnAny25HLUxxGP",
+              priceId: "price_1R1fRmDFVprnAny27gL7XFCY",
               interval: "month",
               limits: {
                 events: 100_000,
@@ -83,7 +83,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "pro250k",
-              priceId: "price_1R1HRGDFVprnAny2ESGsBq3o",
+              priceId: "price_1R1fSADFVprnAny2d7d4tXTs",
               interval: "month",
               limits: {
                 events: 250_000,
@@ -91,7 +91,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "pro500k",
-              priceId: "price_1R1HRPDFVprnAny2glHnoioo",
+              priceId: "price_1R1fSkDFVprnAny2MzBvhPKs",
               interval: "month",
               limits: {
                 events: 500_000,
@@ -99,7 +99,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "pro1m",
-              priceId: "price_1R1HS3DFVprnAny23VqEV8Oe",
+              priceId: "price_1R1fTMDFVprnAny2IdeB1bLV",
               interval: "month",
               limits: {
                 events: 1_000_000,
@@ -107,7 +107,7 @@ const pluginList = IS_CLOUD
             },
             {
               name: "pro2m",
-              priceId: "price_1R1HSBDFVprnAny2ltDOb2pP",
+              priceId: "price_1R1fTXDFVprnAny2JBLVtkIU",
               interval: "month",
               limits: {
                 events: 2_000_000,

@@ -1,28 +1,16 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Check, AlertCircle, ArrowRight, X } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import {
-  useSubscription,
-  useCancelSubscription,
-  useUpgradeSubscription,
-  type Subscription,
-} from "@/hooks/api";
 import {
   Dialog,
   DialogContent,
@@ -31,38 +19,117 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  useCancelSubscription,
+  useSubscription,
+  useUpgradeSubscription,
+} from "@/hooks/api";
+import { STRIPE_PRICES } from "@/lib/stripe";
+import {
+  AlertCircle,
+  ArrowRight,
+  Check,
+  Clock,
+  Shield,
+  X,
+  Zap,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { authClient } from "../../../lib/auth";
 
-// Plans information - should match what's in your auth.ts config
-const plans = [
-  {
-    id: "basic",
-    name: "Basic",
-    price: "$20",
-    interval: "month",
-    description: "Essential analytics for small projects",
-    features: [
-      "100,000 events per month",
-      "Core analytics features",
-      "7-day data retention",
-      "Basic support",
-    ],
-  },
-  {
-    id: "pro",
-    name: "Pro",
-    price: "$50",
-    interval: "month",
-    description: "Advanced analytics for growing businesses",
-    features: [
-      "1,000,000 events per month",
-      "Advanced dashboard features",
-      "30-day data retention",
-      "Priority support",
-      "Custom event definitions",
-      "Team collaboration",
-    ],
-  },
-];
+// Define interfaces for plan data
+interface PlanTemplate {
+  id: string;
+  name: string;
+  price: string;
+  interval: string;
+  description: string;
+  features: string[];
+  color: string;
+  icon: React.ReactNode;
+}
+
+// Helper to get the appropriate plan details based on subscription plan name
+const getPlanDetails = (planName: string | undefined): PlanTemplate | null => {
+  if (!planName) return null;
+
+  const tier = planName.startsWith("basic")
+    ? "basic"
+    : planName.startsWith("pro")
+    ? "pro"
+    : "free";
+  const stripePlan = STRIPE_PRICES.find((p) => p.name === planName);
+
+  const planTemplates: Record<string, PlanTemplate> = {
+    free: {
+      id: "free",
+      name: "Free",
+      price: "$0",
+      interval: "month",
+      description: "Get started with basic analytics",
+      features: [
+        "20,000 events per month",
+        "Basic analytics",
+        "7-day data retention",
+        "Community support",
+      ],
+      color:
+        "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900",
+      icon: <Clock className="h-5 w-5" />,
+    },
+    basic: {
+      id: "basic",
+      name: "Basic",
+      price: "$19+",
+      interval: "month",
+      description: "Essential analytics for small projects",
+      features: [
+        "Core analytics features",
+        "14-day data retention",
+        "Basic support",
+      ],
+      color:
+        "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-800 dark:to-emerald-800",
+      icon: <Shield className="h-5 w-5" />,
+    },
+    pro: {
+      id: "pro",
+      name: "Pro",
+      price: "$39+",
+      interval: "month",
+      description: "Advanced analytics for growing businesses",
+      features: [
+        "Advanced dashboard features",
+        "30-day data retention",
+        "Priority support",
+        "Custom event definitions",
+        "Team collaboration",
+      ],
+      color:
+        "bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-800 dark:to-teal-800",
+      icon: <Zap className="h-5 w-5" />,
+    },
+  };
+
+  const plan = { ...planTemplates[tier] };
+
+  if (stripePlan) {
+    plan.price = `$${stripePlan.price}`;
+    plan.interval = stripePlan.interval;
+
+    // Add event limit as first feature
+    plan.features = [
+      `${stripePlan.limits.events.toLocaleString()} events per month`,
+      ...plan.features,
+    ];
+  }
+
+  return plan;
+};
 
 // Helper function to format dates
 const formatDate = (dateString: string | Date | null | undefined) => {
@@ -93,14 +160,13 @@ export default function SubscriptionPage() {
     refetch,
   } = useSubscription();
 
-  console.info(activeSubscription);
-
   const cancelSubscription = useCancelSubscription();
   const upgradeSubscription = useUpgradeSubscription();
 
   // State variables
   const [errorType, setErrorType] = useState<"cancel" | "resume">("cancel");
   const [showConfigError, setShowConfigError] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   // Current usage - in a real app, you would fetch this from your API
   const currentUsage = DEFAULT_USAGE;
@@ -131,16 +197,12 @@ export default function SubscriptionPage() {
   };
 
   const handleUpgradeSubscription = async (planId: string) => {
-    try {
-      await upgradeSubscription.mutateAsync({
-        plan: planId,
-        successUrl: window.location.origin + "/settings/subscription",
-        cancelUrl: window.location.origin + "/settings/subscription",
-      });
-      // The user will be redirected to Stripe checkout
-    } catch (err) {
-      // Error handling is done in the mutation
-    }
+    await authClient.subscription.upgrade({
+      plan: planId,
+      successUrl: "/settings",
+      cancelUrl: "/settings",
+      referenceId: activeSubscription?.referenceId,
+    });
   };
 
   const handleResumeSubscription = async () => {
@@ -154,10 +216,31 @@ export default function SubscriptionPage() {
     }
   };
 
+  const handleShowUpgradeOptions = () => {
+    setShowUpgradeDialog(true);
+  };
+
   // Get information about current plan if there's an active subscription
   const currentPlan = activeSubscription
-    ? plans.find((plan) => plan.id === activeSubscription.plan)
+    ? getPlanDetails(activeSubscription.plan)
     : null;
+
+  // Find the next tier plans for upgrade options
+  const getCurrentTierPrices = () => {
+    if (!activeSubscription?.plan) return [];
+
+    // Return all available plans for switching
+    return STRIPE_PRICES.sort((a, b) => {
+      // First sort by plan type (basic first, then pro)
+      if (a.name.startsWith("basic") && b.name.startsWith("pro")) return -1;
+      if (a.name.startsWith("pro") && b.name.startsWith("basic")) return 1;
+
+      // Then sort by event limit
+      return a.limits.events - b.limits.events;
+    });
+  };
+
+  const upgradePlans = getCurrentTierPrices();
 
   const isActionInProgress =
     cancelSubscription.isPending || upgradeSubscription.isPending;
@@ -167,8 +250,15 @@ export default function SubscriptionPage() {
     upgradeSubscription.error?.message ||
     null;
 
-  // Default values for limits if they don't exist
-  const eventLimit = activeSubscription?.limits?.events || DEFAULT_EVENT_LIMIT;
+  // Get event limit from the subscription plan
+  const getEventLimit = () => {
+    if (!activeSubscription?.plan) return DEFAULT_EVENT_LIMIT;
+
+    const plan = STRIPE_PRICES.find((p) => p.name === activeSubscription.plan);
+    return plan?.limits.events || DEFAULT_EVENT_LIMIT;
+  };
+
+  const eventLimit = getEventLimit();
   const usagePercentage = (currentUsage.events / eventLimit) * 100;
 
   return (
@@ -266,7 +356,7 @@ export default function SubscriptionPage() {
                   <div>
                     <h3 className="font-medium">Renewal Date</h3>
                     <p className="text-lg font-bold">
-                      {formatDate(activeSubscription?.currentPeriodEnd)}
+                      {formatDate(activeSubscription?.periodEnd)}
                     </p>
                     {activeSubscription?.cancelAt && (
                       <p className="text-sm text-red-500">
@@ -342,17 +432,17 @@ export default function SubscriptionPage() {
                 </Button>
               )}
 
-              {/* Only show upgrade button if on Basic plan */}
-              {activeSubscription?.plan === "basic" && (
+              {/* Only show change plan button if there are other plans available */}
+              {upgradePlans.length > 0 && (
                 <Button
-                  onClick={() => handleUpgradeSubscription("pro")}
+                  onClick={handleShowUpgradeOptions}
                   disabled={isActionInProgress}
                 >
                   {upgradeSubscription.isPending ? (
                     "Processing..."
                   ) : (
                     <>
-                      Upgrade to Pro <ArrowRight className="ml-2 h-4 w-4" />
+                      Change Plan <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
                 </Button>
@@ -419,6 +509,144 @@ export default function SubscriptionPage() {
               }}
             >
               Contact Support
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Upgrade options dialog */}
+      <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>Change Your Plan</DialogTitle>
+            <DialogDescription className="py-4">
+              Select a plan to switch to
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Basic Plans */}
+            <div>
+              <h3 className="font-medium mb-3 flex items-center">
+                <Shield className="h-4 w-4 mr-2 text-green-500" />
+                Basic Plans
+              </h3>
+              <div className="space-y-3">
+                {upgradePlans
+                  .filter((plan) => plan.name.startsWith("basic"))
+                  .map((plan) => (
+                    <Card
+                      key={plan.priceId}
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${
+                        activeSubscription?.plan === plan.name
+                          ? "ring-2 ring-green-400"
+                          : ""
+                      }`}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-bold">
+                              {plan.limits.events.toLocaleString()} events
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              ${plan.price} / {plan.interval}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={
+                              activeSubscription?.plan === plan.name
+                                ? "outline"
+                                : "default"
+                            }
+                            onClick={() => {
+                              if (activeSubscription?.plan !== plan.name) {
+                                handleUpgradeSubscription(plan.name);
+                              }
+                            }}
+                            disabled={activeSubscription?.plan === plan.name}
+                          >
+                            {activeSubscription?.plan === plan.name
+                              ? "Current"
+                              : "Select"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+
+            {/* Pro Plans */}
+            <div>
+              <h3 className="font-medium mb-3 flex items-center">
+                <Zap className="h-4 w-4 mr-2 text-emerald-500" />
+                Pro Plans
+              </h3>
+              <div className="space-y-3">
+                {upgradePlans
+                  .filter((plan) => plan.name.startsWith("pro"))
+                  .map((plan) => (
+                    <Card
+                      key={plan.priceId}
+                      className={`cursor-pointer hover:shadow-md transition-shadow ${
+                        activeSubscription?.plan === plan.name
+                          ? "ring-2 ring-emerald-400"
+                          : ""
+                      }`}
+                    >
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h3 className="font-bold">
+                              {plan.limits.events.toLocaleString()} events
+                            </h3>
+                            <p className="text-sm text-gray-500 dark:text-gray-400">
+                              ${plan.price} / {plan.interval}
+                            </p>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant={
+                              activeSubscription?.plan === plan.name
+                                ? "outline"
+                                : "default"
+                            }
+                            onClick={() => {
+                              if (activeSubscription?.plan !== plan.name) {
+                                handleUpgradeSubscription(plan.name);
+                              }
+                            }}
+                            disabled={activeSubscription?.plan === plan.name}
+                          >
+                            {activeSubscription?.plan === plan.name
+                              ? "Current"
+                              : "Select"}
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setShowUpgradeDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                router.push("/subscribe");
+                setShowUpgradeDialog(false);
+              }}
+            >
+              View All Plans
             </Button>
           </DialogFooter>
         </DialogContent>
