@@ -40,7 +40,7 @@ type GroupedSession = {
   }[];
 };
 
-export interface GetUserSessionsRequest {
+interface GetUserSessionsRequest {
   Querystring: {
     startDate: string;
     endDate: string;
@@ -53,17 +53,10 @@ export interface GetUserSessionsRequest {
   };
 }
 
-export async function getUserSessions(
-  req: FastifyRequest<GetUserSessionsRequest>,
-  res: FastifyReply
+export async function fetchUserSessions(
+  params: GetUserSessionsRequest["Querystring"] & GetUserSessionsRequest["Params"]
 ) {
-  const { startDate, endDate, timezone, site, filters } = req.query;
-  const userId = req.params.userId;
-
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
-  if (!userHasAccessToSite) {
-    return res.status(403).send({ error: "Forbidden" });
-  }
+  const { startDate, endDate, timezone, site, filters, userId } = params;
 
   const filterStatement = getFilterStatement(filters);
 
@@ -152,7 +145,7 @@ ORDER BY timestamp ASC
     });
 
     // Calculate duration for each session and convert to array
-    const groupedSessions = Object.values(sessions)
+    return Object.values(sessions)
       .map((session) => {
         // Calculate duration in seconds
         const firstTime = new Date(session.firstTimestamp).getTime();
@@ -166,10 +159,35 @@ ORDER BY timestamp ASC
           new Date(b.lastTimestamp).getTime() -
           new Date(a.lastTimestamp).getTime()
       );
-
-    return res.send({ data: groupedSessions });
   } catch (error) {
     console.error("Error fetching user sessions:", error);
+    return null;
+  }
+}
+
+export async function getUserSessions(
+  req: FastifyRequest<GetUserSessionsRequest>,
+  res: FastifyReply
+) {
+  const { startDate, endDate, timezone, site, filters } = req.query;
+  const userId = req.params.userId;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
+  const data = await fetchUserSessions({
+    startDate,
+    endDate,
+    timezone,
+    site,
+    filters,
+    userId,
+  });
+  if (!data) {
     return res.status(500).send({ error: "Failed to fetch user sessions" });
   }
+
+  return res.send({ data });
 }
