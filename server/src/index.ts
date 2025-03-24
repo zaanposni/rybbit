@@ -7,7 +7,7 @@ import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
 import { createAccount } from "./api/createAccount.js";
-import { getLiveUsercount } from "./api/getLiveUsercount.js";
+import { getLiveUserCount } from "./api/getLiveUserCount.js";
 import { getOverview } from "./api/getOverview.js";
 import { getOverviewBucketed } from "./api/getOverviewBucketed.js";
 import { getSessions } from "./api/getSessions.js";
@@ -120,7 +120,7 @@ server.addHook("onRequest", async (request, reply) => {
   }
 });
 
-server.get("/live-user-count/:site", getLiveUsercount);
+server.get("/live-user-count/:site", getLiveUserCount);
 server.get("/overview", getOverview);
 server.get("/overview-bucketed", getOverviewBucketed);
 server.get("/single-col", getSingleCol);
