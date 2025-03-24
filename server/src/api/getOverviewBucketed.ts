@@ -7,6 +7,22 @@ import {
 } from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
+type TimeBucket = "hour" | "day" | "week" | "month";
+
+interface GetOverviewBucketedRequest {
+  Querystring: {
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    bucket: TimeBucket;
+    site: string;
+    filters: string;
+    past24Hours?: boolean;
+  };
+}
+
+type GetOverviewBucketedResponse = { time: string; pageviews: number }[];
+
 const TimeBucketToFn = {
   minute: "toStartOfMinute",
   five_minutes: "toStartOfFiveMinutes",
@@ -59,15 +75,7 @@ const getQuery = ({
   site,
   filters,
   past24Hours,
-}: {
-  startDate: string;
-  endDate: string;
-  timezone: string;
-  bucket: TimeBucket;
-  site: string;
-  filters: string;
-  past24Hours: boolean;
-}) => {
+}: GetOverviewBucketedRequest["Querystring"]) => {
   const filterStatement = getFilterStatement(filters);
 
   if (past24Hours) {
@@ -204,32 +212,15 @@ ORDER BY time`;
   return query;
 };
 
-type TimeBucket = "hour" | "day" | "week" | "month";
-
-type getOverviewBucketed = { time: string; pageviews: number }[];
-
-export async function getOverviewBucketed(
-  req: FastifyRequest<{
-    Querystring: {
-      startDate: string;
-      endDate: string;
-      timezone: string;
-      bucket: TimeBucket;
-      site: string;
-      filters: string;
-      past24Hours?: boolean;
-    };
-  }>,
-  res: FastifyReply
-) {
-  const { startDate, endDate, timezone, bucket, site, filters, past24Hours } =
-    req.query;
-
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
-  if (!userHasAccessToSite) {
-    return res.status(403).send({ error: "Forbidden" });
-  }
-
+export async function fetchOverviewBucketed({
+  startDate,
+  endDate,
+  timezone,
+  bucket,
+  site,
+  filters,
+  past24Hours,
+}: GetOverviewBucketedRequest["Querystring"]) {
   const query = getQuery({
     startDate,
     endDate,
@@ -246,10 +237,37 @@ export async function getOverviewBucketed(
       format: "JSONEachRow",
     });
 
-    const data = await processResults<getOverviewBucketed[number]>(result);
-    return res.send({ data });
+    return await processResults<GetOverviewBucketedResponse[number]>(result);
   } catch (error) {
     console.error("Error fetching pageviews:", error);
+    return null;
+  }
+}
+
+export async function getOverviewBucketed(
+  req: FastifyRequest<GetOverviewBucketedRequest>,
+  res: FastifyReply
+) {
+  const { startDate, endDate, timezone, bucket, site, filters, past24Hours } =
+    req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
+  const data = await fetchOverviewBucketed({
+    startDate,
+    endDate,
+    timezone,
+    bucket,
+    site,
+    filters,
+    past24Hours,
+  });
+  if (!data) {
     return res.status(500).send({ error: "Failed to fetch pageviews" });
   }
+
+  return res.send({ data });
 }
