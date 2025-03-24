@@ -7,6 +7,17 @@ import {
 } from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
+interface GetSessionsRequest {
+  Querystring: {
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    site: string;
+    filters: string;
+    page: number;
+  };
+}
+
 type GetSessionsResponse = {
   session_id: string;
   user_id: string;
@@ -21,27 +32,14 @@ type GetSessionsResponse = {
   pageviews: number;
 }[];
 
-export interface GetSessionsRequest {
-  Querystring: {
-    startDate: string;
-    endDate: string;
-    timezone: string;
-    site: string;
-    filters: string;
-    page: number;
-  };
-}
-
-export async function getSessions(
-  req: FastifyRequest<GetSessionsRequest>,
-  res: FastifyReply
-) {
-  const { startDate, endDate, timezone, site, filters, page } = req.query;
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
-  if (!userHasAccessToSite) {
-    return res.status(403).send({ error: "Forbidden" });
-  }
-
+export async function fetchSessions({
+  startDate,
+  endDate,
+  timezone,
+  site,
+  filters,
+  page,
+}: GetSessionsRequest["Querystring"]) {
   const filterStatement = getFilterStatement(filters);
 
   const query = `
@@ -83,10 +81,35 @@ LIMIT 100 OFFSET ${(page - 1) * 100}
       format: "JSONEachRow",
     });
 
-    const data = await processResults<GetSessionsResponse[number]>(result);
-    return res.send({ data });
+    return await processResults<GetSessionsResponse[number]>(result);
   } catch (error) {
     console.error("Error fetching devices:", error);
+    return null;
+  }
+}
+
+export async function getSessions(
+  req: FastifyRequest<GetSessionsRequest>,
+  res: FastifyReply
+) {
+  const { startDate, endDate, timezone, site, filters, page } = req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
+  const data = await fetchSessions({
+    startDate,
+    endDate,
+    timezone,
+    site,
+    filters,
+    page
+  });
+  if (!data) {
     return res.status(500).send({ error: "Failed to fetch devices" });
   }
+
+  return res.send({ data });
 }
