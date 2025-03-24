@@ -6,7 +6,17 @@ import {
   processResults,
 } from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
-import { FilterParameter } from "./types.js";
+
+interface GetOverviewRequest {
+  Querystring: {
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    site: string;
+    filters: string;
+    past24Hours?: boolean;
+  };
+}
 
 type GetOverviewResponse = {
   sessions: number;
@@ -24,14 +34,7 @@ const getQuery = ({
   site,
   filters,
   past24Hours,
-}: {
-  startDate: string;
-  endDate: string;
-  timezone: string;
-  site: string;
-  filters: string;
-  past24Hours: boolean;
-}) => {
+}: GetOverviewRequest["Querystring"]) => {
   const filterStatement = getFilterStatement(filters);
 
   // Define the time condition based on past24Hours flag
@@ -86,37 +89,21 @@ const getQuery = ({
         ) AS page_stats`;
 };
 
-export interface GenericRequest {
-  Querystring: {
-    startDate: string;
-    endDate: string;
-    timezone: string;
-    site: string;
-    filters: string;
-    parameter: FilterParameter;
-    past24Hours: boolean;
-    limit?: number;
-  };
-}
-
-export async function getOverview(
-  req: FastifyRequest<GenericRequest>,
-  res: FastifyReply
-) {
-  const { startDate, endDate, timezone, site, filters, past24Hours } =
-    req.query;
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
-  if (!userHasAccessToSite) {
-    return res.status(403).send({ error: "Forbidden" });
-  }
-
+export async function fetchOverview({
+  startDate,
+  endDate,
+  timezone,
+  site,
+  filters,
+  past24Hours,
+}: GetOverviewRequest["Querystring"]) {
   const query = getQuery({
     startDate,
     endDate,
     timezone,
     site,
     filters,
-    past24Hours,
+    past24Hours: past24Hours ?? false,
   });
 
   try {
@@ -126,9 +113,35 @@ export async function getOverview(
     });
 
     const data = await processResults<GetOverviewResponse>(result);
-    return res.send({ data: data[0] });
+    return data[0] || null;
   } catch (error) {
     console.error("Error fetching overview:", error);
+    return null;
+  }
+}
+
+export async function getOverview(
+  req: FastifyRequest<GetOverviewRequest>,
+  res: FastifyReply
+) {
+  const { startDate, endDate, timezone, site, filters, past24Hours } = req.query;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
+  const data = await fetchOverview({
+    startDate,
+    endDate,
+    timezone,
+    site,
+    filters,
+    past24Hours,
+  });
+  if (!data) {
     return res.status(500).send({ error: "Failed to fetch overview" });
   }
+
+  return res.send({ data });
 }
