@@ -9,7 +9,7 @@ import {
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 import { FilterParameter } from "./types.js";
 
-interface GenericRequest {
+interface GetSingleColRequest {
   Querystring: {
     startDate: string;
     endDate: string;
@@ -29,7 +29,7 @@ type GetSingleColResponse = {
   bounce_rate?: number;
 }[];
 
-const getQuery = (request: GenericRequest["Querystring"]) => {
+const getQuery = (request: GetSingleColRequest["Querystring"]) => {
   const { startDate, endDate, timezone, site, filters, parameter, limit } =
     request;
 
@@ -118,8 +118,24 @@ const getQuery = (request: GenericRequest["Querystring"]) => {
   // `;
 };
 
+export async function fetchSingleCol(params: GetSingleColRequest["Querystring"]) {
+  const query = getQuery(params);
+
+  try {
+    const result = await clickhouse.query({
+      query,
+      format: "JSONEachRow",
+    });
+
+    return await processResults<GetSingleColResponse[number]>(result);
+  } catch (error) {
+    console.error(`Error fetching ${params.parameter}:`, error);
+    return null;
+  }
+}
+
 export async function getSingleCol(
-  req: FastifyRequest<GenericRequest>,
+  req: FastifyRequest<GetSingleColRequest>,
   res: FastifyReply
 ) {
   const { site, parameter } = req.query;
@@ -129,18 +145,10 @@ export async function getSingleCol(
     return res.status(403).send({ error: "Forbidden" });
   }
 
-  const query = getQuery(req.query);
-
-  try {
-    const result = await clickhouse.query({
-      query,
-      format: "JSONEachRow",
-    });
-
-    const data = await processResults<GetSingleColResponse[number]>(result);
-    return res.send({ data });
-  } catch (error) {
-    console.error(`Error fetching ${parameter}:`, error);
+  const data = await fetchSingleCol(req.query);
+  if (!data) {
     return res.status(500).send({ error: `Failed to fetch ${parameter}` });
   }
+
+  return res.send({ data });
 }
