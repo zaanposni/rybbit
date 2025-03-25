@@ -37,14 +37,8 @@ const getQuery = ({
 }: GetOverviewRequest["Querystring"]) => {
   const filterStatement = getFilterStatement(filters);
 
-  // Define the time condition based on past24Hours flag
-  const timeCondition = past24Hours
-    ? `AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
-       AND timestamp < toTimeZone(now('${timezone}'), 'UTC')`
-    : getTimeStatement(startDate, endDate, timezone);
-
-  // Single query template with parameterized time condition
-  return `SELECT 
+  if (past24Hours) {
+    return `SELECT 
       session_stats.sessions,
       session_stats.pages_per_session,
       session_stats.bounce_rate * 100 AS bounce_rate,
@@ -71,7 +65,8 @@ const getQuery = ({
                 WHERE
                     site_id = ${site}
                     ${filterStatement}
-                    ${timeCondition}
+                    AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
+                    AND timestamp < toTimeZone(now('${timezone}'), 'UTC') 
                 GROUP BY session_id
             )
         ) AS session_stats
@@ -79,13 +74,61 @@ const getQuery = ({
         (
             -- Page-level and user-level metrics  
             SELECT
-                COUNT(CASE WHEN type = 'pageview' THEN 1 END) AS pageviews,
-                COUNT(DISTINCT CASE WHEN type = 'pageview' THEN user_id END) AS users
+                COUNT(*)                   AS pageviews,
+                COUNT(DISTINCT user_id)    AS users
             FROM pageviews
             WHERE 
                 site_id = ${site}
                 ${filterStatement}  
-                ${timeCondition}
+                AND timestamp >= toTimeZone(now('${timezone}'), 'UTC') - INTERVAL 1 DAY
+                AND timestamp < toTimeZone(now('${timezone}'), 'UTC')
+                AND type = 'pageview'
+        ) AS page_stats`;
+  }
+
+  return `SELECT   
+      session_stats.sessions,
+      session_stats.pages_per_session,
+      session_stats.bounce_rate * 100 AS bounce_rate,
+      session_stats.session_duration,
+      page_stats.pageviews,
+      page_stats.users  
+    FROM
+    (
+        -- Session-level metrics
+        SELECT
+            COUNT() AS sessions,
+            AVG(pages_in_session) AS pages_per_session,
+            sumIf(1, pages_in_session = 1) / COUNT() AS bounce_rate,
+            AVG(end_time - start_time) AS session_duration
+        FROM
+            (
+                -- One row per session
+                SELECT
+                    session_id,
+                    MIN(timestamp) AS start_time,
+                    MAX(timestamp) AS end_time,
+                    COUNT(CASE WHEN type = 'pageview' THEN 1 END) AS pages_in_session
+                FROM pageviews
+                WHERE
+                    site_id = ${site}
+                    ${filterStatement}
+                    ${getTimeStatement(startDate, endDate, timezone)}
+                GROUP BY session_id
+            )
+        ) AS session_stats
+        CROSS JOIN
+        (
+            -- Page-level and user-level metrics
+            SELECT
+                COUNT(*)                   AS pageviews,
+                COUNT(DISTINCT user_id)    AS users
+            FROM pageviews
+            WHERE 
+                site_id = ${site}
+                ${filterStatement}
+                ${getTimeStatement(startDate, endDate, timezone)}
+                AND type = 'pageview'
         ) AS page_stats`;
 };
 

@@ -13,23 +13,10 @@ import { getCountryName } from "../../../../lib/utils";
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../components/shared/icons/OperatingSystem";
-
-type Session = {
-  session_id: string;
-  user_id: string;
-  country: string;
-  iso_3166_2: string;
-  language: string;
-  device_type: string;
-  browser: string;
-  operating_system: string;
-  referrer: string;
-  last_pageview_timestamp: string;
-  pageviews: number;
-};
+import { GetSessionsResponse } from "../../../../api/analytics/userSessions";
 
 interface SessionsTableProps {
-  data: Session[];
+  data: GetSessionsResponse;
   isLoading: boolean;
   fetchNextPage: () => void;
   hasNextPage: boolean | undefined;
@@ -90,7 +77,7 @@ export default function SessionsTable({
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
   // Column definition
-  const columnHelper = createColumnHelper<Session>();
+  const columnHelper = createColumnHelper<GetSessionsResponse[number]>();
 
   const columns = useMemo(
     () => [
@@ -108,7 +95,7 @@ export default function SessionsTable({
           );
         },
       }),
-      columnHelper.accessor("last_pageview_timestamp", {
+      columnHelper.accessor("session_end", {
         header: "Last Seen",
         cell: (info) => {
           return DateTime.fromSQL(info.getValue()).toFormat(

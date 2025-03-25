@@ -1,9 +1,9 @@
 "use client";
 
 import { useMemo } from "react";
-import SessionsTable from "./components/SessionsTable";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import { useGetSessionsInfinite } from "../../../api/analytics/userSessions";
+import SessionsList from "./components/SessionsList";
 
 export default function SessionsPage() {
   const {
@@ -26,7 +26,7 @@ export default function SessionsPage() {
   return (
     <div>
       <SubHeader />
-      <SessionsTable
+      <SessionsList
         data={flattenedData}
         isLoading={isLoading}
         fetchNextPage={fetchNextPage}

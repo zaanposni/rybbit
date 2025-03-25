@@ -42,7 +42,7 @@ export function useGetUserSessions(userId: string) {
   });
 }
 
-type GetSessionsResponse = {
+export type GetSessionsResponse = {
   session_id: string;
   user_id: string;
   country: string;
@@ -52,8 +52,11 @@ type GetSessionsResponse = {
   browser: string;
   operating_system: string;
   referrer: string;
-  last_pageview_timestamp: string;
+  session_end: string;
+  session_start: string;
   pageviews: number;
+  entry_page: string;
+  exit_page: string;
 }[];
 
 export function useGetSessionsInfinite() {
