@@ -26,6 +26,23 @@ const startDateSchema = dateSchema
 const endDateSchema = dateSchema
   .describe("The end date of the time interval for querying metrics in YYYY-MM-DD format");
 
+const filterParameterSchema = z.enum([
+  "browser",
+  "operating_system",
+  "device_type",
+  "dimensions",
+  "language",
+  "country",
+  "iso_3166_2",
+  "referrer",
+  "pathname",
+  "querystring",
+  "page_title",
+  "event_name",
+  "entry_page",
+  "exit_page",
+]);
+
 // describe sql operator mapping? might be unnecessary if filterSchema has description describing field relationships
 // since value is typed as string only
 // maybe add a description that restricts it to equals or not_equals and contains or not_contains
@@ -33,22 +50,65 @@ const endDateSchema = dateSchema
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
   .describe("The type of comparison to perform");
 
-const filterParameterSchema = z.enum([
-  "browser", // small set
-  "operating_system", // small set
-  "language", // large set
-  "country", // large set
-  "device_type", // small set
-  "referrer", // infinite set (depends on user input)
-  "pathname", // infinite set (depends on user input)
-  "page_title", // infinite set (depends on user input)
-  "querystring", // infinite set (depends on user input)
-  "iso_3166_2", // large set
-  "event_name", // infinite set (depends on user input)
-  "entry_page", // infinite set (depends on user input)
-  "exit_page", // infinite set (depends on user input)
-  "dimensions", // infinite set (depends on user input)
-]);
+const filterValueSchema = z.array(z.string())
+  .nonempty({ message: "Filter values must contain at least one string" })
+  .describe(`An array of one or more string values to match against the given parameter. These values are used to filter the records. If there is only one value, the filter produces a single condition. If there are multiple values, they are combined using the OR operator to allow matching any of the provided values.
+
+The allowable values for each possible parameter are described below.
+
+- browser:
+    - Description: A string extracted from the User-Agent header representing the browser name.
+    - Examples: "Chrome", "Safari", "Edge", "Firefox".
+- operating_system:
+    - Description: A string representing the operating system from the User-Agent header.
+    - Examples: "Windows", "macOS", "Linux", "Android", "iOS".
+- device_type:
+    - Description: A string that indicates the type of device accessing the site.
+    - Allowed Values: "Desktop", "Mobile", or "Tablet".
+    - Notes: This is a closed set, so only these three values are acceptable.
+- dimensions:
+    - Description: A string representing the display resolution in the format "widthxheight".
+    - Examples: "1920x1080", "1366x768".
+- language:
+    - Description: A string conforming to IETF BCP 47 language tags.
+    - Examples: "en-US", "en-GB", "fr-FR", or simply "en", "fr" if the region subtag is missing.
+    - Notes: The language subtag (e.g., "en", "fr") is always present, while the region subtag (e.g., "US", "GB") may be omitted if necessary.
+- country:
+    - Description: A string representing an ISO 3166-1 alpha-2 country code.
+    - Examples: "US", "CA", "GB", "FR".
+    - Notes: This standard ensures that only valid two-letter country codes are accepted.
+- iso_3166_2:
+    - Description: A string representing an ISO 3166-2 code for country subdivisions.
+    - Examples: "US-CA" (for California), "FR-IDF" (for Île-de-France).
+    - Notes: This value follows a standardized format with a country code and a subdivision code separated by a hyphen.
+- referrer:
+    - Description: A string containing the URL returned by JavaScript's document.referrer.
+    - Examples: "https://google.com/", "https://reddit.com/".
+    - Notes: Since the referrer can be any valid URL, this value can be highly varied; typically, only the domain or full URL is used.
+- pathname:
+    - Description: A string representing the path portion of a URL, as returned by JavaScript's URL.pathname.
+    - Examples: "/home", "/about", "/products/item-123".
+    - Notes: This excludes the domain and query string, focusing only on the path structure.
+- querystring:
+    - Description: A string representing the query portion of a URL, as returned by JavaScript's URL.search.
+    - Examples: "?q=search+term", "?page=2&sort=asc".
+    - Notes: This includes the leading "?" and contains key-value pairs.
+- page_title:
+    - Description: A string representing the document title, as provided by JavaScript's document.title.
+    - Examples: "Welcome to Our Site", "Product Details", "Contact Us".
+    - Notes: This is typically a free-form text string that describes the page content.
+- event_name:
+    - Description: A custom string defined by the user, representing the name of an event.
+    - Examples: "button_click", "form_submit", "video_play".
+    - Notes: This is free-form text and may vary widely depending on the specific events being tracked.
+- entry_page:
+    - Description: A string representing the path portion of the URL where a session begins, extracted from the first pageview in a session.
+    - Examples: "/landing", "/homepage".
+    - Notes: It uses the same format as pathname but specifically denotes the entry point of the session.
+- exit_page:
+    - Description: A string representing the path portion of the URL where a session ends, extracted from the last pageview in a session.
+    - Examples: "/checkout", "/thank-you".
+    - Notes: Like entry_page, it follows the pathname structure but indicates the session's end page.`);
 
 // value corresponds to possible values of the parameter field which corresponds to a clickhouse column
 // if value array contains multiple values, the filter type comparison is applied to each value in an OR manner
@@ -60,11 +120,12 @@ const filterParameterSchema = z.enum([
 // describe the order in which the LLM should think through choosing? (parameter, type, value order?)
 const filterSchema = z.object({
   parameter: filterParameterSchema,
-  value: z.array(z.string()).nonempty({ message: "Filter values must contain at least one string" }),
   type: filterTypeSchema,
+  value: filterValueSchema,
 });
 
 // If JSON string of array contains multiple elements, each filter is applied in an AND manner
+// filtersSchema can be empty string "" or empty array "[]" based off getFilterStatement guards
 const filtersSchema = z.string()
   .refine((filters) => {
     try {
