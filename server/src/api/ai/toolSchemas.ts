@@ -10,19 +10,15 @@ import { DateTime } from "luxon";
 // Check if you need to do some post-processing on the return value of each get/fetchMethod() in each tool
 // before returning as a string to filter out unnecessary fields
 
-// If tools end up being too complex (because of long descriptions, complex schemas, etc.) to be reliably
-// handled by a single agent, split architecture into one agent per tool along with a supervisor agent
-// to aggregate their results to respond to the user
-
 // Include in zod schema description or LLM prompt somewhere that date can be null if user querying all time
+// Not sure about this actually; doesn't really match the current string only typing and messes with validation
 const dateSchema = z.string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, {
     message: "Date must be in YYYY-MM-DD format",
   })
   .refine(date => DateTime.fromISO(date).isValid, {
     message: "Date must be a valid calendar date",
-  })
-  .nullable();
+  });
 
 const startDateSchema = dateSchema
   .describe("The start date of the time interval for querying metrics in YYYY-MM-DD format");
@@ -30,6 +26,8 @@ const startDateSchema = dateSchema
 const endDateSchema = dateSchema
   .describe("The end date of the time interval for querying metrics in YYYY-MM-DD format");
 
+// describe sql operator mapping? might be unnecessary if filterSchema has description describing field relationships
+// since value is typed as string only
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
   .describe("The type of comparison to perform");
 
@@ -58,6 +56,7 @@ const filterParameterSchema = z.enum([
 // can be list of literals for parameters with small set of possible values like operating_system, browser, device_type, etc.
 // specify general identifier for parameters with large value set like country, iso_3166, language, etc. (various ISO standards)
 // sometimes value can depend on the user input (e.g., referrer if user asks "how many visits do I have from google.com")
+// describe overall purpose of a single filter object and field relationships
 const filterSchema = z.object({
   parameter: filterParameterSchema,
   value: z.array(z.string()).nonempty({ message: "Filter values must contain at least one string" }),
