@@ -28,6 +28,8 @@ const endDateSchema = dateSchema
 
 // describe sql operator mapping? might be unnecessary if filterSchema has description describing field relationships
 // since value is typed as string only
+// maybe add a description that restricts it to equals or not_equals and contains or not_contains
+// based off the filerParameterSchema value
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
   .describe("The type of comparison to perform");
 
@@ -36,8 +38,6 @@ const filterParameterSchema = z.enum([
   "operating_system", // small set
   "language", // large set
   "country", // large set
-  "region", // remove? clickhouse tables don't have region column, this is just iso_3166_2
-  "city", // remove? clickhouse tables don't have city column
   "device_type", // small set
   "referrer", // infinite set (depends on user input)
   "pathname", // infinite set (depends on user input)
@@ -57,6 +57,7 @@ const filterParameterSchema = z.enum([
 // specify general identifier for parameters with large value set like country, iso_3166, language, etc. (various ISO standards)
 // sometimes value can depend on the user input (e.g., referrer if user asks "how many visits do I have from google.com")
 // describe overall purpose of a single filter object and field relationships
+// describe the order in which the LLM should think through choosing? (parameter, type, value order?)
 const filterSchema = z.object({
   parameter: filterParameterSchema,
   value: z.array(z.string()).nonempty({ message: "Filter values must contain at least one string" }),
