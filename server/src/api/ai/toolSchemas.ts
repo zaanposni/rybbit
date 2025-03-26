@@ -50,9 +50,14 @@ const filterParameterSchema = z.enum([
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
   .describe("The type of comparison to perform");
 
+// Improve "If there is only one... any of the provide values."
+// Don't think OR operator needs to be mentioned. Too technical. Abstract it away
 const filterValueSchema = z.array(z.string())
   .nonempty({ message: "Filter values must contain at least one string" })
-  .describe(`An array of one or more string values to match against the given parameter. These values are used to filter the records. If there is only one value, the filter produces a single condition. If there are multiple values, they are combined using the OR operator to allow matching any of the provided values.
+  .describe(`
+An array of one or more string values to match against the given parameter. These values are used to filter the records.
+
+If there is only one value, the filter produces a single condition. If there are multiple values, they are combined using the OR operator to allow matching any of the provided values.
 
 The allowable values for each possible parameter are described below.
 
