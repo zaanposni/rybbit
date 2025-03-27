@@ -14,17 +14,17 @@ import { DateTime } from "luxon";
 // Not sure about this actually; doesn't really match the current string only typing and messes with validation
 const dateSchema = z.string()
   .regex(/^\d{4}-\d{2}-\d{2}$/, {
-    message: "Date must be in YYYY-MM-DD format",
+    message: "Date must be in YYYY-MM-DD format.",
   })
   .refine(date => DateTime.fromISO(date).isValid, {
-    message: "Date must be a valid calendar date",
+    message: "Date must be a valid calendar date.",
   });
 
 const startDateSchema = dateSchema
-  .describe("The start date of the time interval for querying metrics in YYYY-MM-DD format");
+  .describe("The start date of the time interval for querying metrics in YYYY-MM-DD format.");
 
 const endDateSchema = dateSchema
-  .describe("The end date of the time interval for querying metrics in YYYY-MM-DD format");
+  .describe("The end date of the time interval for querying metrics in YYYY-MM-DD format.");
 
 const filterParameterSchema = z.enum([
   "browser",
@@ -41,25 +41,37 @@ const filterParameterSchema = z.enum([
   "event_name",
   "entry_page",
   "exit_page",
-]);
+]).describe(`The record field to use for filtering, i.e., the property of the data on which records will be filtered.
 
-// describe sql operator mapping? might be unnecessary if filterSchema has description describing field relationships
-// since value is typed as string only
-// maybe add a description that restricts it to equals or not_equals and contains or not_contains
-// based off the filerParameterSchema value
+The purpose of each parameter in the context of web analytics is explained below.
+
+- browser: Helps in analyzing which browsers are most commonly used.
+- operating_system: Displays trends based on the OS, which can influence design decisions.
+- device_type: Critical for optimizing user experience across different devices.
+- dimensions: The display resolution of the user's device. Useful for optimizing visual layout and responsiveness.
+- language: Useful for internationalization and understanding the linguistic demographics.
+- country: Provides insights into geographic distribution and regional traffic patterns.
+- iso_3166_2: A specific country subdivision, such as a state or province. Useful for granular geographic analysis beyond just the country level.
+- referrer: The URL of the webpage that referred the user to the site. Helps in tracking traffic sources.
+- pathname: The path component of a URL that the user visited. Useful for analyzing which specific sections or pages of the site are most popular.
+- querystring: The query portion of a URL. Helps in identifying and tracking dynamic parameters that may affect content display or functionality.
+- page_title: The title of the webpage. Can be used for reporting and user engagement analysis.
+- event_name: A custom, developer-defined string that names an event tracked on the site. Enables tracking of specific interactions or behaviors that are important for understanding user engagement.
+- entry_page: Identifies the entry point for sessions, which is valuable for understanding the initial touchpoint of the user experience.
+- exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.
+`);
+
+// add description that restricts it to equals/not_equals or contains/not_contains based off the filterParameterSchema value?
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
-  .describe("The type of comparison to perform");
+  .describe("The type of comparison to perform.");
 
-// Improve "If there is only one... any of the provide values."
-// Don't think OR operator needs to be mentioned. Too technical. Abstract it away
 const filterValueSchema = z.array(z.string())
-  .nonempty({ message: "Filter values must contain at least one string" })
-  .describe(`
-An array of one or more string values to match against the given parameter. These values are used to filter the records.
+  .nonempty({ message: "Filter values must contain at least one string." })
+  .describe(`An array of one or more string values to match against the chosen parameter. These values are used to filter the records.
 
-If there is only one value, the filter produces a single condition. If there are multiple values, they are combined using the OR operator to allow matching any of the provided values.
+If there is only one value, a record satisfies the filter if it matches the value based on the selected comparison type. If there are multiple values, a record satisfies the filter if it matches any of the provided values based on the selected comparison type.
 
-The allowable values for each possible parameter are described below.
+The allowable values for each parameter are described below.
 
 - browser:
     - Description: A string extracted from the User-Agent header representing the browser name.
@@ -115,14 +127,7 @@ The allowable values for each possible parameter are described below.
     - Examples: "/checkout", "/thank-you".
     - Notes: Like entry_page, it follows the pathname structure but indicates the session's end page.`);
 
-// value corresponds to possible values of the parameter field which corresponds to a clickhouse column
-// if value array contains multiple values, the filter type comparison is applied to each value in an OR manner
-// need to add a description/schema for value that specifies which values it can take depending on the parameter
-// can be list of literals for parameters with small set of possible values like operating_system, browser, device_type, etc.
-// specify general identifier for parameters with large value set like country, iso_3166, language, etc. (various ISO standards)
-// sometimes value can depend on the user input (e.g., referrer if user asks "how many visits do I have from google.com")
 // describe overall purpose of a single filter object and field relationships
-// describe the order in which the LLM should think through choosing? (parameter, type, value order?)
 const filterSchema = z.object({
   parameter: filterParameterSchema,
   type: filterTypeSchema,
@@ -148,7 +153,7 @@ const filtersSchema = z.string()
 const bucketSchema = z.string().describe("Placeholder");
 
 const past24HoursSchema = z.boolean()
-  .describe("Determines whether the query uses the past 24 hours or the startDate and endDate");
+  .describe("Determines whether the query uses the past 24 hours or the startDate and endDate.");
 
 // have some sort of default value if user doesn't say something like "give me top 5, most visited (implies 1), etc."
 // think the value (default or not) has to be returned by the LLM no matter what
