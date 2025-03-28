@@ -16,24 +16,7 @@ const startDateSchema = dateSchema
 const endDateSchema = dateSchema
   .describe("The end date of the time interval to fetch analytics data from in YYYY-MM-DD format.");
 
-const filterParameterSchema = z.enum([
-  "browser",
-  "operating_system",
-  "device_type",
-  "dimensions",
-  "language",
-  "country",
-  "iso_3166_2",
-  "referrer",
-  "pathname",
-  "querystring",
-  "page_title",
-  "event_name",
-  "entry_page",
-  "exit_page",
-]).describe(`The record field to use for filtering, i.e., the property of the data on which records will be filtered.
-
-The purpose of each parameter in the context of web analytics is explained below.
+const parameterDescription = `The purpose of each parameter in the context of web analytics is explained below.
 
 - browser: Helps in analyzing which browsers are most commonly used.
 - operating_system: Displays trends based on the OS, which can influence design decisions.
@@ -48,7 +31,27 @@ The purpose of each parameter in the context of web analytics is explained below
 - page_title: The title of the webpage. Can be used for reporting and user engagement analysis.
 - event_name: A custom, developer-defined string that names an event tracked on the site. Enables tracking of specific interactions or behaviors that are important for understanding user engagement.
 - entry_page: Identifies the entry point for sessions, which is valuable for understanding the initial touchpoint of the user experience.
-- exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.`);
+- exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.`;
+
+const parameterSchema = z.enum([
+  "browser",
+  "operating_system",
+  "device_type",
+  "dimensions",
+  "language",
+  "country",
+  "iso_3166_2",
+  "referrer",
+  "pathname",
+  "querystring",
+  "page_title",
+  "event_name",
+  "entry_page",
+  "exit_page",
+]).describe("The data property to aggregate.\n\n" + parameterDescription);
+
+const filterParameterSchema = parameterSchema
+  .describe("The record field to use for filtering, i.e., the property of the data on which records will be filtered.\n\n" + parameterDescription);
 
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
   .describe(`The type of comparison to perform. Can be an exact match ("equals"), a non-match ("not_equals"), a partial match ("contains"), or a negative partial match ("not_contains").`);
@@ -174,7 +177,7 @@ export const getSingleColToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
   filters: filtersSchema,
-  parameter: filterParameterSchema,
+  parameter: parameterSchema,
   limit: limitSchema,
 });
 
