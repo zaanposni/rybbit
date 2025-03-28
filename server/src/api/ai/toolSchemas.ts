@@ -135,11 +135,14 @@ const bucketSchema = z.enum(["hour", "day", "week", "month"])
 const past24HoursSchema = z.boolean()
   .describe("Determines whether to fetch analytics data from the past 24 hours (true) or the startDate to endDate time interval (false).");
 
-// have some sort of default value if user doesn't say something like "give me top 5, most visited (implies 1), etc."
-// think the value (default or not) has to be returned by the LLM no matter what
-// maybe just let LLM decide on a value if user doesn't specify instead of hardcoding a default value
-// so include something about this in tool and/or parameter descriptions and/or LLM prompt
-const limitSchema = z.number().describe("Placeholder");
+const limitSchema = z.number()
+  .gte(1, {
+    message: "Limit must be greater than or equal to 1.",
+  })
+  .lte(100, {
+    message: "Limit must be less than or equal to 100.",
+  })
+  .describe("The maximum number of data records to return. Must be between 1 and 100.");
 
 // similar situation to limit for getSingleColTool (LLM decides based off user input)
 // except getSessionsTool can be called multiple times in parallel where each tool call is related to each other
