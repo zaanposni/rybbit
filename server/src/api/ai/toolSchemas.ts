@@ -124,7 +124,13 @@ const filterSchema = z.object({
 const filtersSchema = z.array(filterSchema)
   .describe("An array of filter objects, where each object specifies a single filtering condition. This allows for multiple conditions to be combined, each targeting a different property of the data. Only records that satisfy all filter conditions will be returned.");
 
-const bucketSchema = z.string().describe("Placeholder");
+const bucketSchema = z.enum(["hour", "day", "week", "month"])
+  .describe(`The granularity level to group the data by.
+
+- hour: Always allowed.
+- day: Only allowed if the startDate and endDate are at least 1 day apart.
+- week: Only allowed if the startDate and endDate are at least 14 days apart.
+- month: Only allowed if the startDate and endDate are at least 60 days apart.`);
 
 const past24HoursSchema = z.boolean()
   .describe("Determines whether to fetch analytics data from the past 24 hours (true) or the startDate to endDate time interval (false).");
