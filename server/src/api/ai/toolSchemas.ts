@@ -1,18 +1,8 @@
 import { z } from "zod";
 import { DateTime } from "luxon";
 
-// Specify which parameters can/can't be empty in zod schema desc and validation (e.g., filters can be empty string)
-
-// Some typings don't match across frontend and backend
-// E.g., frontend can send null for startDate and endDate while backend expects string only
-// Everything still works since null is falsy but probably good to fix
-
-// Check if you need to do some post-processing on the return value of each get/fetchMethod() in each tool
-// before returning as a string to filter out unnecessary fields
-
-// Include in zod schema description or LLM prompt somewhere that date can be null if user querying all time
-// Not sure about this actually; doesn't really match the current string only typing and messes with validation
 const dateSchema = z.string()
+  .nonempty({ message: "Date is required." })
   .regex(/^\d{4}-\d{2}-\d{2}$/, {
     message: "Date must be in YYYY-MM-DD format.",
   })
@@ -58,12 +48,10 @@ The purpose of each parameter in the context of web analytics is explained below
 - page_title: The title of the webpage. Can be used for reporting and user engagement analysis.
 - event_name: A custom, developer-defined string that names an event tracked on the site. Enables tracking of specific interactions or behaviors that are important for understanding user engagement.
 - entry_page: Identifies the entry point for sessions, which is valuable for understanding the initial touchpoint of the user experience.
-- exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.
-`);
+- exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.`);
 
-// add description that restricts it to equals/not_equals or contains/not_contains based off the filterParameterSchema value?
 const filterTypeSchema = z.enum(["equals", "not_equals", "contains", "not_contains"])
-  .describe("The type of comparison to perform.");
+  .describe(`The type of comparison to perform. Can be an exact match ("equals"), a non-match ("not_equals"), a partial match ("contains"), or a negative partial match ("not_contains").`);
 
 const filterValueSchema = z.array(z.string())
   .nonempty({ message: "Filter values must contain at least one string." })
@@ -127,28 +115,14 @@ The allowable values for each parameter are described below.
     - Examples: "/checkout", "/thank-you".
     - Notes: Like entry_page, it follows the pathname structure but indicates the session's end page.`);
 
-// describe overall purpose of a single filter object and field relationships
 const filterSchema = z.object({
   parameter: filterParameterSchema,
   type: filterTypeSchema,
   value: filterValueSchema,
-});
+}).describe("Defines a condition used to extract a specific subset of records.");
 
-// If JSON string of array contains multiple elements, each filter is applied in an AND manner
-// filtersSchema can be empty string "" or empty array "[]" based off getFilterStatement guards
-const filtersSchema = z.string()
-  .refine((filters) => {
-    try {
-      const parsed = JSON.parse(filters);
-      if (!Array.isArray(parsed)) return false;
-      parsed.forEach((filter: any) => filterSchema.parse(filter));
-      return true;
-    } catch (error) {
-      return false;
-    }
-  }, {
-    message: "Filters must be a JSON string representing an array of filter objects."
-  });
+const filtersSchema = z.array(filterSchema)
+  .describe("An array of filter objects, where each object specifies a single filtering condition. This allows for multiple conditions to be combined, each targeting a different property of the data. Only records that satisfy all filter conditions will be returned.");
 
 const bucketSchema = z.string().describe("Placeholder");
 
