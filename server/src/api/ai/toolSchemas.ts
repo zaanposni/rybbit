@@ -11,10 +11,10 @@ const dateSchema = z.string()
   });
 
 const startDateSchema = dateSchema
-  .describe("The start date of the time interval for querying metrics in YYYY-MM-DD format.");
+  .describe("The start date of the time interval to fetch analytics data from in YYYY-MM-DD format.");
 
 const endDateSchema = dateSchema
-  .describe("The end date of the time interval for querying metrics in YYYY-MM-DD format.");
+  .describe("The end date of the time interval to fetch analytics data from in YYYY-MM-DD format.");
 
 const filterParameterSchema = z.enum([
   "browser",
@@ -127,7 +127,7 @@ const filtersSchema = z.array(filterSchema)
 const bucketSchema = z.string().describe("Placeholder");
 
 const past24HoursSchema = z.boolean()
-  .describe("Determines whether the query uses the past 24 hours or the startDate and endDate.");
+  .describe("Determines whether to fetch analytics data from the past 24 hours (true) or the startDate to endDate time interval (false).");
 
 // have some sort of default value if user doesn't say something like "give me top 5, most visited (implies 1), etc."
 // think the value (default or not) has to be returned by the LLM no matter what
