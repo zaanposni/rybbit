@@ -21,7 +21,15 @@ interface GetOverviewBucketedRequest {
   };
 }
 
-type GetOverviewBucketedResponse = { time: string; pageviews: number }[];
+type GetOverviewBucketedResponse = {
+  time: string;
+  pageviews: number;
+  sessions: number;
+  pages_per_session: number;
+  bounce_rate: number;
+  session_duration: number;
+  users: number;
+}[];
 
 const TimeBucketToFn = {
   minute: "toStartOfMinute",
