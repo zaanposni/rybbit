@@ -7,11 +7,14 @@ import {
 } from "../../../../../components/ui/basic-tabs";
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
+import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 
 type Tab = "events";
 
-export function Events() {
+export function Events({ isRealtime = false }: { isRealtime?: boolean }) {
   const [tab, setTab] = useState<Tab>("events");
+
+  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
     <Card>
@@ -25,7 +28,7 @@ export function Events() {
             <TabsTrigger value="events">Custom Events</TabsTrigger>
           </TabsList>
           <TabsContent value="events">
-            <StandardSection
+            <ComponentToUse
               filterParameter="event_name"
               title="Events"
               countLabel="Count"

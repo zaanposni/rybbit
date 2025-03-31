@@ -17,7 +17,7 @@ export default function SiteLayout({
   const { data: siteHasData, isLoading } = useSiteHasData(site);
 
   const { siteMetadata, isLoading: isLoadingSiteMetadata } =
-    useGetSiteMetadata(site);
+    useGetSiteMetadata();
 
   // Sync store state with URL parameters
   useSyncStateWithUrl();

@@ -28,6 +28,7 @@ export const initializeClickhouse = async () => {
         language LowCardinality(String),
         country LowCardinality(FixedString(2)),
         iso_3166_2 LowCardinality(String),
+        city String,
         latitude Float64,
         longitude Float64,
         screen_width UInt16,

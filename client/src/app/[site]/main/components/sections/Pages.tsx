@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { GetSitesResponse } from "../../../../../api/admin/sites";
+import {
+  GetSitesResponse,
+  useGetSiteMetadata,
+} from "../../../../../api/admin/sites";
 import {
   Tabs,
   TabsContent,
@@ -10,15 +13,16 @@ import {
 } from "../../../../../components/ui/basic-tabs";
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
+import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 
 type Tab = "pages" | "entry_pages" | "exit_pages";
 
-export function Pages({
-  siteMetadata,
-}: {
-  siteMetadata: GetSitesResponse[number];
-}) {
+export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
+  const { siteMetadata } = useGetSiteMetadata();
   const [tab, setTab] = useState<Tab>("pages");
+
+  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
+
   return (
     <Card className="h-[493px]">
       <CardContent className="mt-2">
@@ -33,33 +37,33 @@ export function Pages({
             <TabsTrigger value="exit_pages">Exit Pages</TabsTrigger>
           </TabsList>
           <TabsContent value="pages">
-            <StandardSection
+            <ComponentToUse
               filterParameter="pathname"
               title="Pages"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
               getLabel={(e) => e.value || "Other"}
-              getLink={(e) => `https://${siteMetadata.domain}${e.value}`}
+              getLink={(e) => `https://${siteMetadata?.domain}${e.value}`}
             />
           </TabsContent>
           <TabsContent value="entry_pages">
-            <StandardSection
+            <ComponentToUse
               filterParameter="entry_page"
               title="Entry Pages"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
               getLabel={(e) => e.value || "Other"}
-              getLink={(e) => `https://${siteMetadata.domain}${e.value}`}
+              getLink={(e) => `https://${siteMetadata?.domain}${e.value}`}
             />
           </TabsContent>
           <TabsContent value="exit_pages">
-            <StandardSection
+            <ComponentToUse
               filterParameter="exit_page"
               title="Exit Pages"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
               getLabel={(e) => e.value || "Other"}
-              getLink={(e) => `https://${siteMetadata.domain}${e.value}`}
+              getLink={(e) => `https://${siteMetadata?.domain}${e.value}`}
             />
           </TabsContent>
         </Tabs>

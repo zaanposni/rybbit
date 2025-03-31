@@ -12,6 +12,7 @@ import { getCountryName } from "../../../../../lib/utils";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
 import { useSubdivisions } from "../../../../../lib/geo";
+import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 
 type Tab = "countries" | "regions" | "languages";
 
@@ -45,10 +46,12 @@ const getCountryFromLanguage = (languageCode: string): string | null => {
   return null;
 };
 
-export function Countries() {
+export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
   const [tab, setTab] = useState<Tab>("countries");
 
   const { data: subdivisions } = useSubdivisions();
+
+  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
     <Card className="">
@@ -64,7 +67,7 @@ export function Countries() {
             <TabsTrigger value="languages">Languages</TabsTrigger>
           </TabsList>
           <TabsContent value="countries">
-            <StandardSection
+            <ComponentToUse
               filterParameter="country"
               title="Countries"
               getValue={(e) => e.value}
@@ -80,7 +83,7 @@ export function Countries() {
             />
           </TabsContent>
           <TabsContent value="regions">
-            <StandardSection
+            <ComponentToUse
               filterParameter="iso_3166_2"
               title="Regions"
               getValue={(e) => e.value}
@@ -108,7 +111,7 @@ export function Countries() {
             />
           </TabsContent>
           <TabsContent value="languages">
-            <StandardSection
+            <ComponentToUse
               filterParameter="language"
               title="Languages"
               getValue={(e) => e.value}

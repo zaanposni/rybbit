@@ -8,11 +8,14 @@ import {
 } from "../../../../../components/ui/basic-tabs";
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
-
+import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 type Tab = "referrers";
 
-export function Referrers() {
+export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
   const [tab, setTab] = useState<Tab>("referrers");
+
+  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
+
   return (
     <Card className="h-[493px]">
       <CardContent className="mt-2">
@@ -25,7 +28,7 @@ export function Referrers() {
             <TabsTrigger value="referrers">Referrers</TabsTrigger>
           </TabsList>
           <TabsContent value="referrers">
-            <StandardSection
+            <ComponentToUse
               filterParameter="referrer"
               title="Referrers"
               getValue={(e) => e.value}

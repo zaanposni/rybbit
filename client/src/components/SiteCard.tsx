@@ -84,7 +84,7 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
             {domain}
           </span>
         </Link>
-        <SiteSettings siteId={siteId} />
+        <SiteSettings />
       </div>
 
       <div className="relative mt-1 mb-1 rounded-md p-2 overflow-hidden">

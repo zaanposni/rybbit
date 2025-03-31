@@ -4,6 +4,7 @@ import {
   geSqlParam,
   getFilterStatement,
   getTimeStatement,
+  getTimeStatementRealtime,
   processResults,
 } from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
@@ -13,6 +14,7 @@ interface GetSingleColRequest {
   Querystring: {
     startDate: string;
     endDate: string;
+    minutes: number;
     timezone: string;
     site: string;
     filters: string;
@@ -30,8 +32,16 @@ type GetSingleColResponse = {
 }[];
 
 const getQuery = (request: GetSingleColRequest["Querystring"]) => {
-  const { startDate, endDate, timezone, site, filters, parameter, limit } =
-    request;
+  const {
+    startDate,
+    endDate,
+    timezone,
+    site,
+    filters,
+    parameter,
+    limit,
+    minutes,
+  } = request;
 
   const filterStatement = getFilterStatement(filters);
 
@@ -50,7 +60,11 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
     WHERE
       site_id = ${site}
       ${filterStatement}
-      ${getTimeStatement(startDate, endDate, timezone)}
+      ${
+        minutes
+          ? getTimeStatementRealtime(minutes)
+          : getTimeStatement(startDate, endDate, timezone)
+      }
       AND type = 'custom_event'
     GROUP BY event_name ORDER BY count desc
     ${limit ? `LIMIT ${limit}` : ""};
@@ -74,7 +88,11 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
         WHERE
           site_id = ${site} 
           ${filterStatement}
-          ${getTimeStatement(startDate, endDate, timezone)}
+          ${
+            minutes
+              ? getTimeStatementRealtime(minutes)
+              : getTimeStatement(startDate, endDate, timezone)
+          }
           // AND type = 'pageview'
         GROUP BY session_id
     ) AS query
@@ -91,7 +109,11 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
     WHERE
         site_id = ${site}
         ${filterStatement}
-        ${getTimeStatement(startDate, endDate, timezone)}
+        ${
+          minutes
+            ? getTimeStatementRealtime(minutes)
+            : getTimeStatement(startDate, endDate, timezone)
+        }
         // AND type = 'pageview'
     GROUP BY value ORDER BY count desc
     ${limit ? `LIMIT ${limit}` : ""};

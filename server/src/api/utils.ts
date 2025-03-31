@@ -27,13 +27,17 @@ export function getTimeStatement(
     )`;
 }
 
+export function getTimeStatementRealtime(minutes: number) {
+  return `AND timestamp > now() - interval '${minutes} minute'`;
+}
+
 export async function processResults<T>(
   results: ResultSet<"JSONEachRow">
 ): Promise<T[]> {
   const data: T[] = await results.json();
   for (const row of data) {
     for (const key in row) {
-      if (!isNaN(Number(row[key]))) {
+      if (!isNaN(Number(row[key])) && row[key] !== "") {
         row[key] = Number(row[key]) as any;
       }
     }

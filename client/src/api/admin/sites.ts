@@ -1,4 +1,5 @@
 import { BACKEND_URL } from "../../lib/const";
+import { useStore } from "../../lib/store";
 import { authedFetch, genericQuery, useGenericQuery } from "../utils";
 
 export type GetSitesResponse = {
@@ -59,10 +60,11 @@ export function useSiteHasData(siteId: string) {
   return useGenericQuery<boolean>(`site-has-data/${siteId}`);
 }
 
-export function useGetSiteMetadata(siteId: string | number) {
+export function useGetSiteMetadata() {
+  const { site } = useStore();
   const { data, isLoading } = useGetSites();
   return {
-    siteMetadata: data?.find((site) => site.siteId === Number(siteId)),
+    siteMetadata: data?.find(({ siteId }) => siteId === Number(site)),
     isLoading,
   };
 }

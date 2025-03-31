@@ -41,12 +41,8 @@ import {
 } from "@/api/admin/sites";
 import { BACKEND_URL } from "@/lib/const";
 
-interface SiteSettingsProps {
-  siteId: number;
-}
-
-export function SiteSettings({ siteId }: SiteSettingsProps) {
-  const { siteMetadata } = useGetSiteMetadata(siteId);
+export function SiteSettings() {
+  const { siteMetadata } = useGetSiteMetadata();
 
   if (!siteMetadata) {
     return null;

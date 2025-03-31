@@ -56,3 +56,40 @@ export function useSingleCol({
     },
   });
 }
+
+export function useSingleColRealtime({
+  parameter,
+  limit = 1000,
+  minutes = 30,
+}: {
+  parameter: FilterParameter;
+  limit?: number;
+  minutes?: number;
+}): UseQueryResult<APIResponse<SingleColResponse[]>> {
+  const { time, previousTime, site, filters } = useStore();
+
+  return useQuery({
+    queryKey: [parameter, site, limit, minutes],
+    queryFn: () => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return authedFetch(`${BACKEND_URL}/single-col`, {
+        timezone,
+        site,
+        parameter,
+        limit,
+        minutes,
+      }).then((res) => res.json());
+    },
+    staleTime: Infinity,
+    placeholderData: (_, query: any) => {
+      if (!query?.queryKey) return undefined;
+      const prevQueryKey = query.queryKey as [string, string, string];
+      const [, , prevSite] = prevQueryKey;
+
+      if (prevSite === site) {
+        return query.state.data;
+      }
+      return undefined;
+    },
+  });
+}

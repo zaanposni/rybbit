@@ -17,12 +17,12 @@ export default function MainPage() {
     return null;
   }
 
-  return <MainPageContent site={site} />;
+  return <MainPageContent />;
 }
 
-function MainPageContent({ site }: { site: string }) {
+function MainPageContent() {
   const { siteMetadata, isLoading: isLoadingSiteMetadata } =
-    useGetSiteMetadata(site);
+    useGetSiteMetadata();
 
   if (isLoadingSiteMetadata || !siteMetadata) {
     return null;
@@ -34,7 +34,7 @@ function MainPageContent({ site }: { site: string }) {
       <MainSection />
       <div className="grid grid-cols-2 gap-4 mt-4">
         <Devices />
-        <Pages siteMetadata={siteMetadata} />
+        <Pages />
         <Referrers />
         <Countries />
         <Events />
