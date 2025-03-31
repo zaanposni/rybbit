@@ -1,33 +1,26 @@
-import { useEffect, useRef } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { GetSessionsResponse } from "../../../../api/analytics/userSessions";
+import { useEffect, useMemo, useRef } from "react";
+import { useGetSessionsInfinite } from "../../api/analytics/userSessions";
 import { SessionCard, SessionCardSkeleton } from "./SessionCard";
 
-interface SessionsListProps {
-  data: GetSessionsResponse;
-  isLoading: boolean;
-  fetchNextPage: () => void;
-  hasNextPage: boolean | undefined;
-  isFetchingNextPage: boolean;
-}
+export default function SessionsList({ userId }: { userId?: string }) {
+  // Get sessions data with infinite loading
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetSessionsInfinite(userId);
 
-export default function SessionsList({
-  data,
-  isLoading,
-  fetchNextPage,
-  hasNextPage,
-  isFetchingNextPage,
-}: SessionsListProps) {
-  const { site } = useParams();
-  const router = useRouter();
+  // Combine all pages of data
+  const flattenedData = useMemo(() => {
+    if (!data) return [];
+    return data.pages.flatMap((page) => page.data || []);
+  }, [data]);
 
   // Reference for the scroll container
   const containerRef = useRef<HTMLDivElement>(null);
-
-  // Handle navigation to user details page
-  const handleSessionClick = (userId: string) => {
-    router.push(`/${site}/user/${userId}`);
-  };
 
   // Infinite scroll implementation
   useEffect(() => {
@@ -55,6 +48,11 @@ export default function SessionsList({
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
 
+  if (error)
+    return (
+      <div className="text-red-500 p-4">Error: {(error as Error).message}</div>
+    );
+
   return (
     <div
       ref={containerRef}
@@ -63,26 +61,24 @@ export default function SessionsList({
     >
       {isLoading ? (
         // Show skeleton cards while loading
-        Array.from({ length: 10 }).map((_, index) => (
-          <SessionCardSkeleton key={`skeleton-${index}`} />
-        ))
-      ) : data.length === 0 ? (
+        <SessionCardSkeleton />
+      ) : flattenedData.length === 0 ? (
         <div className="flex justify-center py-8 text-gray-400">
           No sessions found
         </div>
       ) : (
         // Render session cards with more robust key generation
-        data.map((session, index) => (
+        flattenedData.map((session, index) => (
           <SessionCard
-            key={`${index}`}
+            key={`${session.session_id}-${index}`}
             session={session}
-            onClick={() => handleSessionClick(session.user_id)}
+            userId={userId}
           />
         ))
       )}
 
       {isFetchingNextPage && (
-        <div className="py-4">
+        <div className="">
           <SessionCardSkeleton key="loading-more" />
         </div>
       )}

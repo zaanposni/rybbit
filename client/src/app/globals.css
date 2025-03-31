@@ -357,4 +357,56 @@ body {
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }
+
+  /* Dark scrollbar styles */
+  /* For Webkit browsers (Chrome, Safari, newer Edge) */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: hsl(0 0% 9%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 35%);
+    border-radius: 4px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 40%);
+  }
+
+  /* For Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 35%) hsl(0 0% 9%);
+  }
+
+  /* Custom scrollbar class for specific elements */
+  .scrollbar-dark::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-track {
+    background: hsl(0 0% 7%);
+    border-radius: 3px;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-thumb {
+    background: hsl(0 0% 40%);
+    border-radius: 3px;
+  }
+
+  .scrollbar-dark::-webkit-scrollbar-thumb:hover {
+    background: hsl(0 0% 45%);
+  }
+
+  .scrollbar-dark {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(0 0% 40%) hsl(0 0% 7%);
+  }
 }

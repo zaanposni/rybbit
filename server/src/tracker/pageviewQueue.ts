@@ -58,9 +58,12 @@ class PageviewQueue {
 
     // Process each pageview with its geo data
     const processedPageviews = batch.map((pv) => {
-      const countryCode = geoData?.[pv.ipAddress]?.data?.countryIso || "";
-      const regionCode =
-        geoData?.[pv.ipAddress]?.data?.subdivisions?.[0]?.isoCode || "";
+      const dataForIp = geoData?.[pv.ipAddress];
+
+      const countryCode = dataForIp?.data?.countryIso || "";
+      const regionCode = dataForIp?.data?.subdivisions?.[0]?.isoCode || "";
+      const latitude = dataForIp?.data?.latitude || 0;
+      const longitude = dataForIp?.data?.longitude || 0;
 
       return {
         site_id: pv.site_id,
@@ -85,6 +88,8 @@ class PageviewQueue {
         country: countryCode,
         iso_3166_2:
           countryCode && regionCode ? countryCode + "-" + regionCode : "",
+        lat: latitude || 0,
+        lon: longitude || 0,
         type: pv.type || "pageview",
         event_name: pv.event_name || "",
         properties: pv.properties,

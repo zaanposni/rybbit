@@ -31,9 +31,11 @@ type GetSessionsResponse = {
   referrer: string;
   session_end: string;
   session_start: string;
+  session_duration: number;
   entry_page: string;
   exit_page: string;
   pageviews: number;
+  events: number;
 }[];
 
 export async function fetchSessions({
@@ -51,18 +53,20 @@ export async function fetchSessions({
 SELECT
     session_id,
     user_id,
-    country,
-    iso_3166_2,
-    language,
-    device_type,
-    browser,
-    operating_system,
-    referrer,
+    argMax(country, timestamp) AS country,
+    argMax(iso_3166_2, timestamp) AS iso_3166_2,
+    argMax(language, timestamp) AS language,
+    argMax(device_type, timestamp) AS device_type,
+    argMax(browser, timestamp) AS browser,
+    argMax(operating_system, timestamp) AS operating_system,
+    argMin(referrer, timestamp) AS referrer,
     MAX(timestamp) AS session_end,
     MIN(timestamp) AS session_start,
+    dateDiff('second', MIN(timestamp), MAX(timestamp)) AS session_duration,
     argMinIf(pathname, timestamp, type = 'pageview') AS entry_page,
     argMaxIf(pathname, timestamp, type = 'pageview') AS exit_page,
-    countIf(type = 'pageview') AS pageviews
+    countIf(type = 'pageview') AS pageviews,
+    countIf(type = 'custom_event') AS events
 FROM pageviews
 WHERE
     site_id = ${site}
@@ -71,15 +75,8 @@ WHERE
     ${getTimeStatement(startDate, endDate, timezone)}
 GROUP BY
     session_id,
-    user_id,
-    browser,
-    country,
-    iso_3166_2,
-    language,
-    device_type,
-    operating_system,
-    referrer
-ORDER BY session_start DESC
+    user_id
+ORDER BY session_end DESC
 LIMIT 100 OFFSET ${(page - 1) * 100}
   `;
 

@@ -165,7 +165,7 @@ export function Map() {
 
   const MapEventHandler = () => {
     const map = useMapEvent("zoomend", () => {
-      const newMapView = map.getZoom() >= 4 ? "subdivisions" : "countries";
+      const newMapView = map.getZoom() >= 5 ? "subdivisions" : "countries";
       if (newMapView !== mapView) {
         setMapView(newMapView);
         setTooltipContent(null);
@@ -208,18 +208,18 @@ export function Map() {
             }}
           >
             <MapEventHandler />
-            {mapView === "countries" && countriesGeoData && (
-              <GeoJSON
-                key={`countries-${dataVersion}`}
-                data={countriesGeoData as GeoJsonObject}
-                style={handleStyle}
-                onEachFeature={handleEachFeature}
-              />
-            )}
             {mapView === "subdivisions" && subdivisionsGeoData && (
               <GeoJSON
                 key={`subdivisions-${dataVersion}`}
                 data={subdivisionsGeoData as GeoJsonObject}
+                style={handleStyle}
+                onEachFeature={handleEachFeature}
+              />
+            )}
+            {mapView === "countries" && countriesGeoData && (
+              <GeoJSON
+                key={`countries-${dataVersion}`}
+                data={countriesGeoData as GeoJsonObject}
                 style={handleStyle}
                 onEachFeature={handleEachFeature}
               />
@@ -256,7 +256,7 @@ export function Map() {
                 {tooltipContent.count.toLocaleString()}
               </span>{" "}
               <span className="text-neutral-300">
-                ({tooltipContent.percentage.toFixed(1)}%) pageviews
+                ({tooltipContent.percentage.toFixed(1)}%) sessions
               </span>
             </div>
           </div>

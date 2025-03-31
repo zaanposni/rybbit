@@ -11,6 +11,7 @@ import { getLiveUserCount } from "./api/getLiveUserCount.js";
 import { getOverview } from "./api/getOverview.js";
 import { getOverviewBucketed } from "./api/getOverviewBucketed.js";
 import { getSessions } from "./api/getSessions.js";
+import { getSession } from "./api/getSession.js";
 import { getSingleCol } from "./api/getSingleCol.js";
 import { getUserSessions } from "./api/getUserSessions.js";
 import { listUsers } from "./api/listUsers.js";
@@ -30,6 +31,7 @@ import { listOrganizationMembers } from "./api/listOrganizationMembers.js";
 import { getUserOrganizations } from "./api/user/getUserOrganizations.js";
 import { initializeCronJobs } from "./cron/index.js";
 import { getUserSubscription } from "./api/user/getUserSubscription.js";
+import { getUserInfo } from "./api/getUserInfo.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -126,7 +128,9 @@ server.get("/overview-bucketed", getOverviewBucketed);
 server.get("/single-col", getSingleCol);
 server.get("/site-has-data/:site", getSiteHasData);
 server.get("/sessions", getSessions);
+server.get("/session/:sessionId", getSession);
 server.get("/user/:userId/sessions", getUserSessions);
+server.get("/user/info/:siteId/:userId", getUserInfo);
 
 // Administrative
 server.post("/add-site", addSite);

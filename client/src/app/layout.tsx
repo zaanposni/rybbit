@@ -10,6 +10,7 @@ import { useEffect } from "react";
 import { userStore } from "../lib/userStore";
 import "./globals.css";
 import { Toaster } from "../components/ui/sonner";
+import { TooltipProvider } from "../components/ui/tooltip";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -52,20 +53,22 @@ export default function RootLayout({
           defer
           src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/ping.js"
         ></script>
-        <QueryProvider>
-          {pathname === "/login" || pathname === "/signup" ? (
-            <div className="min-h-full flex items-center justify-center">
-              {children}
-            </div>
-          ) : (
-            <div className="min-h-full">
-              <TopBar />
-              <main className="flex min-h-screen flex-col items-center p-4">
-                <div className="w-full max-w-6xl">{children}</div>
-              </main>
-            </div>
-          )}
-        </QueryProvider>
+        <TooltipProvider>
+          <QueryProvider>
+            {pathname === "/login" || pathname === "/signup" ? (
+              <div className="min-h-full flex items-center justify-center">
+                {children}
+              </div>
+            ) : (
+              <div className="min-h-full">
+                <TopBar />
+                <main className="flex min-h-screen flex-col items-center p-4">
+                  <div className="w-full max-w-6xl">{children}</div>
+                </main>
+              </div>
+            )}
+          </QueryProvider>
+        </TooltipProvider>
       </body>
     </html>
   );

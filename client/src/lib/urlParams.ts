@@ -168,11 +168,20 @@ export const useSyncStateWithUrl = () => {
   // This prevents overriding user changes if the effect re-runs
   const initializedFromUrlRef = React.useRef(false);
 
+  // Check if we're on a path where we should sync URL params
+  const shouldSyncUrl = () => {
+    if (!pathname) return false;
+    const pathParts = pathname.split("/");
+    if (pathParts.length < 3) return false;
+    return ["main", "sessions"].includes(pathParts[2]);
+  };
+
   // Initialize from URL params after site is set
   // This fixes the issue where setSite would override URL params
   useEffect(() => {
     // Only proceed if site has been set and we haven't initialized yet
-    if (!site || initializedFromUrlRef.current) return;
+    // and we're on a path where we should sync URL params
+    if (!site || initializedFromUrlRef.current || !shouldSyncUrl()) return;
 
     const state = deserializeUrlToState(searchParams);
     let needsUpdate = false;
@@ -214,7 +223,8 @@ export const useSyncStateWithUrl = () => {
   // Update URL when state changes
   useEffect(() => {
     // Don't update URL if site hasn't been set yet
-    if (!site) return;
+    // or if we're not on a path where we should sync URL params
+    if (!site || !shouldSyncUrl()) return;
 
     const params = serializeStateToUrl(time, bucket, selectedStat, filters);
     const newSearch = params.toString();

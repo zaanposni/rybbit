@@ -54,26 +54,29 @@ export type GetSessionsResponse = {
   referrer: string;
   session_end: string;
   session_start: string;
+  session_duration: number;
   pageviews: number;
+  events: number;
   entry_page: string;
   exit_page: string;
 }[];
 
-export function useGetSessionsInfinite() {
+export function useGetSessionsInfinite(userId?: string) {
   const { time, site, filters } = useStore();
   const { startDate, endDate } = getStartAndEndDate(time);
 
   return useInfiniteQuery<APIResponse<GetSessionsResponse>>({
-    queryKey: ["sessions-infinite", time, site, filters],
+    queryKey: ["sessions-infinite", time, site, filters, userId],
     queryFn: ({ pageParam = 1 }) => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       return authedFetch(`${BACKEND_URL}/sessions`, {
-        startDate,
-        endDate,
+        startDate: userId ? undefined : startDate,
+        endDate: userId ? undefined : endDate,
         timezone,
         site,
         filters,
         page: pageParam,
+        userId,
       }).then((res) => res.json());
     },
     initialPageParam: 1,
@@ -87,6 +90,61 @@ export function useGetSessionsInfinite() {
       }
       return undefined;
     },
+    staleTime: Infinity,
+  });
+}
+
+export interface SessionDetails {
+  session_id: string;
+  user_id: string;
+  country: string;
+  iso_3166_2: string;
+  language: string;
+  device_type: string;
+  browser: string;
+  browser_version: string;
+  operating_system: string;
+  operating_system_version: string;
+  screen_width: number;
+  screen_height: number;
+  referrer: string;
+  session_end: string;
+  session_start: string;
+  pageviews: number;
+  entry_page: string;
+  exit_page: string;
+}
+
+export interface PageviewEvent {
+  timestamp: string;
+  pathname: string;
+  hostname: string;
+  querystring: string;
+  page_title: string;
+  referrer: string;
+  type: string;
+  event_name?: string;
+  properties?: string;
+}
+
+export interface SessionPageviewsAndEvents {
+  session: SessionDetails;
+  pageviews: PageviewEvent[];
+}
+
+export function useGetSessionDetails(sessionId: string | null) {
+  const { site } = useStore();
+
+  return useQuery<APIResponse<SessionPageviewsAndEvents>>({
+    queryKey: ["session-details", sessionId, site],
+    queryFn: () => {
+      if (!sessionId) throw new Error("Session ID is required");
+
+      return authedFetch(`${BACKEND_URL}/session/${sessionId}`, {
+        site,
+      }).then((res) => res.json());
+    },
+    enabled: !!sessionId && !!site,
     staleTime: Infinity,
   });
 }
