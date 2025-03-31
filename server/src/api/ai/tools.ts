@@ -1,5 +1,10 @@
 import { tool } from "@langchain/core/tools";
 import {
+  getLiveUserCountToolDescription,
+  getOverviewBucketedToolDescription,
+  getOverviewToolDescription
+} from "./toolDescriptions.js";
+import {
   getLiveUserCountToolSchema,
   getOverviewBucketedToolSchema,
   getOverviewToolSchema,
@@ -23,7 +28,7 @@ export function generateTools(timezone: string, site: string) {
     },
     {
       name: "get_live_user_count",
-      description: "Placeholder",
+      description: getLiveUserCountToolDescription,
       schema: getLiveUserCountToolSchema,
     }
   );
@@ -39,7 +44,7 @@ export function generateTools(timezone: string, site: string) {
     },
     {
       name: "get_overview",
-      description: "Placeholder",
+      description: getOverviewToolDescription,
       schema: getOverviewToolSchema,
     }
   );
@@ -55,7 +60,7 @@ export function generateTools(timezone: string, site: string) {
     },
     {
       name: "get_overview_bucketed",
-      description: "Placeholder",
+      description: getOverviewBucketedToolDescription,
       schema: getOverviewBucketedToolSchema,
     }
   );
