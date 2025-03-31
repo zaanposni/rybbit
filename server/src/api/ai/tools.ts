@@ -14,7 +14,8 @@ export function generateTools(timezone: string, site: string) {
   const getLiveUserCountTool = tool(
     async () => {
       try {
-        return await fetchLiveUserCount(site);
+        const result = await fetchLiveUserCount(site);
+        return result.toString();
       } catch (error) {
         console.error(error);
         return "Failed to get live user count";
@@ -29,7 +30,8 @@ export function generateTools(timezone: string, site: string) {
   const getOverviewTool = tool(
     async (input) => {
       try {
-        return await fetchOverview({ ...input, timezone, site });
+        const result = await fetchOverview({ ...input, timezone, site });
+        return JSON.stringify(result);
       } catch (error) {
         console.error(error);
         return "Failed to get overview";
@@ -44,7 +46,8 @@ export function generateTools(timezone: string, site: string) {
   const getOverviewBucketedTool = tool(
     async (input) => {
       try {
-        return await fetchOverviewBucketed({ ...input, timezone, site });
+        const result = await fetchOverviewBucketed({ ...input, timezone, site });
+        return JSON.stringify(result);
       } catch (error) {
         console.error(error);
         return "Failed to get overview bucketed";
@@ -59,7 +62,8 @@ export function generateTools(timezone: string, site: string) {
   const getSingleColTool = tool(
     async (input) => {
       try {
-        return await fetchSingleCol({ ...input, timezone, site });
+        const result = await fetchSingleCol({ ...input, timezone, site });
+        return JSON.stringify(result);
       } catch (error) {
         console.error(error);
         return "Failed to get single col";
