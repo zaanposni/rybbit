@@ -125,6 +125,7 @@ const filterSchema = z.object({
 }).describe("Defines a condition used to extract a specific subset of records.");
 
 const filtersSchema = z.array(filterSchema)
+  .transform(filters => JSON.stringify(filters))
   .describe("An array of filter objects, where each object specifies a single filtering condition. This allows for multiple conditions to be combined, each targeting a different property of the data. Only records that satisfy all filter conditions will be returned.");
 
 const bucketSchema = z.enum(["hour", "day", "week", "month"])
@@ -152,10 +153,8 @@ const limitSchema = z.number()
 // related as in the page for each tool call has to be consecutive starting from 1
 const pageSchema = z.number().describe("Placeholder");
 
-// pass site at runtime
 export const getLiveUserCountToolSchema = z.object({});
 
-// pass timezone and site at runtime
 export const getOverviewToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
@@ -163,7 +162,6 @@ export const getOverviewToolSchema = z.object({
   past24Hours: past24HoursSchema,
 });
 
-// pass timezone and site at runtime
 export const getOverviewBucketedToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
@@ -172,7 +170,6 @@ export const getOverviewBucketedToolSchema = z.object({
   past24Hours: past24HoursSchema,
 });
 
-// pass timezone and site at runtime
 export const getSingleColToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
@@ -204,6 +201,9 @@ export const getSessionsToolSchema = z.object({
 // Cause maybe you need the general sessions data to determine which user(s) to fetch detailed sessions data for
 // Might need another tool that wraps this one to be able to call this tool multiple times in parallel
 // without losing any context (parallel LLM tool calls are unaware of each other)
+// Or maybe use tool artifacts from getSessionsTool
+// Having chat/LLM handle functionality involving individual sessions might be too much
+// Leave until the very end
 export const getUserSessionsToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
