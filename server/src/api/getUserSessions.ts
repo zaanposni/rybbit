@@ -78,7 +78,9 @@ WHERE
     site_id = ${site}
     AND user_id = '${userId}'
     ${filterStatement}
-    ${getTimeStatement(startDate, endDate, timezone)}
+    ${getTimeStatement({
+      date: { startDate, endDate, timezone },
+    })}
 ORDER BY timestamp ASC
   `;
 

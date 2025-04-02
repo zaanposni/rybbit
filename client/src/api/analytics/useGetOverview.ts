@@ -16,11 +16,9 @@ type PeriodTime = "current" | "previous";
 
 export function useGetOverview({
   periodTime,
-  past24Hours,
   site,
 }: {
   periodTime?: PeriodTime;
-  past24Hours?: boolean;
   site?: number | string;
 }) {
   const { time, previousTime, filters } = useStore();
@@ -28,7 +26,7 @@ export function useGetOverview({
   const { startDate, endDate } = getStartAndEndDate(timeToUse);
 
   return useQuery({
-    queryKey: ["overview", timeToUse, site, filters, past24Hours],
+    queryKey: ["overview", timeToUse, site, filters],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       return authedFetch(`${BACKEND_URL}/overview`, {
@@ -37,7 +35,37 @@ export function useGetOverview({
         timezone,
         site,
         filters,
-        past24Hours,
+      }).then((res) => res.json());
+    },
+    staleTime: Infinity,
+    placeholderData: (_, query: any) => {
+      if (!query?.queryKey) return undefined;
+      const prevQueryKey = query.queryKey as [string, string, string];
+      const [, , prevSite] = prevQueryKey;
+
+      if (prevSite === site) {
+        return query.state.data;
+      }
+      return undefined;
+    },
+  });
+}
+
+export function useGetOverviewPastMinutes({
+  pastMinutes,
+  site,
+}: {
+  pastMinutes: number;
+  site?: number | string;
+}) {
+  return useQuery({
+    queryKey: ["overview-past-minutes", pastMinutes, site],
+    queryFn: () => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return authedFetch(`${BACKEND_URL}/overview`, {
+        pastMinutes,
+        timezone,
+        site,
       }).then((res) => res.json());
     },
     staleTime: Infinity,

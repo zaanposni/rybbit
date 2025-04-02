@@ -72,7 +72,9 @@ WHERE
     site_id = ${site}
     ${userId ? ` AND user_id = '${userId}'` : ""}
     ${filterStatement}
-    ${getTimeStatement(startDate, endDate, timezone)}
+    ${getTimeStatement({
+      date: { startDate, endDate, timezone },
+    })}
 GROUP BY
     session_id,
     user_id

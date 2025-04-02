@@ -1,34 +1,42 @@
 import { ResultSet } from "@clickhouse/client";
 import { Filter, FilterParameter, FilterType } from "./types.js";
 
-export function getTimeStatement(
-  startDate: string,
-  endDate: string,
-  timezone: string,
-  table: "events" | "sessions" = "events"
-) {
-  if (!startDate && !endDate) {
-    return "";
-  }
+export function getTimeStatement({
+  date,
+  pastMinutes,
+}: {
+  date?: {
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    table?: "events" | "sessions";
+  };
+  pastMinutes?: number;
+}) {
+  if (date) {
+    const { startDate, endDate, timezone, table } = date;
+    if (!startDate && !endDate) {
+      return "";
+    }
 
-  const col = table === "events" ? "timestamp" : "session_end";
+    const col = (table ?? "events") === "events" ? "timestamp" : "session_end";
 
-  return `AND ${col} >= toTimeZone(
+    return `AND ${col} >= toTimeZone(
       toStartOfDay(toDateTime('${startDate}', '${timezone}')),
       'UTC'
-    )
-    AND ${col} < if(
-      toDate('${endDate}') = toDate(now(), '${timezone}'),
-      now(),
-      toTimeZone(
-        toStartOfDay(toDateTime('${endDate}', '${timezone}')) + INTERVAL 1 DAY,
-        'UTC'
       )
-    )`;
-}
-
-export function getTimeStatementRealtime(minutes: number) {
-  return `AND timestamp > now() - interval '${minutes} minute'`;
+      AND ${col} < if(
+        toDate('${endDate}') = toDate(now(), '${timezone}'),
+        now(),
+        toTimeZone(
+          toStartOfDay(toDateTime('${endDate}', '${timezone}')) + INTERVAL 1 DAY,
+          'UTC'
+        )
+      )`;
+  }
+  if (pastMinutes) {
+    return `AND timestamp > now() - interval '${pastMinutes} minute'`;
+  }
 }
 
 export async function processResults<T>(

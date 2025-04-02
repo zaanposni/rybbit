@@ -1,11 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import clickhouse from "../db/clickhouse/clickhouse.js";
-import {
-  getFilterStatement,
-  getTimeStatement,
-  processResults,
-} from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import { processResults } from "./utils.js";
 
 export interface SessionDetails {
   session_id: string;
