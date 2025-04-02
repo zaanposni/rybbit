@@ -2,13 +2,14 @@ import { tool } from "@langchain/core/tools";
 import {
   getLiveUserCountToolDescription,
   getOverviewBucketedToolDescription,
-  getOverviewToolDescription
+  getOverviewToolDescription,
+  getParameterStatsToolDescription
 } from "./toolDescriptions.js";
 import {
   getLiveUserCountToolSchema,
   getOverviewBucketedToolSchema,
   getOverviewToolSchema,
-  getSingleColToolSchema
+  getParameterStatsToolSchema
 } from "./toolSchemas.js";
 import { fetchLiveUserCount } from "../getLiveUserCount.js";
 import { fetchOverview } from "../getOverview.js";
@@ -65,7 +66,7 @@ export function generateTools(timezone: string, site: string) {
       schema: getOverviewBucketedToolSchema,
     }
   );
-  const getSingleColTool = tool(
+  const getParameterStatsTool = tool(
     async (input) => {
       try {
         const minutes = NaN;
@@ -73,15 +74,15 @@ export function generateTools(timezone: string, site: string) {
         return JSON.stringify(result);
       } catch (error) {
         console.error(error);
-        return "Failed to get single col";
+        return "Failed to get parameter stats";
       }
     },
     {
-      name: "get_single_col",
-      description: "Placeholder",
-      schema: getSingleColToolSchema,
+      name: "get_parameter_stats",
+      description: getParameterStatsToolDescription,
+      schema: getParameterStatsToolSchema,
     }
   );
 
-  return [getLiveUserCountTool, getOverviewTool, getOverviewBucketedTool, getSingleColTool];
+  return [getLiveUserCountTool, getOverviewTool, getOverviewBucketedTool, getParameterStatsTool];
 }

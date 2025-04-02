@@ -164,12 +164,12 @@ export const getOverviewToolSchema = z.object({
 export const getOverviewBucketedToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
-  bucket: bucketSchema,
   filters: filtersSchema,
+  bucket: bucketSchema,
   past24Hours: past24HoursSchema,
 });
 
-export const getSingleColToolSchema = z.object({
+export const getParameterStatsToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
   filters: filtersSchema,
