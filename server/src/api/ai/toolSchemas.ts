@@ -159,7 +159,6 @@ export const getOverviewToolSchema = z.object({
   startDate: startDateSchema,
   endDate: endDateSchema,
   filters: filtersSchema,
-  past24Hours: past24HoursSchema,
 });
 
 export const getOverviewBucketedToolSchema = z.object({

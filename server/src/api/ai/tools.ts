@@ -35,7 +35,8 @@ export function generateTools(timezone: string, site: string) {
   const getOverviewTool = tool(
     async (input) => {
       try {
-        const result = await fetchOverview({ ...input, timezone, site });
+        const pastMinutes = NaN;
+        const result = await fetchOverview({ ...input, timezone, site, pastMinutes });
         return JSON.stringify(result);
       } catch (error) {
         console.error(error);
@@ -67,7 +68,8 @@ export function generateTools(timezone: string, site: string) {
   const getSingleColTool = tool(
     async (input) => {
       try {
-        const result = await fetchSingleCol({ ...input, timezone, site });
+        const minutes = NaN;
+        const result = await fetchSingleCol({ ...input, timezone, site, minutes });
         return JSON.stringify(result);
       } catch (error) {
         console.error(error);
