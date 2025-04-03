@@ -36,8 +36,7 @@ export function generateTools(timezone: string, site: string) {
   const getOverviewTool = tool(
     async (input) => {
       try {
-        const pastMinutes = NaN;
-        const result = await fetchOverview({ ...input, timezone, site, pastMinutes });
+        const result = await fetchOverview({ ...input, timezone, site });
         return JSON.stringify(result);
       } catch (error) {
         console.error(error);

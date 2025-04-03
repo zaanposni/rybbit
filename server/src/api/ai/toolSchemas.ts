@@ -136,9 +136,6 @@ const bucketSchema = z.enum(["hour", "day", "week", "month"])
 - week: Only allowed if the startDate and endDate are at least 14 days apart.
 - month: Only allowed if the startDate and endDate are at least 60 days apart.`);
 
-const past24HoursSchema = z.boolean()
-  .describe("Determines whether to fetch analytics data from the past 24 hours (true) or the startDate to endDate time interval (false).");
-
 const limitSchema = z.number()
   .gte(1, {
     message: "Limit must be greater than or equal to 1.",
@@ -161,7 +158,6 @@ export const getOverviewBucketedToolSchema = z.object({
   endDate: endDateSchema,
   filters: filtersSchema,
   bucket: bucketSchema,
-  past24Hours: past24HoursSchema,
 });
 
 export const getParameterStatsToolSchema = z.object({
