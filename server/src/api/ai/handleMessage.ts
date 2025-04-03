@@ -1,5 +1,7 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import { getUserHasAccessToSite } from "../../lib/auth-utils.js";
+import { initChatModel } from "langchain/chat_models/universal";
+import { generateAnalyticsTools } from "./tools.js";
 
 interface Message {
   role: "user" | "system";
@@ -24,5 +26,15 @@ export async function handleMessage (
   const userHasAccessToSite = await getUserHasAccessToSite(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
+  }
+
+  try {
+    const llm = await initChatModel(process.env.MODEL, {
+      modelProvider: process.env.PROVIDER,
+      temperature: 0,
+    });
+    const llmWithTools = llm.bindTools(generateAnalyticsTools(timezone, site));
+  } catch (error) {
+    console.error(error);
   }
 }

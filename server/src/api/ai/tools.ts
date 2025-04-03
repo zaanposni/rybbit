@@ -16,7 +16,7 @@ import { fetchOverview } from "../getOverview.js";
 import { fetchOverviewBucketed } from "../getOverviewBucketed.js";
 import { fetchSingleCol } from "../getSingleCol.js";
 
-export function generateTools(timezone: string, site: string) {
+export function generateAnalyticsTools(timezone: string, site: string) {
   const getLiveUserCountTool = tool(
     async () => {
       try {
