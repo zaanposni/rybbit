@@ -33,6 +33,7 @@ import { initializeCronJobs } from "./cron/index.js";
 import { getUserSubscription } from "./api/user/getUserSubscription.js";
 import { getUserInfo } from "./api/getUserInfo.js";
 import { getLiveSessionLocations } from "./api/getLiveSessionLocations.js";
+import { handleMessage } from "./api/ai/handleMessage.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -133,6 +134,8 @@ server.get("/session/:sessionId", getSession);
 server.get("/user/:userId/sessions", getUserSessions);
 server.get("/user/info/:siteId/:userId", getUserInfo);
 server.get("/live-session-locations/:siteId", getLiveSessionLocations);
+
+server.post("/handle-message", handleMessage);
 
 // Administrative
 server.post("/add-site", addSite);
