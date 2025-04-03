@@ -7,6 +7,7 @@ export function useGetLiveUsercount() {
   const { site } = useStore();
   return useQuery({
     queryKey: ["live-user-count", site],
+    refetchInterval: 5000,
     queryFn: () =>
       authedFetch(`${BACKEND_URL}/live-user-count/${site}`).then((res) =>
         res.json()

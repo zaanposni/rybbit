@@ -1,7 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useGetOverviewPastMinutes } from "../api/analytics/useGetOverview";
-import { useGetOverviewBucketed } from "../api/analytics/useGetOverviewBucketed";
+import { useGetOverviewBucketedPastMinutes } from "../api/analytics/useGetOverviewBucketed";
 import { SiteSessionChart } from "./SiteSessionChart";
 import { SiteSettings } from "./SiteSettings/SiteSettings";
 import { Button } from "./ui/button";
@@ -13,9 +13,10 @@ interface SiteCardProps {
 }
 
 export function SiteCard({ siteId, domain }: SiteCardProps) {
-  const { data, isLoading } = useGetOverviewBucketed({
-    past24Hours: true,
+  const { data, isLoading } = useGetOverviewBucketedPastMinutes({
+    pastMinutes: 24 * 60,
     site: siteId,
+    bucket: "hour",
   });
 
   const { data: overviewData, isLoading: isOverviewLoading } =
@@ -85,7 +86,7 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
             {domain}
           </span>
         </Link>
-        <SiteSettings />
+        <SiteSettings siteId={siteId} />
       </div>
 
       <div className="relative mt-1 mb-1 rounded-md p-2 overflow-hidden">

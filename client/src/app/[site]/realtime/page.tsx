@@ -4,11 +4,13 @@ import { Countries } from "../main/components/sections/Countries";
 import { Events } from "../main/components/sections/Events";
 import { Pages } from "../main/components/sections/Pages";
 import { Referrers } from "../main/components/sections/Referrers";
+import { RealtimeChart } from "./RealtimeChart/RealtimeChart";
 import { RealtimeMap } from "./RealtimeMap/RealtimeMap";
 
 export default function RealtimePage() {
   return (
     <div className="flex flex-col gap-4">
+      <RealtimeChart />
       <RealtimeMap />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Pages isRealtime />

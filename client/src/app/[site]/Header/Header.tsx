@@ -1,16 +1,13 @@
 "use client";
-import { useStore } from "@/lib/store";
-import { Circle } from "@phosphor-icons/react";
 import { ChartBarDecreasing, ChartLine, Radio, User } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { SiteSettings } from "../../../components/SiteSettings/SiteSettings";
 import { useGetSites } from "../../../api/admin/sites";
-import { useGetLiveUsercount } from "../../../api/analytics/useLiveUserCount";
+import { SiteSettings } from "../../../components/SiteSettings/SiteSettings";
+import LiveUserCount from "./LiveUserCount";
 import { UsageBanners } from "./UsageBanners";
 
 export function Header() {
-  const { data } = useGetLiveUsercount();
   const { data: sites } = useGetSites();
   const pathname = usePathname();
 
@@ -45,9 +42,8 @@ export function Header() {
             <div>{site?.domain}</div>
           </div>
           <div className="flex items-center gap-1 text-base text-neutral-600 dark:text-neutral-400">
-            <Circle size={12} weight="fill" color="hsl(var(--green-500))" />
-            {data?.count} users online
-            <SiteSettings />
+            <LiveUserCount />
+            <SiteSettings siteId={site?.siteId ?? 0} />
           </div>
         </div>
         <div className="flex space-x-2">

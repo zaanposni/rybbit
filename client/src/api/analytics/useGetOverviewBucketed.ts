@@ -2,7 +2,7 @@ import { UseQueryResult, useQuery } from "@tanstack/react-query";
 import { BACKEND_URL } from "../../lib/const";
 import { APIResponse } from "../types";
 import { getStartAndEndDate, authedFetch } from "../utils";
-import { useStore } from "../../lib/store";
+import { TimeBucket, useStore } from "../../lib/store";
 
 type PeriodTime = "current" | "previous";
 
@@ -18,11 +18,9 @@ export type GetOverviewBucketedResponse = {
 
 export function useGetOverviewBucketed({
   periodTime,
-  past24Hours,
   site,
 }: {
   periodTime?: PeriodTime;
-  past24Hours?: boolean;
   site?: number | string;
 }): UseQueryResult<APIResponse<GetOverviewBucketedResponse>> {
   const { time, previousTime, bucket, filters } = useStore();
@@ -32,14 +30,7 @@ export function useGetOverviewBucketed({
   const { startDate, endDate } = getStartAndEndDate(timeToUse);
 
   return useQuery({
-    queryKey: [
-      "overview-bucketed",
-      timeToUse,
-      bucket,
-      site,
-      filters,
-      past24Hours,
-    ],
+    queryKey: ["overview-bucketed", timeToUse, bucket, site, filters],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       return authedFetch(`${BACKEND_URL}/overview-bucketed`, {
@@ -49,9 +40,45 @@ export function useGetOverviewBucketed({
         bucket,
         site,
         filters,
-        past24Hours,
       }).then((res) => res.json());
     },
+    placeholderData: (_, query: any) => {
+      if (!query?.queryKey) return undefined;
+      const prevQueryKey = query.queryKey as [string, string, string];
+      const [, , prevSite] = prevQueryKey;
+
+      if (prevSite === site) {
+        return query.state.data;
+      }
+      return undefined;
+    },
+    staleTime: Infinity,
+  });
+}
+
+export function useGetOverviewBucketedPastMinutes({
+  pastMinutes = 24 * 60,
+  site,
+  bucket = "hour",
+  refetchInterval,
+}: {
+  pastMinutes: number;
+  site?: number | string;
+  bucket?: TimeBucket;
+  refetchInterval?: number;
+}): UseQueryResult<APIResponse<GetOverviewBucketedResponse>> {
+  return useQuery({
+    queryKey: ["overview-bucketed-past-minutes", pastMinutes, site, bucket],
+    queryFn: () => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return authedFetch(`${BACKEND_URL}/overview-bucketed`, {
+        timezone,
+        bucket,
+        site,
+        pastMinutes,
+      }).then((res) => res.json());
+    },
+    refetchInterval,
     placeholderData: (_, query: any) => {
       if (!query?.queryKey) return undefined;
       const prevQueryKey = query.queryKey as [string, string, string];

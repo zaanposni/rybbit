@@ -14,7 +14,7 @@ interface GetOverviewRequest {
     timezone: string;
     site: string;
     filters: string;
-    pastMinutes: number;
+    pastMinutes?: number;
   };
 }
 

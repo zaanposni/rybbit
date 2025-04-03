@@ -60,11 +60,14 @@ export function useSiteHasData(siteId: string) {
   return useGenericQuery<boolean>(`site-has-data/${siteId}`);
 }
 
-export function useGetSiteMetadata() {
-  const { site } = useStore();
+export function useGetSiteMetadata(siteId?: string | number) {
   const { data, isLoading } = useGetSites();
+  const { site } = useStore();
+
+  const siteIdToUse = siteId ?? site;
+
   return {
-    siteMetadata: data?.find(({ siteId }) => siteId === Number(site)),
+    siteMetadata: data?.find((site) => site.siteId === Number(siteIdToUse)),
     isLoading,
   };
 }

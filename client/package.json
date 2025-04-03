@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@better-auth/stripe": "^1.2.3",
+    "@nivo/bar": "^0.88.0",
     "@nivo/core": "^0.88.0",
     "@nivo/line": "^0.88.0",
+    "@number-flow/react": "^0.5.8",
     "@phosphor-icons/react": "^2.1.7",
     "@radix-ui/react-alert-dialog": "^1.1.6",
     "@radix-ui/react-dialog": "^1.1.6",
