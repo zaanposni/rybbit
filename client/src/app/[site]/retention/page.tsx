@@ -28,6 +28,7 @@ import {
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
+import { Skeleton } from "../../../components/ui/skeleton";
 
 // Available time range options (in days)
 const RANGE_OPTIONS = [
@@ -39,6 +40,10 @@ const RANGE_OPTIONS = [
   { value: "180", label: "6 months" },
   { value: "365", label: "1 year" },
 ];
+
+// Default number of periods and cohorts for skeleton
+const DEFAULT_SKELETON_PERIODS = 6;
+const DEFAULT_SKELETON_COHORTS = 8;
 
 // Dynamic color function that creates a smooth gradient based on retention percentage
 const getRetentionColor = (
@@ -78,6 +83,66 @@ const getRetentionColor = (
   };
 };
 
+// Loading skeleton for the retention grid
+const RetentionGridSkeleton = () => {
+  const periodHeaders = Array.from(
+    { length: DEFAULT_SKELETON_PERIODS + 1 },
+    (_, i) => (i === 0 ? "Cohort" : `Week ${i - 1}`)
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <div
+        className="inline-grid gap-px bg-neutral-900 border border-neutral-800 rounded-lg shadow-lg"
+        style={{
+          gridTemplateColumns: `minmax(120px, auto) repeat(${DEFAULT_SKELETON_PERIODS}, minmax(90px, auto))`,
+        }}
+      >
+        {/* Header Row */}
+        {periodHeaders.map((header, i) => (
+          <div
+            key={`header-${i}`}
+            className={`p-3 font-semibold bg-neutral-850 text-center border-b border-neutral-700 ${
+              i === 0 ? "sticky left-0 z-10 border-r" : ""
+            }`}
+          >
+            <Skeleton className="h-4 w-16 mx-auto bg-neutral-700/50 animate-pulse" />
+          </div>
+        ))}
+
+        {/* Data Rows */}
+        {Array.from({ length: DEFAULT_SKELETON_COHORTS }).map((_, rowIndex) => (
+          <Fragment key={`row-${rowIndex}`}>
+            {/* Cohort Info Cell */}
+            <div className="p-3 bg-neutral-850 text-sm sticky left-0 z-10 border-r border-neutral-700">
+              <Skeleton className="h-4 w-24 mb-2 bg-neutral-700/50 animate-pulse" />
+              <Skeleton className="h-3 w-16 bg-neutral-700/50 animate-pulse" />
+            </div>
+            {/* Retention Cells */}
+            {Array.from({ length: DEFAULT_SKELETON_PERIODS }).map(
+              (_, cellIndex) => (
+                <div
+                  key={`cell-${rowIndex}-${cellIndex}`}
+                  className="m-[2px] p-3 flex items-center justify-center bg-neutral-800 rounded-md"
+                >
+                  <Skeleton
+                    className={`h-4 w-10 bg-neutral-700/50 animate-pulse`}
+                    style={{
+                      animationDelay: `${
+                        (rowIndex * DEFAULT_SKELETON_PERIODS + cellIndex) * 50
+                      }ms`,
+                    }}
+                  />
+                </div>
+              )
+            )}
+          </Fragment>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export default function RetentionPage() {
   // State for the retention mode (day or week)
   const [mode, setMode] = useState<RetentionMode>("week");
@@ -108,24 +173,6 @@ export default function RetentionPage() {
     return mode === "day" ? `Day ${index}` : `Week ${index}`;
   };
 
-  if (isLoading) {
-    return <div className="p-4">Loading retention data...</div>;
-  }
-
-  if (isError || !data) {
-    return (
-      <div className="p-4 text-red-500">Error loading retention data.</div>
-    );
-  }
-
-  if (!data.cohorts || cohortKeys.length === 0) {
-    return <div className="p-4">No retention data available.</div>;
-  }
-
-  const periodHeaders = Array.from({ length: data.maxPeriods + 1 }, (_, i) =>
-    getPeriodLabel(i)
-  );
-
   const handleModeChange = (newMode: string) => {
     setMode(newMode as RetentionMode);
   };
@@ -133,6 +180,59 @@ export default function RetentionPage() {
   const handleRangeChange = (value: string) => {
     setTimeRange(parseInt(value));
   };
+
+  // Render error state
+  if (isError) {
+    return (
+      <div className="pt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Retention</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-8 text-center">
+              <div className="text-red-500 mb-2 font-medium">
+                Error loading retention data
+              </div>
+              <p className="text-neutral-500 text-sm">
+                There was a problem fetching the retention data. Please try
+                again later.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Render empty state
+  if (data && (!data.cohorts || cohortKeys.length === 0)) {
+    return (
+      <div className="pt-4">
+        <Card>
+          <CardHeader>
+            <CardTitle>User Retention</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="p-8 text-center">
+              <div className="text-neutral-300 mb-2 font-medium">
+                No retention data available
+              </div>
+              <p className="text-neutral-500 text-sm">
+                Try selecting a different time range or make sure you have
+                tracking data in the system.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const periodHeaders =
+    !isLoading && data
+      ? Array.from({ length: data.maxPeriods + 1 }, (_, i) => getPeriodLabel(i))
+      : [];
 
   return (
     <div className="pt-4">
@@ -161,6 +261,7 @@ export default function RetentionPage() {
               <Select
                 value={timeRange.toString()}
                 onValueChange={handleRangeChange}
+                disabled={isLoading}
               >
                 <SelectTrigger id="time-range" className="w-28" size="sm">
                   <SelectValue placeholder="90 days" />
@@ -176,72 +277,80 @@ export default function RetentionPage() {
             </div>
             <Tabs value={mode} onValueChange={handleModeChange}>
               <TabsList>
-                <TabsTrigger value="day">Daily</TabsTrigger>
-                <TabsTrigger value="week">Weekly</TabsTrigger>
+                <TabsTrigger value="day" disabled={isLoading}>
+                  Daily
+                </TabsTrigger>
+                <TabsTrigger value="week" disabled={isLoading}>
+                  Weekly
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
         </CardHeader>
         <CardContent>
-          <div className="overflow-x-auto">
-            <div
-              className="inline-grid gap-px bg-neutral-900 border border-neutral-800 rounded-lg shadow-lg"
-              style={{
-                gridTemplateColumns: `minmax(120px, auto) repeat(${
-                  data.maxPeriods + 1
-                }, minmax(90px, auto))`,
-              }}
-            >
-              {/* Header Row */}
-              <div className="p-3 font-semibold bg-neutral-850 text-neutral-100 text-center sticky left-0 z-10 border-b border-r border-neutral-700">
-                Cohort
-              </div>
-              {periodHeaders.map((header) => (
-                <div
-                  key={header}
-                  className="p-3 font-semibold bg-neutral-850 text-neutral-100 text-center border-b border-neutral-700"
-                >
-                  {header}
+          {isLoading ? (
+            <RetentionGridSkeleton />
+          ) : data ? (
+            <div className="overflow-x-auto">
+              <div
+                className="inline-grid gap-px bg-neutral-900 rounded-lg shadow-lg"
+                style={{
+                  gridTemplateColumns: `minmax(120px, auto) repeat(${
+                    data.maxPeriods + 1
+                  }, minmax(90px, auto))`,
+                }}
+              >
+                {/* Header Row */}
+                <div className="p-3 font-semibold bg-neutral-900 text-neutral-100 text-center sticky left-0 z-10 border-b border-r border-neutral-700">
+                  Cohort
                 </div>
-              ))}
-
-              {/* Data Rows */}
-              {cohortKeys.map((cohortPeriod) => (
-                <Fragment key={cohortPeriod}>
-                  {/* Cohort Info Cell */}
-                  <div className="p-3 bg-neutral-850 text-sm sticky left-0 z-10 border-r border-neutral-700">
-                    <div className="font-medium whitespace-nowrap text-neutral-100">
-                      {formatDate(cohortPeriod)}
-                    </div>
-                    <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
-                      {data.cohorts[cohortPeriod].size.toLocaleString()} users
-                    </div>
+                {periodHeaders.map((header) => (
+                  <div
+                    key={header}
+                    className="p-3 font-semibold bg-neutral-900 text-neutral-100 text-center border-b border-r border-neutral-700"
+                  >
+                    {header}
                   </div>
-                  {/* Retention Cells */}
-                  {data.cohorts[cohortPeriod].percentages.map(
-                    (percentage: number | null, index: number) => {
-                      const { backgroundColor, textColor } =
-                        getRetentionColor(percentage);
-                      return (
-                        <div
-                          key={`${cohortPeriod}-period-${index}`}
-                          className="m-[2px] p-3 text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-850 rounded-md"
-                          style={{
-                            backgroundColor,
-                            color: textColor,
-                          }}
-                        >
-                          {percentage !== null
-                            ? `${percentage.toFixed(1)}%`
-                            : "-"}
-                        </div>
-                      );
-                    }
-                  )}
-                </Fragment>
-              ))}
+                ))}
+
+                {/* Data Rows */}
+                {cohortKeys.map((cohortPeriod) => (
+                  <Fragment key={cohortPeriod}>
+                    {/* Cohort Info Cell */}
+                    <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-b border-neutral-700">
+                      <div className="font-medium whitespace-nowrap text-neutral-100">
+                        {formatDate(cohortPeriod)}
+                      </div>
+                      <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
+                        {data.cohorts[cohortPeriod].size.toLocaleString()} users
+                      </div>
+                    </div>
+                    {/* Retention Cells */}
+                    {data.cohorts[cohortPeriod].percentages.map(
+                      (percentage: number | null, index: number) => {
+                        const { backgroundColor, textColor } =
+                          getRetentionColor(percentage);
+                        return (
+                          <div
+                            key={`${cohortPeriod}-period-${index}`}
+                            className="m-[2px] p-3 text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-850 rounded-md"
+                            style={{
+                              backgroundColor,
+                              color: textColor,
+                            }}
+                          >
+                            {percentage !== null
+                              ? `${percentage.toFixed(1)}%`
+                              : "-"}
+                          </div>
+                        );
+                      }
+                    )}
+                  </Fragment>
+                ))}
+              </div>
             </div>
-          </div>
+          ) : null}
         </CardContent>
       </Card>
     </div>
