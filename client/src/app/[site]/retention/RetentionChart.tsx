@@ -56,21 +56,44 @@ const RetentionChartSkeleton = () => (
 );
 
 export function RetentionChart({ data, isLoading, mode }: RetentionChartProps) {
+  // Get cohort keys once for both chart data and tooltip
+  const cohortKeys = useMemo(() => {
+    if (!data || !data.cohorts) return [];
+    return Object.keys(data.cohorts)
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, 12); // Limit to 12 most recent cohorts for better readability
+  }, [data]);
+
   // Process data for the chart - organize by cohort
   const chartData = useMemo(() => {
-    if (!data || !data.cohorts) {
+    if (!data || !data.cohorts || cohortKeys.length === 0) {
       return [];
     }
-
-    // Get cohort keys and sort them - newest cohorts first to match the matrix ordering
-    const cohortKeys = Object.keys(data.cohorts)
-      .sort((a, b) => b.localeCompare(a))
-      .slice(0, 12); // Limit to 10 most recent cohorts for better readability
 
     // Format each cohort as a series (line)
     return cohortKeys.map((cohortKey, index) => {
       const cohortData = data.cohorts[cohortKey];
-      const formattedDate = DateTime.fromISO(cohortKey).toFormat("MMM dd");
+
+      // Format the date label based on mode
+      let formattedDate: string;
+      if (mode === "day") {
+        formattedDate = DateTime.fromISO(cohortKey).toFormat("MMM dd");
+      } else {
+        // For weekly mode
+        const startDate = DateTime.fromISO(cohortKey);
+        const endDate = startDate.plus({ days: 6 });
+
+        // If same month, don't repeat month
+        if (startDate.month === endDate.month) {
+          formattedDate = `${startDate.toFormat("MMM dd")}-${endDate.toFormat(
+            "dd"
+          )}`;
+        } else {
+          formattedDate = `${startDate.toFormat("MMM dd")}-${endDate.toFormat(
+            "MMM dd"
+          )}`;
+        }
+      }
 
       // Create data points for each period
       const points = cohortData.percentages.map((percentage, periodIndex) => ({
@@ -84,7 +107,7 @@ export function RetentionChart({ data, isLoading, mode }: RetentionChartProps) {
         color: cohortColors[index % cohortColors.length],
       };
     });
-  }, [data]);
+  }, [data, mode, cohortKeys]);
 
   if (isLoading) {
     return <RetentionChartSkeleton />;
@@ -176,13 +199,48 @@ export function RetentionChart({ data, isLoading, mode }: RetentionChartProps) {
         tooltip={({ point }) => {
           const value = point.data.y as number | null;
           const xValue = point.data.x as number;
+
+          // Find the original cohort date by matching the formatted label
+          const cohortEntry = chartData.find(
+            (series) => series.id === point.serieId
+          );
+          const cohortIndex = cohortEntry ? chartData.indexOf(cohortEntry) : -1;
+          const originalCohortKey =
+            cohortIndex >= 0 && cohortKeys && cohortKeys[cohortIndex];
+
+          // Format full date for tooltip
+          let cohortDateDisplay = point.serieId;
+          if (originalCohortKey) {
+            if (mode === "day") {
+              cohortDateDisplay =
+                DateTime.fromISO(originalCohortKey).toFormat("MMM dd, yyyy");
+            } else {
+              const startDate = DateTime.fromISO(originalCohortKey);
+              const endDate = startDate.plus({ days: 6 });
+
+              if (startDate.month === endDate.month) {
+                cohortDateDisplay = `${startDate.toFormat(
+                  "MMM dd"
+                )} - ${endDate.toFormat("dd, yyyy")}`;
+              } else if (startDate.year === endDate.year) {
+                cohortDateDisplay = `${startDate.toFormat(
+                  "MMM dd"
+                )} - ${endDate.toFormat("MMM dd, yyyy")}`;
+              } else {
+                cohortDateDisplay = `${startDate.toFormat(
+                  "MMM dd, yyyy"
+                )} - ${endDate.toFormat("MMM dd, yyyy")}`;
+              }
+            }
+          }
+
           return (
             <div className="text-sm bg-neutral-850 p-2 rounded-md border border-neutral-800 shadow-md">
               <div
                 className="font-medium mb-1"
                 style={{ color: point.serieColor }}
               >
-                Cohort: {point.serieId}
+                Cohort: {cohortDateDisplay}
               </div>
               <div className="flex justify-between w-48 text-neutral-200">
                 <span>

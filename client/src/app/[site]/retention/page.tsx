@@ -164,9 +164,30 @@ export default function RetentionPage() {
 
   // Function to format date based on mode
   const formatDate = (dateStr: string) => {
-    return mode === "day"
-      ? DateTime.fromISO(dateStr).toFormat("MMM dd, yyyy")
-      : DateTime.fromISO(dateStr).toFormat("MMM dd, yyyy") + " (Week)";
+    if (mode === "day") {
+      return DateTime.fromISO(dateStr).toFormat("MMM dd, yyyy");
+    } else {
+      // For weekly mode, show start and end dates of the week
+      const startDate = DateTime.fromISO(dateStr);
+      const endDate = startDate.plus({ days: 6 }); // End of week (7 days total)
+
+      // If same month, don't repeat month name
+      if (startDate.month === endDate.month) {
+        return `${startDate.toFormat("MMM dd")} - ${endDate.toFormat(
+          "dd, yyyy"
+        )}`;
+      } else if (startDate.year === endDate.year) {
+        // Different months, same year
+        return `${startDate.toFormat("MMM dd")} - ${endDate.toFormat(
+          "MMM dd, yyyy"
+        )}`;
+      } else {
+        // Different years
+        return `${startDate.toFormat("MMM dd, yyyy")} - ${endDate.toFormat(
+          "MMM dd, yyyy"
+        )}`;
+      }
+    }
   };
 
   // Labels for column headers based on mode
