@@ -1,3 +1,201 @@
-export function RetentionChart() {
-  return <div>RetentionChart</div>;
+"use client";
+
+import { nivoTheme } from "@/lib/nivo";
+import {
+  ProcessedRetentionData,
+  RetentionMode,
+} from "../../../api/analytics/useGetRetention";
+import { ResponsiveLine } from "@nivo/line";
+import { useMemo } from "react";
+import { Skeleton } from "../../../components/ui/skeleton";
+import { DateTime } from "luxon";
+
+interface RetentionChartProps {
+  data: ProcessedRetentionData | undefined;
+  isLoading: boolean;
+  mode: RetentionMode;
+}
+
+// Vibrant color palette for different cohorts using Tailwind CSS HSL variables
+const cohortColors = [
+  "hsl(var(--accent-500))", // Primary accent color
+  "hsl(var(--green-500))", // Green
+  "hsl(var(--red-500))", // Red
+  "hsl(var(--blue-500))", // Blue
+  "hsl(var(--orange-500))", // Orange
+  "hsl(var(--purple-500))", // Purple
+  "hsl(var(--teal-500))", // Teal
+  "hsl(var(--amber-500))", // Amber
+  "hsl(var(--slate-600))", // Slate
+  "hsl(var(--red-600))", // Darker red
+  "hsl(var(--green-600))", // Darker green
+  "hsl(var(--blue-600))", // Darker blue
+  "hsl(var(--purple-600))", // Darker purple
+  "hsl(var(--teal-600))", // Darker teal
+];
+
+// Loading skeleton
+const RetentionChartSkeleton = () => (
+  <div className="h-[400px] flex items-center justify-center">
+    <div className="w-full space-y-3">
+      <Skeleton className="h-[300px] w-full bg-neutral-900 rounded-md animate-pulse" />
+      <div className="flex items-center justify-between px-6">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <Skeleton
+            key={i}
+            className="h-4 w-12 bg-neutral-700/50 animate-pulse"
+            style={{
+              animationDelay: `${i * 100}ms`,
+              opacity: 0.3 + i * 0.1,
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
+export function RetentionChart({ data, isLoading, mode }: RetentionChartProps) {
+  // Process data for the chart - organize by cohort
+  const chartData = useMemo(() => {
+    if (!data || !data.cohorts) {
+      return [];
+    }
+
+    // Get cohort keys and sort them - newest cohorts first to match the matrix ordering
+    const cohortKeys = Object.keys(data.cohorts)
+      .sort((a, b) => b.localeCompare(a))
+      .slice(0, 12); // Limit to 10 most recent cohorts for better readability
+
+    // Format each cohort as a series (line)
+    return cohortKeys.map((cohortKey, index) => {
+      const cohortData = data.cohorts[cohortKey];
+      const formattedDate = DateTime.fromISO(cohortKey).toFormat("MMM dd");
+
+      // Create data points for each period
+      const points = cohortData.percentages.map((percentage, periodIndex) => ({
+        x: periodIndex,
+        y: percentage ?? null,
+      }));
+
+      return {
+        id: formattedDate,
+        data: points.filter((point) => point.y !== null), // Remove null points
+        color: cohortColors[index % cohortColors.length],
+      };
+    });
+  }, [data]);
+
+  if (isLoading) {
+    return <RetentionChartSkeleton />;
+  }
+
+  if (!data || chartData.length === 0) {
+    return (
+      <div className="h-[400px] flex items-center justify-center">
+        <div className="text-neutral-400 text-sm">
+          No retention data available
+        </div>
+      </div>
+    );
+  }
+
+  // Calculate max Y value with a little headroom
+  const maxY = Math.min(
+    100,
+    Math.max(
+      ...chartData.flatMap((series) =>
+        series.data.map((d) => (typeof d.y === "number" ? d.y : 0))
+      )
+    ) * 1.1
+  );
+
+  return (
+    <div className="h-[400px]">
+      <ResponsiveLine
+        data={chartData}
+        theme={nivoTheme}
+        margin={{ top: 20, right: 100, bottom: 30, left: 40 }}
+        xScale={{
+          type: "linear",
+          min: 0,
+          max: "auto",
+        }}
+        yScale={{
+          type: "linear",
+          min: 0,
+          max: maxY,
+          stacked: false,
+        }}
+        curve="linear"
+        axisBottom={{
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: 0,
+          tickValues: chartData.length,
+          format: (value) => `${value}`,
+        }}
+        axisLeft={{
+          tickSize: 5,
+          tickPadding: 5,
+          tickRotation: 0,
+          format: (value) => `${value}%`,
+        }}
+        enableGridX={true}
+        gridXValues={Array.from({ length: data.maxPeriods + 1 }, (_, i) => i)}
+        colors={{ datum: "color" }}
+        useMesh={true}
+        pointSize={0}
+        legends={[
+          {
+            anchor: "right",
+            direction: "column",
+            justify: false,
+            translateX: 120,
+            translateY: 0,
+            itemsSpacing: 5,
+            itemDirection: "left-to-right",
+            itemWidth: 100,
+            itemHeight: 20,
+            itemOpacity: 0.85,
+            symbolSize: 12,
+            symbolShape: "circle",
+            symbolBorderColor: "rgba(0, 0, 0, .5)",
+            effects: [
+              {
+                on: "hover",
+                style: {
+                  itemBackground: "rgba(0, 0, 0, .1)",
+                  itemOpacity: 1,
+                },
+              },
+            ],
+            itemTextColor: "hsl(var(--neutral-200))",
+          },
+        ]}
+        tooltip={({ point }) => {
+          const value = point.data.y as number | null;
+          const xValue = point.data.x as number;
+          return (
+            <div className="text-sm bg-neutral-850 p-2 rounded-md border border-neutral-800 shadow-md">
+              <div
+                className="font-medium mb-1"
+                style={{ color: point.serieColor }}
+              >
+                Cohort: {point.serieId}
+              </div>
+              <div className="flex justify-between w-48 text-neutral-200">
+                <span>
+                  {mode === "day" ? "Day" : "Week"} {xValue}
+                </span>
+                <span className="font-medium">
+                  {value !== null ? `${value.toFixed(1)}%` : "-"}
+                </span>
+              </div>
+            </div>
+          );
+        }}
+      />
+    </div>
+  );
 }

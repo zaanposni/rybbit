@@ -29,6 +29,7 @@ import {
 } from "../../../components/ui/tooltip";
 import { HelpCircle } from "lucide-react";
 import { Skeleton } from "../../../components/ui/skeleton";
+import { RetentionChart } from "./RetentionChart";
 
 // Available time range options (in days)
 const RANGE_OPTIONS = [
@@ -102,7 +103,7 @@ const RetentionGridSkeleton = () => {
         {periodHeaders.map((header, i) => (
           <div
             key={`header-${i}`}
-            className={`p-3 font-semibold bg-neutral-850 text-center border-b border-neutral-700 ${
+            className={`p-3 font-semibold bg-neutral-900 text-center border-b border-neutral-700 ${
               i === 0 ? "sticky left-0 z-10 border-r" : ""
             }`}
           >
@@ -114,7 +115,7 @@ const RetentionGridSkeleton = () => {
         {Array.from({ length: DEFAULT_SKELETON_COHORTS }).map((_, rowIndex) => (
           <Fragment key={`row-${rowIndex}`}>
             {/* Cohort Info Cell */}
-            <div className="p-3 bg-neutral-850 text-sm sticky left-0 z-10 border-r border-neutral-700">
+            <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-neutral-700">
               <Skeleton className="h-4 w-24 mb-2 bg-neutral-700/50 animate-pulse" />
               <Skeleton className="h-3 w-16 bg-neutral-700/50 animate-pulse" />
             </div>
@@ -181,6 +182,57 @@ export default function RetentionPage() {
     setTimeRange(parseInt(value));
   };
 
+  // Common filters for both views
+  const FilterControls = () => (
+    <div className="flex items-center gap-4 flex-wrap justify-end">
+      <div className="flex items-center gap-2">
+        <Label htmlFor="time-range" className="text-sm whitespace-nowrap">
+          Time Range:
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <HelpCircle className="h-3.5 w-3.5 ml-1 inline-block text-neutral-400" />
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="w-[200px] text-xs">
+                  Amount of historical data to include in the retention
+                  calculation. All available periods within this timeframe will
+                  be shown.
+                </p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </Label>
+        <Select
+          value={timeRange.toString()}
+          onValueChange={handleRangeChange}
+          disabled={isLoading}
+        >
+          <SelectTrigger id="time-range" className="w-28" size="sm">
+            <SelectValue placeholder="90 days" />
+          </SelectTrigger>
+          <SelectContent size="sm">
+            {RANGE_OPTIONS.map((option) => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <Tabs value={mode} onValueChange={handleModeChange}>
+        <TabsList>
+          <TabsTrigger value="day" disabled={isLoading}>
+            Daily
+          </TabsTrigger>
+          <TabsTrigger value="week" disabled={isLoading}>
+            Weekly
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+    </div>
+  );
+
   // Render error state
   if (isError) {
     return (
@@ -236,121 +288,90 @@ export default function RetentionPage() {
 
   return (
     <div className="pt-4">
+      {/* Single Card containing both chart and grid */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>User Retention</CardTitle>
-          <div className="flex items-center gap-4 flex-wrap justify-end">
-            <div className="flex items-center gap-2">
-              <Label htmlFor="time-range" className="text-sm whitespace-nowrap">
-                Time Range:
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <HelpCircle className="h-3.5 w-3.5 ml-1 inline-block text-neutral-400" />
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p className="w-[200px] text-xs">
-                        Amount of historical data to include in the retention
-                        calculation. All available periods within this timeframe
-                        will be shown.
-                      </p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </Label>
-              <Select
-                value={timeRange.toString()}
-                onValueChange={handleRangeChange}
-                disabled={isLoading}
-              >
-                <SelectTrigger id="time-range" className="w-28" size="sm">
-                  <SelectValue placeholder="90 days" />
-                </SelectTrigger>
-                <SelectContent size="sm">
-                  {RANGE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Tabs value={mode} onValueChange={handleModeChange}>
-              <TabsList>
-                <TabsTrigger value="day" disabled={isLoading}>
-                  Daily
-                </TabsTrigger>
-                <TabsTrigger value="week" disabled={isLoading}>
-                  Weekly
-                </TabsTrigger>
-              </TabsList>
-            </Tabs>
-          </div>
+          <FilterControls />
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
+          {/* Retention Chart */}
           {isLoading ? (
-            <RetentionGridSkeleton />
-          ) : data ? (
-            <div className="overflow-x-auto">
-              <div
-                className="inline-grid gap-px bg-neutral-900 rounded-lg shadow-lg"
-                style={{
-                  gridTemplateColumns: `minmax(120px, auto) repeat(${
-                    data.maxPeriods + 1
-                  }, minmax(90px, auto))`,
-                }}
-              >
-                {/* Header Row */}
-                <div className="p-3 font-semibold bg-neutral-900 text-neutral-100 text-center sticky left-0 z-10 border-b border-r border-neutral-700">
-                  Cohort
-                </div>
-                {periodHeaders.map((header) => (
-                  <div
-                    key={header}
-                    className="p-3 font-semibold bg-neutral-900 text-neutral-100 text-center border-b border-r border-neutral-700"
-                  >
-                    {header}
-                  </div>
-                ))}
-
-                {/* Data Rows */}
-                {cohortKeys.map((cohortPeriod) => (
-                  <Fragment key={cohortPeriod}>
-                    {/* Cohort Info Cell */}
-                    <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-b border-neutral-700">
-                      <div className="font-medium whitespace-nowrap text-neutral-100">
-                        {formatDate(cohortPeriod)}
-                      </div>
-                      <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
-                        {data.cohorts[cohortPeriod].size.toLocaleString()} users
-                      </div>
-                    </div>
-                    {/* Retention Cells */}
-                    {data.cohorts[cohortPeriod].percentages.map(
-                      (percentage: number | null, index: number) => {
-                        const { backgroundColor, textColor } =
-                          getRetentionColor(percentage);
-                        return (
-                          <div
-                            key={`${cohortPeriod}-period-${index}`}
-                            className="m-[2px] p-3 text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-850 rounded-md"
-                            style={{
-                              backgroundColor,
-                              color: textColor,
-                            }}
-                          >
-                            {percentage !== null
-                              ? `${percentage.toFixed(1)}%`
-                              : "-"}
-                          </div>
-                        );
-                      }
-                    )}
-                  </Fragment>
-                ))}
+            <div className="h-[400px]">
+              <div className="w-full h-full space-y-3">
+                <Skeleton className="h-[350px] w-full bg-neutral-900 rounded-md animate-pulse" />
               </div>
             </div>
+          ) : data ? (
+            <RetentionChart data={data} isLoading={false} mode={mode} />
           ) : null}
+
+          <div>
+            {isLoading ? (
+              <RetentionGridSkeleton />
+            ) : data ? (
+              <div className="overflow-x-auto">
+                <div
+                  className="inline-grid gap-px bg-neutral-900 rounded-lg shadow-lg"
+                  style={{
+                    gridTemplateColumns: `minmax(120px, auto) repeat(${
+                      data.maxPeriods + 1
+                    }, minmax(90px, auto))`,
+                  }}
+                >
+                  {/* Header Row */}
+                  <div className="p-2 text-sm font-semibold bg-neutral-900 text-neutral-100 text-center sticky left-0 z-10 border-b border-r border-neutral-700">
+                    Cohort
+                  </div>
+                  {periodHeaders.map((header) => (
+                    <div
+                      key={header}
+                      className="p-2 text-sm bg-neutral-900 text-neutral-100 text-center border-b border-neutral-700"
+                    >
+                      {header}
+                    </div>
+                  ))}
+
+                  {/* Data Rows */}
+                  {cohortKeys.map((cohortPeriod) => (
+                    <Fragment key={cohortPeriod}>
+                      {/* Cohort Info Cell */}
+                      <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-neutral-800">
+                        <div className="font-medium whitespace-nowrap text-neutral-100">
+                          {formatDate(cohortPeriod)}
+                        </div>
+                        <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
+                          {data.cohorts[cohortPeriod].size.toLocaleString()}{" "}
+                          users
+                        </div>
+                      </div>
+                      {/* Retention Cells */}
+                      {data.cohorts[cohortPeriod].percentages.map(
+                        (percentage: number | null, index: number) => {
+                          const { backgroundColor, textColor } =
+                            getRetentionColor(percentage);
+                          return (
+                            <div
+                              key={`${cohortPeriod}-period-${index}`}
+                              className="m-[2px] p-3 text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-900 rounded-md"
+                              style={{
+                                backgroundColor,
+                                color: textColor,
+                              }}
+                            >
+                              {percentage !== null
+                                ? `${percentage.toFixed(1)}%`
+                                : "-"}
+                            </div>
+                          );
+                        }
+                      )}
+                    </Fragment>
+                  ))}
+                </div>
+              </div>
+            ) : null}
+          </div>
         </CardContent>
       </Card>
     </div>
