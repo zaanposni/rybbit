@@ -17,20 +17,24 @@ interface ProcessedRetentionData {
   cohorts: Record<string, { size: number; percentages: (number | null)[] }>;
   maxPeriods: number;
   mode: "day" | "week";
+  range: number;
 }
 
 export const getRetention = async (
   req: FastifyRequest<{
     Params: { site: string };
-    Querystring: { mode?: string };
+    Querystring: { mode?: string; range?: string };
   }>,
   res: FastifyReply
 ) => {
   const { site } = req.params;
-  const { mode = "week" } = req.query; // Default to weekly mode
+  const { mode = "week", range = "90" } = req.query; // Default to weekly mode and 90 days range
 
   // Validate mode parameter
   const retentionMode = mode === "day" ? "day" : "week";
+
+  // Validate range parameter (between 7-365 days)
+  const timeRange = Math.min(365, Math.max(7, parseInt(range) || 90));
 
   const userHasAccessToSite = await getUserHasAccessToSite(req, site);
   if (!userHasAccessToSite) {
@@ -51,7 +55,8 @@ WITH UserFirstPeriod AS (
     }) AS cohort_period
     FROM pageviews
     WHERE site_id = {siteId:UInt16}
-    -- AND timestamp >= today() - INTERVAL 90 DAY
+    -- Use the configurable time range
+    AND timestamp >= addDays(today(), -{timeRange:UInt16})
     GROUP BY user_id
 ),
 PeriodActivity AS (
@@ -62,7 +67,8 @@ PeriodActivity AS (
     }) AS activity_period
     FROM pageviews
     WHERE site_id = {siteId:UInt16}
-    -- AND timestamp >= today() - INTERVAL 90 DAY
+    -- Match the date range filter
+    AND timestamp >= addDays(today(), -{timeRange:UInt16})
 ),
 CohortRetention AS (
     SELECT
@@ -98,6 +104,7 @@ ORDER BY
     format: "JSONEachRow",
     query_params: {
       siteId: Number(site),
+      timeRange: timeRange,
     },
   });
 
@@ -107,6 +114,7 @@ ORDER BY
   const processedData: ProcessedRetentionData = {
     ...processRetentionData(results),
     mode: retentionMode as "day" | "week",
+    range: timeRange,
   };
 
   return res.send({ data: processedData });
@@ -115,7 +123,7 @@ ORDER BY
 // Process raw retention data into a grid-friendly format
 function processRetentionData(
   rawData: RetentionDataRow[]
-): Omit<ProcessedRetentionData, "mode"> {
+): Omit<ProcessedRetentionData, "mode" | "range"> {
   if (!rawData || rawData.length === 0) {
     return { cohorts: {}, maxPeriods: 0 };
   }
@@ -149,11 +157,14 @@ function processRetentionData(
   });
 
   // Ensure all percentage arrays have the same length for grid alignment
+  const finalMaxPeriods = Math.max(maxPeriodDiff, 0);
+
   Object.values(processedCohorts).forEach((cohort) => {
-    while (cohort.percentages.length <= maxPeriodDiff) {
+    // Ensure all cohorts have the same number of periods
+    while (cohort.percentages.length <= finalMaxPeriods) {
       cohort.percentages.push(null);
     }
   });
 
-  return { cohorts: processedCohorts, maxPeriods: maxPeriodDiff };
+  return { cohorts: processedCohorts, maxPeriods: finalMaxPeriods };
 }

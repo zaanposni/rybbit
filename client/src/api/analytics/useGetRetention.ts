@@ -8,16 +8,22 @@ export interface ProcessedRetentionData {
   cohorts: Record<string, { size: number; percentages: (number | null)[] }>;
   maxPeriods: number;
   mode: "day" | "week";
+  range: number;
 }
 
 export type RetentionMode = "day" | "week";
 
-export function useGetRetention(mode: RetentionMode = "week") {
+export function useGetRetention(
+  mode: RetentionMode = "week",
+  range: number = 90
+) {
   const { site } = useStore();
   return useQuery<ProcessedRetentionData>({
-    queryKey: ["retention", site, mode],
+    queryKey: ["retention", site, mode, range],
     queryFn: () =>
-      authedFetch(`${BACKEND_URL}/retention/${site}?mode=${mode}`)
+      authedFetch(
+        `${BACKEND_URL}/retention/${site}?mode=${mode}&range=${range}`
+      )
         .then((res) => res.json())
         .then((data) => data.data),
   });

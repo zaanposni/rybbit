@@ -13,6 +13,32 @@ import {
   CardTitle,
 } from "../../../components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../../../components/ui/select";
+import { Label } from "../../../components/ui/label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../../../components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
+
+// Available time range options (in days)
+const RANGE_OPTIONS = [
+  { value: "7", label: "7 days" },
+  { value: "14", label: "14 days" },
+  { value: "30", label: "30 days" },
+  { value: "60", label: "60 days" },
+  { value: "90", label: "90 days" },
+  { value: "180", label: "6 months" },
+  { value: "365", label: "1 year" },
+];
 
 // Dynamic color function that creates a smooth gradient based on retention percentage
 const getRetentionColor = (
@@ -55,7 +81,11 @@ const getRetentionColor = (
 export default function RetentionPage() {
   // State for the retention mode (day or week)
   const [mode, setMode] = useState<RetentionMode>("week");
-  const { data, isLoading, isError } = useGetRetention(mode);
+  // State for the data time range (days)
+  const [timeRange, setTimeRange] = useState<number>(90);
+
+  // Use the updated hook without the limit parameter
+  const { data, isLoading, isError } = useGetRetention(mode, timeRange);
 
   // Get sorted cohort keys (oldest first)
   const cohortKeys = useMemo(
@@ -100,21 +130,57 @@ export default function RetentionPage() {
     setMode(newMode as RetentionMode);
   };
 
+  const handleRangeChange = (value: string) => {
+    setTimeRange(parseInt(value));
+  };
+
   return (
     <div className="pt-4">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
           <CardTitle>User Retention</CardTitle>
-          <Tabs
-            value={mode}
-            onValueChange={handleModeChange}
-            className="ml-auto"
-          >
-            <TabsList>
-              <TabsTrigger value="day">Daily</TabsTrigger>
-              <TabsTrigger value="week">Weekly</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <div className="flex items-center gap-4 flex-wrap justify-end">
+            <div className="flex items-center gap-2">
+              <Label htmlFor="time-range" className="text-sm whitespace-nowrap">
+                Time Range:
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <HelpCircle className="h-3.5 w-3.5 ml-1 inline-block text-neutral-400" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p className="w-[200px] text-xs">
+                        Amount of historical data to include in the retention
+                        calculation. All available periods within this timeframe
+                        will be shown.
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </Label>
+              <Select
+                value={timeRange.toString()}
+                onValueChange={handleRangeChange}
+              >
+                <SelectTrigger id="time-range" className="w-28" size="sm">
+                  <SelectValue placeholder="90 days" />
+                </SelectTrigger>
+                <SelectContent size="sm">
+                  {RANGE_OPTIONS.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Tabs value={mode} onValueChange={handleModeChange}>
+              <TabsList>
+                <TabsTrigger value="day">Daily</TabsTrigger>
+                <TabsTrigger value="week">Weekly</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto">
@@ -143,8 +209,8 @@ export default function RetentionPage() {
               {cohortKeys.map((cohortPeriod) => (
                 <Fragment key={cohortPeriod}>
                   {/* Cohort Info Cell */}
-                  <div className="p-3 bg-neutral-850  text-sm sticky left-0 z-10 border-r border-neutral-700">
-                    <div className="font-medium whitespace-nowrap">
+                  <div className="p-3 bg-neutral-850 text-sm sticky left-0 z-10 border-r border-neutral-700">
+                    <div className="font-medium whitespace-nowrap text-neutral-100">
                       {formatDate(cohortPeriod)}
                     </div>
                     <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
