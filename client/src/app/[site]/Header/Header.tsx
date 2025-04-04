@@ -66,6 +66,12 @@ export function Header() {
             icon={<Radio size={20} />}
           />
           <TabButton
+            label="Retention"
+            active={isActiveTab("retention")}
+            href={getTabPath("retention")}
+            icon={<ChartBarDecreasing size={20} />}
+          />
+          <TabButton
             label="Reports"
             active={isActiveTab("reports")}
             href={getTabPath("reports")}
