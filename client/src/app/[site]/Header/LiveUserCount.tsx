@@ -7,7 +7,7 @@ import {
 import NumberFlow from "@number-flow/react";
 
 export default function LiveUserCount() {
-  const { data } = useGetLiveUsercount();
+  const { data } = useGetLiveUsercount(5);
 
   return (
     <div className="flex items-center gap-[6px] text-base text-neutral-200 cursor-default">

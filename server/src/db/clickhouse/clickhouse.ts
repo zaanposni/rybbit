@@ -21,6 +21,7 @@ export const initializeClickhouse = async () => {
         querystring String,
         page_title String,
         referrer String,
+        channel String,
         browser LowCardinality(String),
         browser_version LowCardinality(String),
         operating_system LowCardinality(String),

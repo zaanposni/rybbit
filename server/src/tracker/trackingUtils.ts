@@ -45,6 +45,23 @@ export type ActiveSession = {
   referrer: string | null;
 };
 
+// Clear referrer if it's from the same domain
+export function clearSelfReferrer(referrer: string, hostname: string): string {
+  if (!referrer || !hostname) return referrer;
+
+  try {
+    const referrerUrl = new URL(referrer);
+    if (referrerUrl.hostname === hostname) {
+      // Internal navigation, clear the referrer
+      return "";
+    }
+  } catch (e) {
+    // Invalid URL, return original referrer
+  }
+
+  return referrer;
+}
+
 // Check if site is over the monthly limit
 export function isSiteOverLimit(siteId: number | string): boolean {
   return sitesOverLimit.has(Number(siteId));
@@ -128,7 +145,9 @@ export async function updateSession(
     browser: payload.ua.browser.name || null,
     operatingSystem: payload.ua.os.name || null,
     language: payload.language || null,
-    referrer: payload.referrer || null,
+    referrer: payload.hostname
+      ? clearSelfReferrer(payload.referrer || "", payload.hostname)
+      : payload.referrer || null,
   };
 
   await db.insert(activeSessions).values(insertData);

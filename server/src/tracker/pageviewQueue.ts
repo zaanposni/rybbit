@@ -2,6 +2,8 @@ import { DateTime } from "luxon";
 import clickhouse from "../db/clickhouse/clickhouse.js";
 import { TrackingPayload } from "../types.js";
 import { getDeviceType } from "../utils.js";
+import { getChannel } from "./getChannel.js";
+import { clearSelfReferrer } from "./trackingUtils.js";
 
 type TotalPayload = TrackingPayload & {
   userId: string;
@@ -66,6 +68,9 @@ class PageviewQueue {
       const longitude = dataForIp?.data?.longitude || 0;
       const city = dataForIp?.data?.city || "";
 
+      // Check if referrer is from the same domain and clear it if so
+      let referrer = clearSelfReferrer(pv.referrer || "", pv.hostname || "");
+
       return {
         site_id: pv.site_id,
         timestamp: DateTime.fromISO(pv.timestamp).toFormat(
@@ -77,7 +82,8 @@ class PageviewQueue {
         pathname: pv.pathname || "",
         querystring: pv.querystring || "",
         page_title: pv.page_title || "",
-        referrer: pv.referrer || "",
+        referrer: referrer,
+        channel: getChannel(referrer, pv.querystring, pv.hostname),
         browser: pv.ua.browser.name || "",
         browser_version: pv.ua.browser.major || "",
         operating_system: pv.ua.os.name || "",

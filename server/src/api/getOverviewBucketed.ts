@@ -207,8 +207,6 @@ export async function fetchOverviewBucketed({
     pastMinutes,
   });
 
-  console.info(query);
-
   try {
     const result = await clickhouse.query({
       query,
