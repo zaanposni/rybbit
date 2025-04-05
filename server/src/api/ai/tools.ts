@@ -20,7 +20,7 @@ export function generateAnalyticsTools(timezone: string, site: string) {
   const getLiveUserCountTool = tool(
     async () => {
       try {
-        const result = await fetchLiveUserCount(site);
+        const result = await fetchLiveUserCount(site, 5);
         return result.toString();
       } catch (error) {
         console.error(error);
