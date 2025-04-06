@@ -1,5 +1,6 @@
 "use client";
 import {
+  BrainCircuit,
   ChartBarDecreasing,
   ChartLine,
   LayoutDashboard,
@@ -81,6 +82,12 @@ export function Sidebar() {
           active={isActiveTab("reports")}
           href={getTabPath("reports")}
           icon={<ChartBarDecreasing className="w-4 h-4" />}
+        />
+        <SidebarLink
+          label="AI"
+          active={isActiveTab("ai")}
+          href={getTabPath("ai")}
+          icon={<BrainCircuit className="w-4 h-4" />}
         />
         <SiteSettings
           siteId={site?.siteId ?? 0}
