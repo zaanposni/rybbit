@@ -21,6 +21,7 @@ export type SaveFunnelRequest = {
   startDate: string;
   endDate: string;
   name: string;
+  reportId?: number;
 };
 
 export type FunnelResponse = {

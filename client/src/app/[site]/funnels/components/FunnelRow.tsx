@@ -10,11 +10,23 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp, Calendar, BarChart2 } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  BarChart2,
+  Edit,
+  Trash2,
+} from "lucide-react";
 import { Time, DateRangeMode } from "@/components/DateSelector/types";
 import { DateTime } from "luxon";
 import { Funnel } from "./Funnel";
 import { useGetFunnel } from "@/api/analytics/useGetFunnel";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { useDeleteFunnel } from "@/api/analytics/useDeleteFunnel";
+import { toast } from "sonner";
+import { CreateFunnelDialog } from "./CreateFunnel";
+import { EditFunnelDialog } from "./EditFunnel";
 
 interface FunnelRowProps {
   funnel: SavedFunnel;
@@ -22,6 +34,8 @@ interface FunnelRowProps {
 
 export function FunnelRow({ funnel }: FunnelRowProps) {
   const [expanded, setExpanded] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
   console.info(funnel);
 
@@ -42,6 +56,9 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
     isPending,
     isSuccess,
   } = useGetFunnel();
+
+  // Delete funnel mutation
+  const { mutate: deleteFunnel, isPending: isDeleting } = useDeleteFunnel();
 
   // Handle expansion (fetch data if needed)
   const handleExpand = () => {
@@ -73,14 +90,25 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
     }
   };
 
+  // Handle funnel deletion
+  const handleDeleteFunnel = async () => {
+    try {
+      await deleteFunnel(funnel.id);
+      toast.success("Funnel deleted successfully");
+    } catch (error) {
+      console.error("Error deleting funnel:", error);
+      throw error; // Let the ConfirmationModal handle the error display
+    }
+  };
+
   return (
     <Card className="mb-4 overflow-hidden">
       {/* Header row (always visible) */}
-      <div
-        className="flex items-center justify-between p-4 cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
-        onClick={handleExpand}
-      >
-        <div className="flex items-center space-x-4">
+      <div className="flex items-center justify-between p-4">
+        <div
+          className="flex items-center space-x-4 flex-grow cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+          onClick={handleExpand}
+        >
           <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md">
             <BarChart2 className="h-5 w-5 text-neutral-500" />
           </div>
@@ -104,9 +132,41 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
               {(funnel.conversionRate || 0).toFixed(1)}%
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="ml-2">
-            {expanded ? <ChevronUp /> : <ChevronDown />}
-          </Button>
+
+          <div className="flex gap-2">
+            {/* Edit button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditModalOpen(true);
+              }}
+            >
+              <Edit className="h-4 w-4" />
+            </Button>
+
+            {/* Delete button */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsDeleteModalOpen(true);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+
+            <Button
+              variant="ghost"
+              size="sm"
+              className="ml-2"
+              onClick={handleExpand}
+            >
+              {expanded ? <ChevronUp /> : <ChevronDown />}
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -143,6 +203,30 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
             )}
           </div>
         </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        title="Delete Funnel"
+        description={`Are you sure you want to delete "${funnel.name}"? This action cannot be undone.`}
+        isOpen={isDeleteModalOpen}
+        setIsOpen={setIsDeleteModalOpen}
+        onConfirm={handleDeleteFunnel}
+        primaryAction={{
+          children: isDeleting ? "Deleting..." : "Delete",
+          variant: "destructive",
+        }}
+      >
+        <span></span>
+      </ConfirmationModal>
+
+      {/* Edit Funnel Modal */}
+      {isEditModalOpen && (
+        <EditFunnelDialog
+          funnel={funnel}
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+        />
       )}
     </Card>
   );

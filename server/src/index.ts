@@ -37,6 +37,7 @@ import { getRetention } from "./api/getRetention.js";
 import { getFunnel } from "./api/getFunnel.js";
 import { createFunnel } from "./api/createFunnel.js";
 import { getFunnels } from "./api/getFunnels.js";
+import { deleteReport } from "./api/deleteReport.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -141,6 +142,7 @@ server.get("/live-session-locations/:siteId", getLiveSessionLocations);
 server.post("/funnel/:site", getFunnel);
 server.post("/funnel/create/:site", createFunnel);
 server.get("/funnels/:site", getFunnels);
+server.delete("/report/:reportId", deleteReport);
 
 // Administrative
 server.post("/add-site", addSite);
