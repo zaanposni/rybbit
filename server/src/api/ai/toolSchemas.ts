@@ -137,13 +137,16 @@ const bucketSchema = z.enum(["hour", "day", "week", "month"])
 - month: Only allowed if the startDate and endDate are at least 60 days apart.`);
 
 const limitSchema = z.number()
+  .int({
+    message: "Limit must be an integer.",
+  })
   .gte(1, {
     message: "Limit must be greater than or equal to 1.",
   })
   .lte(100, {
     message: "Limit must be less than or equal to 100.",
   })
-  .describe("The maximum number of data records to return. Must be between 1 and 100.");
+  .describe("The maximum number of data records to return. Must be an integer between 1 and 100.");
 
 export const getLiveUserCountToolSchema = z.object({});
 
