@@ -35,6 +35,8 @@ import { getUserInfo } from "./api/getUserInfo.js";
 import { getLiveSessionLocations } from "./api/getLiveSessionLocations.js";
 import { getRetention } from "./api/getRetention.js";
 import { getFunnel } from "./api/getFunnel.js";
+import { createFunnel } from "./api/createFunnel.js";
+import { getFunnels } from "./api/getFunnels.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -137,6 +139,8 @@ server.get("/user/:userId/sessions", getUserSessions);
 server.get("/user/info/:siteId/:userId", getUserInfo);
 server.get("/live-session-locations/:siteId", getLiveSessionLocations);
 server.post("/funnel/:site", getFunnel);
+server.post("/funnel/create/:site", createFunnel);
+server.get("/funnels/:site", getFunnels);
 
 // Administrative
 server.post("/add-site", addSite);

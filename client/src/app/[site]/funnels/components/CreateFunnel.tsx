@@ -16,8 +16,20 @@ import { Time } from "@/components/DateSelector/types";
 import { DateTime } from "luxon";
 import { useGetFunnel, FunnelStep } from "@/api/analytics/useGetFunnel";
 import { Funnel } from "./Funnel";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { useStore } from "@/lib/store";
 
-export function CreateFunnel() {
+export function CreateFunnelDialog() {
+  const [open, setOpen] = useState(false);
+  const { site } = useStore();
+
   // Initial date state - last 30 days
   const [time, setTime] = useState<Time>({
     mode: "range",
@@ -32,6 +44,9 @@ export function CreateFunnel() {
     { type: "page", value: "", name: "" },
   ]);
 
+  // Funnel name
+  const [name, setName] = useState("New Funnel");
+
   // Funnel analysis mutation
   const {
     mutate: analyzeFunnel,
@@ -39,6 +54,7 @@ export function CreateFunnel() {
     isError,
     error,
     isPending,
+    reset,
   } = useGetFunnel();
 
   // Handle adding a new step
@@ -81,8 +97,7 @@ export function CreateFunnel() {
       return;
     }
 
-    // Get timezone and dates
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Get dates based on time selection
     let startDate = "",
       endDate = "";
 
@@ -121,97 +136,146 @@ export function CreateFunnel() {
       steps,
       startDate,
       endDate,
-      timezone,
+      name,
     });
   };
 
+  // Reset form when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      reset();
+    }
+  };
+
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Left side: Funnel configuration form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Funnel</CardTitle>
-        </CardHeader>
-        <CardContent>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="flex gap-2">
+          <Plus className="w-4 h-4" /> Create Funnel
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[80vw]">
+        <DialogHeader>
+          <DialogTitle>Create Funnel</DialogTitle>
+        </DialogHeader>
+
+        <div className="grid grid-cols-[600px_3fr] gap-6 my-4">
+          {/* Left side: Funnel configuration form */}
           <div className="space-y-4">
-            {steps.map((step, index) => (
-              <div key={index} className="flex flex-col space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-xs">
-                    {index + 1}
-                  </div>
-                  <Select
-                    value={step.type}
-                    onValueChange={(value) =>
-                      updateStepType(index, value as "page" | "event")
-                    }
-                  >
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="page">Page Path</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                    </SelectContent>
-                  </Select>
+            <div>
+              <label className="text-sm font-medium mb-1 block">
+                Funnel Name
+              </label>
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Enter funnel name"
+              />
+            </div>
 
-                  <div className="flex-grow flex gap-2">
-                    <Input
-                      placeholder={
-                        step.type === "page"
-                          ? "Path (e.g. /pricing)"
-                          : "Event name"
+            <div className="mt-4">
+              <label className="text-sm font-medium mb-1 block">
+                Funnel Steps
+              </label>
+              {steps.map((step, index) => (
+                <div key={index} className="flex flex-col space-y-2 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-xs">
+                      {index + 1}
+                    </div>
+                    <Select
+                      value={step.type}
+                      onValueChange={(value) =>
+                        updateStepType(index, value as "page" | "event")
                       }
-                      value={step.value}
-                      onChange={(e) =>
-                        updateStep(index, "value", e.target.value)
-                      }
-                    />
-                    <Input
-                      placeholder="Label (optional)"
-                      value={step.name || ""}
-                      onChange={(e) =>
-                        updateStep(index, "name", e.target.value)
-                      }
-                    />
-                  </div>
+                    >
+                      <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="page">Page Path</SelectItem>
+                        <SelectItem value="event">Event</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeStep(index)}
-                    disabled={steps.length <= 2}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                    <div className="flex-grow flex gap-2">
+                      <Input
+                        placeholder={
+                          step.type === "page"
+                            ? "Path (e.g. /pricing)"
+                            : "Event name"
+                        }
+                        value={step.value}
+                        onChange={(e) =>
+                          updateStep(index, "value", e.target.value)
+                        }
+                      />
+                      <Input
+                        placeholder="Label (optional)"
+                        value={step.name || ""}
+                        onChange={(e) =>
+                          updateStep(index, "name", e.target.value)
+                        }
+                      />
+                    </div>
+
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeStep(index)}
+                      disabled={steps.length <= 2}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
+              ))}
+
+              <Button variant="outline" onClick={addStep} className="w-full">
+                <Plus className="mr-2 h-4 w-4" /> Add Step
+              </Button>
+            </div>
+          </div>
+
+          {/* Right side: Funnel visualization (if data exists) */}
+          {data?.data && data.data.length > 0 ? (
+            <Funnel
+              data={data}
+              isError={isError}
+              error={error}
+              isPending={isPending}
+              time={time}
+              setTime={setTime}
+            />
+          ) : (
+            <div className="flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 rounded-lg h-full">
+              <div className="text-center p-6">
+                <div className="text-lg font-medium mb-2">Preview</div>
+                <p className="text-sm text-neutral-500">
+                  Configure your funnel steps and analyze to preview the funnel
+                  visualization
+                </p>
               </div>
-            ))}
+            </div>
+          )}
+        </div>
 
-            <Button variant="outline" onClick={addStep} className="w-full mt-2">
-              <Plus className="mr-2 h-4 w-4" /> Add Step
+        <DialogFooter className="flex justify-between items-center">
+          <div className="text-sm text-red-500">
+            {isError &&
+              (error instanceof Error ? error.message : "An error occurred")}
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancel
             </Button>
-
-            <Button
-              onClick={handleSubmit}
-              className="w-full mt-4"
-              disabled={isPending}
-            >
+            <Button onClick={handleSubmit} disabled={isPending}>
               {isPending ? "Analyzing..." : "Analyze Funnel"}
             </Button>
           </div>
-        </CardContent>
-      </Card>
-
-      {/* Right side: Funnel visualization */}
-      <Funnel
-        data={data}
-        isError={isError}
-        error={error}
-        isPending={isPending}
-        time={time}
-        setTime={setTime}
-      />
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
