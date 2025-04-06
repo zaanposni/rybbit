@@ -3,9 +3,11 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useStore } from "../../lib/store";
 import { useSyncStateWithUrl } from "../../lib/urlParams";
-import { Header } from "./Header/Header";
+import { Header } from "./components/Header/Header";
 import { useSiteHasData, useGetSiteMetadata } from "../../api/admin/sites";
 import { NoData } from "./components/NoData";
+import { TopBar } from "../../components/TopBar";
+import { Sidebar } from "./components/Sidebar/Sidebar";
 
 export default function SiteLayout({
   children,
@@ -41,9 +43,17 @@ export default function SiteLayout({
   }
 
   return (
-    <>
-      <Header />
-      {children}
-    </>
+    <div className="flex flex-col h-screen">
+      <TopBar />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
+        <div className="flex-1 overflow-auto">
+          <div className="px-4 py-2 max-w-[1400px] mx-auto w-full">
+            <Header />
+            <div>{children}</div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

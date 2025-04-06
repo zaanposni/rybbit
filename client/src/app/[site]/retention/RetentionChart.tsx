@@ -138,7 +138,7 @@ export function RetentionChart({ data, isLoading, mode }: RetentionChartProps) {
       <ResponsiveLine
         data={chartData}
         theme={nivoTheme}
-        margin={{ top: 20, right: 90, bottom: 30, left: 40 }}
+        margin={{ top: 20, right: 120, bottom: 30, left: 40 }}
         xScale={{
           type: "linear",
           min: 0,

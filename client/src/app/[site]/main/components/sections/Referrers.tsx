@@ -9,7 +9,8 @@ import {
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
 import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
-type Tab = "referrers";
+
+type Tab = "referrers" | "channels";
 
 export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
   const [tab, setTab] = useState<Tab>("referrers");
@@ -26,6 +27,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
         >
           <TabsList>
             <TabsTrigger value="referrers">Referrers</TabsTrigger>
+            <TabsTrigger value="channels">Channels</TabsTrigger>
           </TabsList>
           <TabsContent value="referrers">
             <ComponentToUse
@@ -42,6 +44,18 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
                   />
                   {e.value ? e.value : "Direct"}
                 </div>
+              )}
+            />
+          </TabsContent>
+          <TabsContent value="channels">
+            <ComponentToUse
+              filterParameter="channel"
+              title="Channels"
+              getValue={(e) => e.value}
+              getKey={(e) => e.value}
+              // getLink={(e) => `https://${e.value}`}
+              getLabel={(e) => (
+                <div className="flex items-center">{e.value}</div>
               )}
             />
           </TabsContent>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Time, useStore } from "@/lib/store";
+import { useStore } from "@/lib/store";
 import {
   SelectItem,
   Select,
@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { DateTime } from "luxon";
+import { Time } from "../../../../../components/DateSelector/types";
 
 const getOptions = (time: Time) => {
   if (time.mode === "day") {

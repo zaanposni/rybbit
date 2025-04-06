@@ -1,6 +1,7 @@
 "use client";
 
 import { User } from "@phosphor-icons/react";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authClient } from "../lib/auth";
@@ -10,13 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-} from "./ui/navigation-menu";
-import { useQueryClient } from "@tanstack/react-query";
 
 export function TopBar() {
   const session = authClient.useSession();
@@ -24,37 +18,13 @@ export function TopBar() {
   const queryClient = useQueryClient();
 
   return (
-    <div className="flex pt-2 items-center w-full pb-4 bg-neutral-900 justify-center">
-      <div className="flex items-center justify-between max-w-6xl flex-1">
+    <div className="flex pt-2 pb-2 px-3 items-center w-full  bg-neutral-900 justify-center">
+      <div className="flex items-center justify-between flex-1">
         <div className="flex items-center space-x-4">
-          <Link href="/" className="font-bold text-xl">
+          <Link href="/" className="font-bold text-lg">
             🐸 Frogstats
           </Link>
         </div>
-        <NavigationMenu>
-          <NavigationMenuList>
-            <NavigationMenuItem>
-              <Link href="/" legacyBehavior passHref>
-                <NavigationMenuLink className="text-neutral-100 flex items-center gap-1 text-sm font-medium">
-                  Websites
-                </NavigationMenuLink>
-              </Link>
-            </NavigationMenuItem>
-          </NavigationMenuList>
-        </NavigationMenu>
-        {/* <nav className="ml-auto flex items-center space-x-6 text-sm">
-          <Link href="/" className="text-neutral-100">
-            Websites
-          </Link>
-          <Link
-            href="/settings"
-            className="text-neutral-100 flex items-center gap-1"
-          >
-            <GearSix size={18} weight="bold" />
-            Settings
-          </Link>
-          <ThemeToggle />
-        </nav> */}
         <DropdownMenu>
           <DropdownMenuTrigger className="flex items-center gap-1 text-sm font-medium">
             <User size={16} weight="bold" />

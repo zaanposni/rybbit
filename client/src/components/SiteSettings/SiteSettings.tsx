@@ -41,20 +41,28 @@ import {
 } from "@/api/admin/sites";
 import { BACKEND_URL } from "@/lib/const";
 
-export function SiteSettings({ siteId }: { siteId: number }) {
+export function SiteSettings({
+  siteId,
+  trigger,
+}: {
+  siteId: number;
+  trigger?: React.ReactNode;
+}) {
   const { siteMetadata } = useGetSiteMetadata(siteId);
 
   if (!siteMetadata) {
     return null;
   }
 
-  return <SiteSettingsInner siteMetadata={siteMetadata} />;
+  return <SiteSettingsInner siteMetadata={siteMetadata} trigger={trigger} />;
 }
 
 export function SiteSettingsInner({
   siteMetadata,
+  trigger,
 }: {
   siteMetadata: GetSitesResponse[number];
+  trigger?: React.ReactNode;
 }) {
   const { refetch } = useGetSites();
   const router = useRouter();
@@ -128,9 +136,11 @@ export function SiteSettingsInner({
   return (
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Settings className="h-4 w-4" />
-        </Button>
+        {trigger ?? (
+          <Button variant="ghost" size="icon">
+            <Settings className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>

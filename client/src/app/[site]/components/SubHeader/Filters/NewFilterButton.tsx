@@ -1,5 +1,5 @@
 "use client";
-import { Plus } from "lucide-react";
+import { ListFilterPlus, Plus } from "lucide-react";
 import { Button } from "../../../../../components/ui/button";
 import {
   DropdownMenu,
@@ -31,6 +31,10 @@ const FilterOptions: { label: string; value: FilterParameter }[] = [
     value: "referrer",
   },
   {
+    label: "Channel",
+    value: "channel",
+  },
+  {
     label: "Country",
     value: "country",
   },
@@ -38,10 +42,10 @@ const FilterOptions: { label: string; value: FilterParameter }[] = [
     label: "Region",
     value: "iso_3166_2",
   },
-  // {
-  //   label: "City",
-  //   value: "city",
-  // },
+  {
+    label: "City",
+    value: "city",
+  },
   {
     label: "Device Type",
     value: "device_type",
@@ -136,7 +140,7 @@ export function NewFilterButton() {
           className="px-3"
           onClick={() => setOpen(true)}
         >
-          <Plus />
+          <ListFilterPlus className="w-4 h-4" />
           Filter
         </Button>
       </DropdownMenuTrigger>

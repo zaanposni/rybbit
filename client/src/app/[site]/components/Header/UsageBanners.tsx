@@ -4,9 +4,9 @@ import {
   Alert,
   AlertDescription,
   AlertTitle,
-} from "../../../components/ui/alert";
-import { Button } from "../../../components/ui/button";
-import { GetSitesResponse } from "../../../api/admin/sites";
+} from "../../../../components/ui/alert";
+import { Button } from "../../../../components/ui/button";
+import { GetSitesResponse } from "../../../../api/admin/sites";
 
 interface UsageBannersProps {
   site: GetSitesResponse[0] | undefined;

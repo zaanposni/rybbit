@@ -1,8 +1,8 @@
-import { Time } from "@/lib/store";
 import { DateTime } from "luxon";
 import { APIResponse } from "./types";
 import { useQuery, UseQueryResult } from "@tanstack/react-query";
 import { BACKEND_URL } from "../lib/const";
+import { Time } from "../components/DateSelector/types";
 
 export function getStartAndEndDate(time: Time) {
   if (time.mode === "range") {

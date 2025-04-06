@@ -1,8 +1,7 @@
-import { useSearchParams, usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { DateTime } from "luxon";
-import { Filter, Time, TimeBucket, StatType, useStore } from "./store";
-import React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { useEffect } from "react";
+import { Time } from "../components/DateSelector/types";
+import { Filter, StatType, TimeBucket, useStore } from "./store";
 
 // Serialize store state to URL parameters
 export const serializeStateToUrl = (

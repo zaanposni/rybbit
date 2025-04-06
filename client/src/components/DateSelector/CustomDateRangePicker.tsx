@@ -11,13 +11,16 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { useStore } from "../../../../lib/store";
+import { Time } from "./types";
 
 export function CustomDateRangePicker({
   className,
-}: React.HTMLAttributes<HTMLDivElement>) {
+  setTime,
+}: {
+  className?: string;
+  setTime: (time: Time) => void;
+}) {
   const [date, setDate] = React.useState<DateRange | undefined>();
-  const { setTime } = useStore();
 
   return (
     <div className={cn("grid gap-2", className)}>

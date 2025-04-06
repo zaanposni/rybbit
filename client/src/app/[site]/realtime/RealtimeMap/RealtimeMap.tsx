@@ -91,7 +91,7 @@ export function RealtimeMap() {
   return (
     <div>
       <div
-        className="w-full h-[600px] rounded-lg overflow-hidden border border-neutral-800"
+        className="w-full h-[600px] rounded-lg overflow-hidden border border-neutral-850"
         onMouseMove={(e) => {
           if (tooltipContent) {
             setTooltipPosition({

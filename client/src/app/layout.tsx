@@ -60,12 +60,7 @@ export default function RootLayout({
                 {children}
               </div>
             ) : (
-              <div className="min-h-full">
-                <TopBar />
-                <main className="flex min-h-screen flex-col items-center p-4">
-                  <div className="w-full max-w-6xl">{children}</div>
-                </main>
-              </div>
+              children
             )}
           </QueryProvider>
         </TooltipProvider>

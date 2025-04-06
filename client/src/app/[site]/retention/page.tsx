@@ -308,7 +308,7 @@ export default function RetentionPage() {
       : [];
 
   return (
-    <div className="pt-4">
+    <div className="pt-1">
       {/* Single Card containing both chart and grid */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -337,7 +337,7 @@ export default function RetentionPage() {
                   style={{
                     gridTemplateColumns: `minmax(120px, auto) repeat(${
                       data.maxPeriods + 1
-                    }, minmax(90px, auto))`,
+                    }, minmax(80px, auto))`,
                   }}
                 >
                   {/* Header Row */}
@@ -357,8 +357,8 @@ export default function RetentionPage() {
                   {cohortKeys.map((cohortPeriod) => (
                     <Fragment key={cohortPeriod}>
                       {/* Cohort Info Cell */}
-                      <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-neutral-800">
-                        <div className="font-medium whitespace-nowrap text-neutral-100">
+                      <div className="py-2 px-2 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-neutral-800">
+                        <div className="whitespace-nowrap text-neutral-100">
                           {formatDate(cohortPeriod)}
                         </div>
                         <div className="text-xs text-neutral-300 mt-1 whitespace-nowrap">
@@ -374,7 +374,7 @@ export default function RetentionPage() {
                           return (
                             <div
                               key={`${cohortPeriod}-period-${index}`}
-                              className="m-[2px] p-3 text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-900 rounded-md"
+                              className="m-[2px] text-center flex items-center justify-center font-medium transition-colors duration-150 bg-neutral-900 rounded-md"
                               style={{
                                 backgroundColor,
                                 color: textColor,

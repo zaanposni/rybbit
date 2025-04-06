@@ -9,6 +9,7 @@ import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { authClient } from "../lib/auth";
 import { AddSite } from "./components/AddSite";
 import { CreateOrganizationDialog } from "./components/CreateOrganizationDialog";
+import { StandardPage } from "../components/StandardPage";
 
 export default function Home() {
   const {
@@ -32,7 +33,7 @@ export default function Home() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col pt-1">
+    <StandardPage>
       <div className="flex justify-between items-center mb-4">
         <div className="text-2xl font-bold">Websites</div>
         <AddSite disabled={hasNoOrganizations} />
@@ -100,6 +101,6 @@ export default function Home() {
         onOpenChange={setCreateOrgDialogOpen}
         onSuccess={handleOrganizationCreated}
       />
-    </div>
+    </StandardPage>
   );
 }
