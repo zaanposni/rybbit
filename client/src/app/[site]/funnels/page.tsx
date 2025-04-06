@@ -2,26 +2,15 @@
 
 import { CreateFunnelDialog } from "./components/CreateFunnel";
 import { useState, useEffect } from "react";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, PlusCircle } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useGetFunnels, SavedFunnel } from "@/api/analytics/useGetFunnels";
+import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
-import {
-  SavedFunnel,
-  useGetFunnels,
-} from "../../../api/analytics/useGetFunnels";
+import { FunnelRow } from "./components/FunnelRow";
 
 export default function FunnelsPage() {
   const { site } = useStore();
-  const router = useRouter();
   const { data: funnels, isLoading, error } = useGetFunnels(site);
 
   if (isLoading) {
@@ -31,11 +20,9 @@ export default function FunnelsPage() {
           <h1 className="text-2xl font-bold">Funnels</h1>
           <Skeleton className="h-10 w-32" />
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-40 w-full" />
-          ))}
-        </div>
+        {[1, 2, 3].map((i) => (
+          <Skeleton key={i} className="h-20 w-full mb-4" />
+        ))}
       </div>
     );
   }
@@ -53,34 +40,9 @@ export default function FunnelsPage() {
           {error instanceof Error ? error.message : "Unknown error"}
         </div>
       ) : funnels?.length ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="space-y-2">
           {funnels.map((funnel: SavedFunnel) => (
-            <Card key={funnel.id} className="hover:shadow-md transition-shadow">
-              <CardHeader className="pb-2">
-                <CardTitle>{funnel.name}</CardTitle>
-                <CardDescription>
-                  {funnel.steps.length} steps • Created{" "}
-                  {new Date(funnel.createdAt).toLocaleDateString()}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="text-sm">Conversion rate</div>
-                    <div className="text-2xl font-bold">
-                      {funnel.conversionRate || "0"}%
-                    </div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    className="rounded-full"
-                    onClick={() => router.push(`/funnels/${funnel.id}`)}
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <FunnelRow key={funnel.id} funnel={funnel} />
           ))}
         </div>
       ) : (
