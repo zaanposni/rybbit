@@ -40,7 +40,7 @@ export default function FunnelsPage() {
           {error instanceof Error ? error.message : "Unknown error"}
         </div>
       ) : funnels?.length ? (
-        <div className="space-y-2">
+        <div className="space-y-4">
           {funnels.map((funnel: SavedFunnel) => (
             <FunnelRow key={funnel.id} funnel={funnel} />
           ))}

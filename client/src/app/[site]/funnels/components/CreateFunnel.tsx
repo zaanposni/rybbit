@@ -14,7 +14,11 @@ import {
 import { Plus, Trash2, Search, Save } from "lucide-react";
 import { Time } from "@/components/DateSelector/types";
 import { DateTime } from "luxon";
-import { useGetFunnel, FunnelStep } from "@/api/analytics/useGetFunnel";
+import {
+  useGetFunnel,
+  FunnelStep,
+  useSaveFunnel,
+} from "@/api/analytics/useGetFunnel";
 import { Funnel } from "./Funnel";
 import {
   Dialog,
@@ -25,6 +29,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
+import { toast } from "sonner";
 
 export function CreateFunnelDialog() {
   const [open, setOpen] = useState(false);
@@ -53,8 +58,15 @@ export function CreateFunnelDialog() {
     isError,
     error,
     isPending,
-    reset,
+    reset: resetAnalysis,
   } = useGetFunnel();
+
+  // Funnel save mutation
+  const {
+    mutate: saveFunnel,
+    isPending: isSaving,
+    error: saveError,
+  } = useSaveFunnel();
 
   // Handle adding a new step
   const addStep = () => {
@@ -125,8 +137,8 @@ export function CreateFunnelDialog() {
         .toISODate();
       endDate = endDateValue || DateTime.now().toISODate();
     } else {
-      // Fall back to last 30 days for all-time
-      startDate = DateTime.now().minus({ days: 30 }).toISODate();
+      // Fall back to last 7 days for all-time
+      startDate = DateTime.now().minus({ days: 7 }).toISODate();
       endDate = DateTime.now().toISODate();
     }
 
@@ -182,25 +194,39 @@ export function CreateFunnelDialog() {
         .toISODate();
       endDate = endDateValue || DateTime.now().toISODate();
     } else {
-      // Fall back to last 30 days for all-time
-      startDate = DateTime.now().minus({ days: 30 }).toISODate();
+      // Fall back to last 7 days for all-time
+      startDate = DateTime.now().minus({ days: 7 }).toISODate();
       endDate = DateTime.now().toISODate();
     }
 
-    // Create funnel analysis with name to trigger saving
-    analyzeFunnel({
-      steps,
-      startDate,
-      endDate,
-      name,
-    });
+    // Save funnel directly without analyzing
+    saveFunnel(
+      {
+        steps,
+        startDate,
+        endDate,
+        name,
+      },
+      {
+        onSuccess: () => {
+          // Close dialog on successful save
+          setOpen(false);
+          // Optional: Show success message
+          toast?.success("Funnel saved successfully");
+        },
+        onError: (error) => {
+          // Show error but don't close dialog
+          toast?.error(`Failed to save funnel: ${error.message}`);
+        },
+      }
+    );
   };
 
   // Reset form when dialog closes
   const handleOpenChange = (open: boolean) => {
     setOpen(open);
     if (!open) {
-      reset();
+      resetAnalysis();
     }
   };
 
@@ -333,8 +359,10 @@ export function CreateFunnelDialog() {
 
         <DialogFooter className="flex justify-between items-center">
           <div className="text-sm text-red-500">
-            {isError &&
-              (error instanceof Error ? error.message : "An error occurred")}
+            {(isError || saveError) &&
+              (error instanceof Error || saveError instanceof Error
+                ? (error || saveError)?.message
+                : "An error occurred")}
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
@@ -342,11 +370,11 @@ export function CreateFunnelDialog() {
             </Button>
             <Button
               onClick={handleSaveFunnel}
-              disabled={isPending}
+              disabled={isSaving}
               variant="success"
             >
-              <Save />
-              Save Funnel
+              <Save className="mr-2 h-4 w-4" />
+              {isSaving ? "Saving..." : "Save Funnel"}
             </Button>
           </div>
         </DialogFooter>
