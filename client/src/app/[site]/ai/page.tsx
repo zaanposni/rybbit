@@ -1,7 +1,7 @@
 "use client";
 
-import { ThreadList } from "@/components/assistant-ui/thread-list";
-import { Thread } from "@/components/assistant-ui/thread";
+import { ThreadList } from "@/components/ui/assistant-ui/thread-list";
+import { Thread } from "@/components/ui/assistant-ui/thread";
 import { RuntimeProvider } from "./RuntimeProvider";
 
 export default function AIPage() {
