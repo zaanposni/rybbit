@@ -40,13 +40,11 @@ export function LocalRuntimeProvider({
       });
       const data = await response.json();
 
-      console.log("Received:", data);
-
       return {
         content: [
           {
             type: "text",
-            text: data.text,
+            text: data.response || data.error,
           },
         ],
       };
