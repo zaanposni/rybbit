@@ -31,6 +31,7 @@ import {
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
 import { getStartAndEndDate } from "../../../../api/utils";
+import { useDebounce } from "@uidotdev/usehooks";
 
 interface EditFunnelDialogProps {
   funnel: SavedFunnel;
@@ -54,10 +55,14 @@ export function EditFunnelDialog({
   // Funnel steps state - initialized from funnel
   const [steps, setSteps] = useState<FunnelStep[]>(funnel.steps);
 
+  // Debounce steps and time changes
+  const debouncedSteps = useDebounce(steps, 300);
+  const debouncedTime = useDebounce(time, 300);
+
   // Funnel name - initialized from funnel
   const [name, setName] = useState(funnel.name);
 
-  const { startDate, endDate } = getStartAndEndDate(time);
+  const { startDate, endDate } = getStartAndEndDate(debouncedTime);
 
   // Funnel analysis query
   const {
@@ -66,7 +71,7 @@ export function EditFunnelDialog({
     error,
     isLoading: isPending,
   } = useGetFunnel({
-    steps,
+    steps: debouncedSteps,
     startDate,
     endDate,
   });

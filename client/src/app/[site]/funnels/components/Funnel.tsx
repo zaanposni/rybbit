@@ -109,7 +109,12 @@ export function Funnel({
             </div>
 
             {/* Step details */}
-            <div className="grid grid-cols-3 gap-0 ml-8">
+            <div
+              style={{
+                gridTemplateColumns: `repeat(${chartData.length}, 1fr)`,
+              }}
+              className={`grid gap-0 ml-8`}
+            >
               {chartData.map((step, index) => {
                 // For step 2+, calculate the number of users who dropped off
                 const prevStep = index > 0 ? chartData[index - 1] : null;

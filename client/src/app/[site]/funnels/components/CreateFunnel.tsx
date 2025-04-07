@@ -31,6 +31,7 @@ import {
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
 import { getStartAndEndDate } from "../../../../api/utils";
+import { useDebounce } from "@uidotdev/usehooks";
 
 export function CreateFunnelDialog() {
   const [open, setOpen] = useState(false);
@@ -49,10 +50,14 @@ export function CreateFunnelDialog() {
     { type: "page", value: "", name: "" },
   ]);
 
+  // Debounce steps and time changes
+  const debouncedSteps = useDebounce(steps, 300);
+  const debouncedTime = useDebounce(time, 300);
+
   // Funnel name
   const [name, setName] = useState("New Funnel");
 
-  const { startDate, endDate } = getStartAndEndDate(time);
+  const { startDate, endDate } = getStartAndEndDate(debouncedTime);
 
   // Funnel analysis query
   const {
@@ -61,10 +66,10 @@ export function CreateFunnelDialog() {
     error,
     isLoading: isPending,
   } = useGetFunnel(
-    steps.some((step) => !step.value)
+    debouncedSteps.some((step) => !step.value)
       ? undefined
       : {
-          steps,
+          steps: debouncedSteps,
           startDate,
           endDate,
         }

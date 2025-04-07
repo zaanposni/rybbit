@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { getStartAndEndDate } from "../../../../api/utils";
 import { EditFunnelDialog } from "./EditFunnel";
 import { Funnel } from "./Funnel";
+import { useDebounce } from "@uidotdev/usehooks";
 
 interface FunnelRowProps {
   funnel: SavedFunnel;
@@ -39,7 +40,9 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
     wellKnown: "Last 7 days",
   } as DateRangeMode);
 
-  const { startDate, endDate } = getStartAndEndDate(time);
+  // Debounce time changes
+  const debouncedTime = useDebounce(time, 300);
+  const { startDate, endDate } = getStartAndEndDate(debouncedTime);
 
   // Funnel data fetching
   const {
