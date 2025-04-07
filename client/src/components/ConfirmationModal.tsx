@@ -15,7 +15,7 @@ import { AlertCircle } from "lucide-react";
 export const ConfirmationModal: React.FC<{
   title: React.ReactNode;
   description: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   isOpen: boolean;
   setIsOpen: (b: boolean) => void;
   onConfirm: () => void;

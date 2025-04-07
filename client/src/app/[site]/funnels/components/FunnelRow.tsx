@@ -13,6 +13,7 @@ import {
   ChevronDown,
   ChevronUp,
   Edit,
+  FunnelIcon,
   Trash2,
 } from "lucide-react";
 import { DateTime } from "luxon";
@@ -102,7 +103,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
           onClick={handleExpand}
         >
           <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md">
-            <BarChart2 className="h-5 w-5 text-neutral-500" />
+            <FunnelIcon className="h-5 w-5 text-neutral-500" />
           </div>
           <div>
             <h3 className="font-medium">{funnel.name}</h3>
@@ -118,18 +119,18 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-right">
+          {/* <div className="text-right">
             <div className="text-sm text-neutral-500">Conversion</div>
             <div className="font-semibold">
               {(funnel.conversionRate || 0).toFixed(1)}%
             </div>
-          </div>
+          </div> */}
 
-          <div className="flex gap-2">
+          <div className="flex">
             {/* Edit button */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditModalOpen(true);
@@ -141,7 +142,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
             {/* Delete button */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={(e) => {
                 e.stopPropagation();
                 setIsDeleteModalOpen(true);
@@ -150,12 +151,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
               <Trash2 className="h-4 w-4" />
             </Button>
 
-            <Button
-              variant="ghost"
-              size="sm"
-              className="ml-2"
-              onClick={handleExpand}
-            >
+            <Button variant="ghost" size="icon" onClick={handleExpand}>
               {expanded ? <ChevronUp /> : <ChevronDown />}
             </Button>
           </div>
@@ -208,9 +204,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
           children: isDeleting ? "Deleting..." : "Delete",
           variant: "destructive",
         }}
-      >
-        <span></span>
-      </ConfirmationModal>
+      />
 
       {/* Edit Funnel Modal */}
       {isEditModalOpen && (
