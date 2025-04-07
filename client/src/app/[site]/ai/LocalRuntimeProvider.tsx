@@ -23,8 +23,6 @@ export function LocalRuntimeProvider({
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const date = DateTime.now().toFormat("yyyy-MM-dd");
 
-      console.log("Sent:", messages);
-
       const response = await authedFetch(`${BACKEND_URL}/handle-message`, {
         method: "POST",
         headers: {
@@ -34,7 +32,7 @@ export function LocalRuntimeProvider({
           site,
           timezone,
           date,
-          messages,
+          messages: messages.map(({ role, content }) => ({ role, content })),
         }),
         signal: abortSignal,
       });

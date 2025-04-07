@@ -43,10 +43,6 @@ export async function handleMessage (
 
     const result = await analyticsAgent.invoke(prompt);
 
-    console.log("Received:", messages)
-    console.log("Prompt:", prompt.messages);
-    console.log("Result:", result.messages);
-
     return res.send({ response: result.messages[result.messages.length - 1].content });
   } catch (error) {
     console.error(error);
