@@ -2,15 +2,15 @@
 
 import { ThreadList } from "@/components/ui/assistant-ui/thread-list";
 import { Thread } from "@/components/ui/assistant-ui/thread";
-import { RuntimeProvider } from "./RuntimeProvider";
+import { LocalRuntimeProvider } from "./LocalRuntimeProvider";
 
 export default function AIPage() {
   return (
-    <RuntimeProvider>
-      <div className="grid h-dvh grid-cols-[200px_1fr] gap-x-2 px-4 py-4">
+    <LocalRuntimeProvider>
+      <div className="grid h-[calc(100vh-80px)] grid-cols-[200px_1fr] gap-x-2 px-4 py-4">
         <ThreadList />
         <Thread />
       </div>
-    </RuntimeProvider>
+    </LocalRuntimeProvider>
   );
 }
