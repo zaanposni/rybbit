@@ -1,13 +1,9 @@
 import { z } from "zod";
-import { DateTime } from "luxon";
 
 const dateSchema = z.string()
   .nonempty({ message: "Date is required." })
   .regex(/^\d{4}-\d{2}-\d{2}$/, {
     message: "Date must be in YYYY-MM-DD format.",
-  })
-  .refine(date => DateTime.fromISO(date).isValid, {
-    message: "Date must be a valid calendar date.",
   });
 
 const startDateSchema = dateSchema
