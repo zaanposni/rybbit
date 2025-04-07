@@ -7,11 +7,6 @@ export interface SavedFunnel {
   id: number;
   name: string;
   steps: FunnelStep[];
-  configuration: {
-    startDate: string;
-    endDate: string;
-    timezone: string;
-  };
   createdAt: string;
   updatedAt: string;
   conversionRate: number | null;

@@ -1,32 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useDeleteFunnel } from "@/api/analytics/useDeleteFunnel";
+import { useGetFunnel } from "@/api/analytics/useGetFunnel";
 import { SavedFunnel } from "@/api/analytics/useGetFunnels";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { ConfirmationModal } from "@/components/ConfirmationModal";
+import { DateRangeMode, Time } from "@/components/DateSelector/types";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import {
+  BarChart2,
+  Calendar,
   ChevronDown,
   ChevronUp,
-  Calendar,
-  BarChart2,
   Edit,
   Trash2,
 } from "lucide-react";
-import { Time, DateRangeMode } from "@/components/DateSelector/types";
 import { DateTime } from "luxon";
-import { Funnel } from "./Funnel";
-import { useGetFunnel } from "@/api/analytics/useGetFunnel";
-import { ConfirmationModal } from "@/components/ConfirmationModal";
-import { useDeleteFunnel } from "@/api/analytics/useDeleteFunnel";
+import { useState } from "react";
 import { toast } from "sonner";
-import { CreateFunnelDialog } from "./CreateFunnel";
+import { getStartAndEndDate } from "../../../../api/utils";
 import { EditFunnelDialog } from "./EditFunnel";
+import { Funnel } from "./Funnel";
 
 interface FunnelRowProps {
   funnel: SavedFunnel;
@@ -37,8 +31,6 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-  console.info(funnel);
-
   // Time state for funnel visualization - default to last 7 days
   const [time, setTime] = useState<Time>({
     mode: "range",
@@ -47,33 +39,30 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
     wellKnown: "Last 7 days",
   } as DateRangeMode);
 
+  const { startDate, endDate } = getStartAndEndDate(time);
+
   // Funnel data fetching
   const {
-    mutate: analyzeFunnel,
     data,
     isError,
     error,
-    isPending,
+    isLoading: isPending,
     isSuccess,
-  } = useGetFunnel();
+  } = useGetFunnel(
+    expanded
+      ? {
+          steps: funnel.steps,
+          startDate,
+          endDate,
+        }
+      : undefined
+  );
 
   // Delete funnel mutation
   const { mutate: deleteFunnel, isPending: isDeleting } = useDeleteFunnel();
 
-  // Handle expansion (fetch data if needed)
+  // Handle expansion
   const handleExpand = () => {
-    if (!expanded && !isSuccess) {
-      // Fetch funnel data when expanding if not already loaded
-      analyzeFunnel({
-        steps: funnel.steps,
-        startDate:
-          time.mode === "range"
-            ? time.startDate
-            : DateTime.now().minus({ days: 7 }).toISODate(),
-        endDate:
-          time.mode === "range" ? time.endDate : DateTime.now().toISODate(),
-      });
-    }
     setExpanded(!expanded);
   };
 

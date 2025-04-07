@@ -12,9 +12,6 @@ type FunnelStep = {
 
 type Funnel = {
   steps: FunnelStep[];
-  startDate: string;
-  endDate: string;
-  timezone: string;
   name: string;
   reportId?: number; // Optional report ID for updates
 };
@@ -28,7 +25,7 @@ export async function createFunnel(
   }>,
   reply: FastifyReply
 ) {
-  const { steps, startDate, endDate, timezone, name, reportId } = request.body;
+  const { steps, name, reportId } = request.body;
   const { site } = request.params;
   const userId = request.user?.id;
 
@@ -75,11 +72,6 @@ export async function createFunnel(
           data: {
             name,
             steps,
-            configuration: {
-              startDate,
-              endDate,
-              timezone,
-            },
           },
           updatedAt: new Date().toISOString(),
         })
@@ -100,11 +92,6 @@ export async function createFunnel(
           data: {
             name,
             steps,
-            configuration: {
-              startDate,
-              endDate,
-              timezone,
-            },
           },
         })
         .returning({ reportId: reports.reportId });

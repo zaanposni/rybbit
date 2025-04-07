@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BACKEND_URL } from "../../lib/const";
 import { authedFetch } from "../utils";
 import { useStore } from "../../lib/store";
@@ -11,8 +11,8 @@ export type FunnelStep = {
 
 export type FunnelRequest = {
   steps: FunnelStep[];
-  startDate: string;
-  endDate: string;
+  startDate: string | null;
+  endDate: string | null;
   name?: string;
 };
 
@@ -35,65 +35,40 @@ export type FunnelResponse = {
 /**
  * Hook for analyzing conversion funnels through a series of steps
  */
-export function useGetFunnel() {
+export function useGetFunnel(config?: FunnelRequest) {
   const { site } = useStore();
-  const queryClient = useQueryClient();
 
-  return useMutation<{ data: FunnelResponse[] }, Error, FunnelRequest>({
-    mutationFn: async (funnelConfig) => {
-      // If name is provided, save the funnel configuration
-      const saveConfiguration = !!funnelConfig.name;
+  return useQuery<{ data: FunnelResponse[] }, Error>({
+    queryKey: ["funnel", site, config],
+    queryFn: async () => {
+      console.info(config);
+      if (!config) {
+        throw new Error("Funnel configuration is required");
+      }
 
       // Add timezone to the request
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
       const fullConfig = {
-        ...funnelConfig,
+        ...config,
         timezone,
       };
 
-      // First, analyze the funnel to get conversion data
-      const analyzeResponse = await authedFetch(
-        `${BACKEND_URL}/funnel/${site}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(fullConfig),
-        }
-      );
+      const response = await authedFetch(`${BACKEND_URL}/funnel/${site}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(fullConfig),
+      });
 
-      if (!analyzeResponse.ok) {
-        const errorData = await analyzeResponse.json();
+      if (!response.ok) {
+        const errorData = await response.json();
         throw new Error(errorData.error || "Failed to analyze funnel");
       }
 
-      const analyzeResult = await analyzeResponse.json();
-
-      // If name is provided, save the funnel configuration with the results
-      if (saveConfiguration) {
-        const saveResponse = await authedFetch(
-          `${BACKEND_URL}/funnel/create/${site}`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify(fullConfig),
-          }
-        );
-
-        if (!saveResponse.ok) {
-          console.error("Failed to save funnel:", await saveResponse.json());
-          // Continue even if save fails, just show the analysis
-        } else {
-          // Invalidate the funnels query to refresh the list
-          queryClient.invalidateQueries({ queryKey: ["funnels", site] });
-        }
-      }
-
-      return analyzeResult;
+      return response.json();
     },
+    enabled: !!site && !!config,
   });
 }
 

@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import { useStore } from "@/lib/store";
 import { toast } from "sonner";
+import { getStartAndEndDate } from "../../../../api/utils";
 
 interface EditFunnelDialogProps {
   funnel: SavedFunnel;
@@ -45,10 +46,8 @@ export function EditFunnelDialog({
   // Time state - initialized from funnel configuration
   const [time, setTime] = useState<Time>({
     mode: "range",
-    startDate:
-      funnel.configuration.startDate ||
-      DateTime.now().minus({ days: 7 }).toISODate(),
-    endDate: funnel.configuration.endDate || DateTime.now().toISODate(),
+    startDate: DateTime.now().minus({ days: 7 }).toISODate(),
+    endDate: DateTime.now().toISODate(),
     wellKnown: "Last 7 days",
   });
 
@@ -58,15 +57,19 @@ export function EditFunnelDialog({
   // Funnel name - initialized from funnel
   const [name, setName] = useState(funnel.name);
 
-  // Funnel analysis mutation
+  const { startDate, endDate } = getStartAndEndDate(time);
+
+  // Funnel analysis query
   const {
-    mutate: analyzeFunnel,
     data,
     isError,
     error,
-    isPending,
-    reset: resetAnalysis,
-  } = useGetFunnel();
+    isLoading: isPending,
+  } = useGetFunnel({
+    steps,
+    startDate,
+    endDate,
+  });
 
   // Funnel save mutation
   const {
@@ -114,47 +117,6 @@ export function EditFunnelDialog({
       alert("All steps must have values");
       return;
     }
-
-    // Get dates based on time selection
-    let startDate = "",
-      endDate = "";
-
-    if (time.mode === "range") {
-      startDate = time.startDate;
-      endDate = time.endDate;
-    } else if (time.mode === "day") {
-      startDate = time.day;
-      endDate = time.day;
-    } else if (time.mode === "week") {
-      startDate = time.week;
-      const endDateValue = DateTime.fromISO(time.week)
-        .plus({ days: 6 })
-        .toISODate();
-      endDate = endDateValue || DateTime.now().toISODate();
-    } else if (time.mode === "month") {
-      startDate = time.month;
-      const endDateValue = DateTime.fromISO(time.month)
-        .endOf("month")
-        .toISODate();
-      endDate = endDateValue || DateTime.now().toISODate();
-    } else if (time.mode === "year") {
-      startDate = time.year;
-      const endDateValue = DateTime.fromISO(time.year)
-        .endOf("year")
-        .toISODate();
-      endDate = endDateValue || DateTime.now().toISODate();
-    } else {
-      // Fall back to last 7 days for all-time
-      startDate = DateTime.now().minus({ days: 7 }).toISODate();
-      endDate = DateTime.now().toISODate();
-    }
-
-    // Analyze funnel without saving
-    analyzeFunnel({
-      steps,
-      startDate,
-      endDate,
-    });
   };
 
   // Update funnel
@@ -233,13 +195,7 @@ export function EditFunnelDialog({
   // Load existing funnel data on first render
   useEffect(() => {
     // Pre-load the funnel visualization
-    analyzeFunnel({
-      steps,
-      startDate:
-        time.mode === "range" ? time.startDate : funnel.configuration.startDate,
-      endDate:
-        time.mode === "range" ? time.endDate : funnel.configuration.endDate,
-    });
+    handleQueryFunnel();
   }, []);
 
   return (
