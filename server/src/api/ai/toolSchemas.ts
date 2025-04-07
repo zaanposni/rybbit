@@ -23,9 +23,6 @@ const parameterDescription = `The purpose of each parameter in the context of we
 - iso_3166_2: A specific country subdivision, such as a state or province. Useful for granular geographic analysis beyond just the country level.
 - referrer: The URL of the webpage that referred the user to the site. Helps in tracking traffic sources.
 - pathname: The path component of a URL that the user visited. Useful for analyzing which specific sections or pages of the site are most popular.
-- querystring: The query portion of a URL. Helps in identifying and tracking dynamic parameters that may affect content display or functionality.
-- page_title: The title of the webpage. Can be used for reporting and user engagement analysis.
-- event_name: A custom, developer-defined string that names an event tracked on the site. Enables tracking of specific interactions or behaviors that are important for understanding user engagement.
 - entry_page: Identifies the entry point for sessions, which is valuable for understanding the initial touchpoint of the user experience.
 - exit_page: Provides insight into where users leave the site, which can help in analyzing drop-off points and improving retention.`;
 
@@ -39,9 +36,6 @@ const parameterSchema = z.enum([
   "iso_3166_2",
   "referrer",
   "pathname",
-  "querystring",
-  "page_title",
-  "event_name",
   "entry_page",
   "exit_page",
 ]).describe("The data property to aggregate.\n\n" + parameterDescription);
@@ -93,18 +87,6 @@ The allowable values for each parameter are described below.
     - Description: A string representing the path portion of a URL, as returned by JavaScript's URL.pathname.
     - Examples: "/home", "/about", "/products/item-123".
     - Notes: This excludes the domain and query string, focusing only on the path structure.
-- querystring:
-    - Description: A string representing the query portion of a URL, as returned by JavaScript's URL.search.
-    - Examples: "?q=search+term", "?page=2&sort=asc".
-    - Notes: This includes the leading "?" and contains key-value pairs.
-- page_title:
-    - Description: A string representing the document title, as provided by JavaScript's document.title.
-    - Examples: "Welcome to Our Site", "Product Details", "Contact Us".
-    - Notes: This is typically a free-form text string that describes the page content.
-- event_name:
-    - Description: A custom string defined by the user, representing the name of an event.
-    - Examples: "button_click", "form_submit", "video_play".
-    - Notes: This is free-form text and may vary widely depending on the specific events being tracked.
 - entry_page:
     - Description: A string representing the path portion of the URL where a session begins, extracted from the first pageview in a session.
     - Examples: "/landing", "/homepage".
