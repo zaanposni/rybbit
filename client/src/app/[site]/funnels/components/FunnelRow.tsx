@@ -8,30 +8,35 @@ import { DateRangeMode, Time } from "@/components/DateSelector/types";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-  BarChart2,
-  Calendar,
-  ChevronDown,
-  ChevronUp,
-  Edit,
-  FunnelIcon,
-  Trash2,
-  Globe,
-  ZapIcon,
-  ArrowRight,
-} from "lucide-react";
-import { DateTime } from "luxon";
-import { useState } from "react";
-import { toast } from "sonner";
-import { getStartAndEndDate } from "../../../../api/utils";
-import { EditFunnelDialog } from "./EditFunnel";
-import { Funnel } from "./Funnel";
-import { useDebounce } from "@uidotdev/usehooks";
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useDebounce } from "@uidotdev/usehooks";
+import {
+  ArrowRight,
+  ChevronDown,
+  ChevronUp,
+  Edit,
+  FilterIcon,
+  FunnelIcon,
+  Globe,
+  Trash2,
+  ZapIcon,
+} from "lucide-react";
+import { DateTime } from "luxon";
+import { useState } from "react";
+import { toast } from "sonner";
+import { getStartAndEndDate } from "../../../../api/utils";
+import { useGetRegionName } from "../../../../lib/geo";
+import {
+  filterTypeToLabel,
+  getParameterNameLabel,
+  getParameterValueLabel,
+} from "../../components/shared/Filters/utils";
+import { EditFunnelDialog } from "./EditFunnel";
+import { Funnel } from "./Funnel";
 
 interface FunnelRowProps {
   funnel: SavedFunnel;
@@ -41,6 +46,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
   const [expanded, setExpanded] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const { getRegionName } = useGetRegionName();
 
   // Time state for funnel visualization - default to last 7 days
   const [time, setTime] = useState<Time>({
@@ -67,6 +73,7 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
           steps: funnel.steps,
           startDate,
           endDate,
+          filters: funnel.filters,
         }
       : undefined
   );
@@ -77,19 +84,6 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
   // Handle expansion
   const handleExpand = () => {
     setExpanded(!expanded);
-  };
-
-  // Format date string
-  const formatDate = (dateString: string) => {
-    try {
-      return new Date(dateString).toLocaleDateString(undefined, {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      });
-    } catch (e) {
-      return "Unknown date";
-    }
   };
 
   // Handle funnel deletion
@@ -103,6 +97,9 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
     }
   };
 
+  // Check if funnel has filters
+  const hasFilters = funnel.filters && funnel.filters.length > 0;
+
   return (
     <Card className="mb-4 overflow-hidden">
       {/* Header row (always visible) */}
@@ -114,17 +111,10 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
           <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md">
             <FunnelIcon className="h-5 w-5 text-neutral-500" />
           </div>
-          <div>
+          <div className="flex-grow">
             <h3 className="font-medium">{funnel.name}</h3>
-            {/* <div className="text-sm text-neutral-500 flex items-center gap-2">
-              <span>{funnel.steps.length} steps</span>
-              <span>•</span>
-              <div className="flex items-center">
-                <Calendar className="h-3 w-3 mr-1" />
-                {formatDate(funnel.createdAt)}
-              </div>
-            </div> */}
-            <div className="mt-1 text-xs text-neutral-400 flex items-center">
+            <div className="mt-1 text-xs text-neutral-400 flex flex-col gap-1">
+              {/* Steps visualization */}
               <div className="flex flex-wrap gap-1 max-w-[500px]">
                 {funnel.steps.map((step, index) => (
                   <div key={index} className="flex items-center">
@@ -164,18 +154,45 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
                   </div>
                 ))}
               </div>
+
+              {/* Filters visualization */}
+              {hasFilters && (
+                <div className="flex items-center gap-1">
+                  <FilterIcon className="h-3 w-3 text-neutral-400" />
+                  <div className="flex flex-wrap gap-1">
+                    {funnel.filters?.map((filter, index) => (
+                      <span
+                        key={index}
+                        className="rounded bg-neutral-100 dark:bg-neutral-800 px-1.5 py-0.5 whitespace-nowrap overflow-hidden text-ellipsis flex items-center cursor-default"
+                      >
+                        <span className="text-neutral-300">
+                          {getParameterNameLabel(filter.parameter)}
+                        </span>
+                        <span
+                          className={`mx-1 ${
+                            filter.type === "not_equals" ||
+                            filter.type === "not_contains"
+                              ? "text-red-400"
+                              : "text-emerald-400"
+                          }`}
+                        >
+                          {filterTypeToLabel(filter.type)}
+                        </span>
+                        <span className="text-neutral-100 max-w-[100px] overflow-hidden text-ellipsis inline-block">
+                          {filter.value.length > 0
+                            ? getParameterValueLabel(filter, getRegionName)
+                            : "empty"}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* <div className="text-right">
-            <div className="text-sm text-neutral-500">Conversion</div>
-            <div className="font-semibold">
-              {(funnel.conversionRate || 0).toFixed(1)}%
-            </div>
-          </div> */}
-
           <div className="flex">
             {/* Edit button */}
             <Button

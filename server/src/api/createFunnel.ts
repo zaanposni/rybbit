@@ -10,10 +10,17 @@ type FunnelStep = {
   type: "page" | "event";
 };
 
+type Filter = {
+  parameter: string;
+  type: string;
+  value: string[];
+};
+
 type Funnel = {
   steps: FunnelStep[];
   name: string;
   reportId?: number; // Optional report ID for updates
+  filters?: Filter[]; // Optional filters for the funnel
 };
 
 export async function createFunnel(
@@ -25,7 +32,7 @@ export async function createFunnel(
   }>,
   reply: FastifyReply
 ) {
-  const { steps, name, reportId } = request.body;
+  const { steps, name, reportId, filters } = request.body;
   const { site } = request.params;
   const userId = request.user?.id;
 
@@ -72,6 +79,7 @@ export async function createFunnel(
           data: {
             name,
             steps,
+            filters,
           },
           updatedAt: new Date().toISOString(),
         })
@@ -92,6 +100,7 @@ export async function createFunnel(
           data: {
             name,
             steps,
+            filters,
           },
         })
         .returning({ reportId: reports.reportId });

@@ -43,13 +43,13 @@ export function NewFilterButton() {
 
   const onClose = async () => {
     setOpen(false);
-    setLocalFilters(filters);
     await sleep(100);
   };
 
   return (
     <DropdownMenu
       onOpenChange={(isOpen) => {
+        setLocalFilters(filters);
         if (!isOpen) {
           onClose();
         }

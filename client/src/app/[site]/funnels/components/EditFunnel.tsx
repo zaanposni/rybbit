@@ -1,17 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Trash2, Search, Save } from "lucide-react";
 import { Time } from "@/components/DateSelector/types";
 import { DateTime } from "luxon";
 import {
@@ -20,18 +9,16 @@ import {
   useSaveFunnel,
 } from "@/api/analytics/useGetFunnel";
 import { SavedFunnel } from "@/api/analytics/useGetFunnels";
-import { Funnel } from "./Funnel";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
-import { useStore } from "@/lib/store";
 import { toast } from "sonner";
 import { getStartAndEndDate } from "../../../../api/utils";
-import { useDebounce } from "@uidotdev/usehooks";
+import { FunnelForm } from "./FunnelForm";
+import { Filter } from "../../../../lib/store";
 
 interface EditFunnelDialogProps {
   funnel: SavedFunnel;
@@ -55,14 +42,13 @@ export function EditFunnelDialog({
   // Funnel steps state - initialized from funnel
   const [steps, setSteps] = useState<FunnelStep[]>(funnel.steps);
 
-  // Debounce steps and time changes
-  const debouncedSteps = useDebounce(steps, 300);
-  const debouncedTime = useDebounce(time, 300);
+  // Funnel filters state - initialized from funnel
+  const [filters, setFilters] = useState<Filter[]>(funnel.filters || []);
 
   // Funnel name - initialized from funnel
   const [name, setName] = useState(funnel.name);
 
-  const { startDate, endDate } = getStartAndEndDate(debouncedTime);
+  const { startDate, endDate } = getStartAndEndDate(time);
 
   // Funnel analysis query
   const {
@@ -71,9 +57,10 @@ export function EditFunnelDialog({
     error,
     isLoading: isPending,
   } = useGetFunnel({
-    steps: debouncedSteps,
+    steps,
     startDate,
     endDate,
+    filters,
   });
 
   // Funnel save mutation
@@ -82,37 +69,6 @@ export function EditFunnelDialog({
     isPending: isSaving,
     error: saveError,
   } = useSaveFunnel();
-
-  // Handle adding a new step
-  const addStep = () => {
-    setSteps([...steps, { type: "page", value: "", name: "" }]);
-  };
-
-  // Handle removing a step
-  const removeStep = (index: number) => {
-    if (steps.length <= 2) return; // Maintain at least 2 steps
-    const newSteps = [...steps];
-    newSteps.splice(index, 1);
-    setSteps(newSteps);
-  };
-
-  // Handle step input changes
-  const updateStep = (
-    index: number,
-    field: keyof FunnelStep,
-    value: string
-  ) => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setSteps(newSteps);
-  };
-
-  // Handle step type changes
-  const updateStepType = (index: number, type: "page" | "event") => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], type };
-    setSteps(newSteps);
-  };
 
   // Query funnel without saving
   const handleQueryFunnel = () => {
@@ -181,6 +137,7 @@ export function EditFunnelDialog({
         endDate,
         name,
         reportId: funnel.id,
+        filters: filters.length > 0 ? filters : undefined,
       },
       {
         onSuccess: () => {
@@ -210,142 +167,26 @@ export function EditFunnelDialog({
           <DialogTitle>Edit Funnel</DialogTitle>
         </DialogHeader>
 
-        <div className="grid grid-cols-[600px_3fr] gap-6 my-4">
-          {/* Left side: Funnel configuration form */}
-          <div className="space-y-4">
-            <div>
-              <label className="text-sm font-medium mb-1 block">
-                Funnel Name
-              </label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter funnel name"
-              />
-            </div>
-
-            {/* Funnel Steps in a boxed container */}
-            <Card className="border border-neutral-200 dark:border-neutral-800">
-              <CardHeader className="px-4 py-3">
-                <CardTitle className="text-base">Funnel Steps</CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 py-3 space-y-4">
-                {steps.map((step, index) => (
-                  <div key={index} className="flex flex-col space-y-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-xs">
-                        {index + 1}
-                      </div>
-                      <Select
-                        value={step.type}
-                        onValueChange={(value) =>
-                          updateStepType(index, value as "page" | "event")
-                        }
-                      >
-                        <SelectTrigger className="w-[120px]">
-                          <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="page">Page Path</SelectItem>
-                          <SelectItem value="event">Event</SelectItem>
-                        </SelectContent>
-                      </Select>
-
-                      <div className="flex-grow flex gap-2">
-                        <Input
-                          placeholder={
-                            step.type === "page"
-                              ? "Path (e.g. /pricing)"
-                              : "Event name"
-                          }
-                          value={step.value}
-                          onChange={(e) =>
-                            updateStep(index, "value", e.target.value)
-                          }
-                        />
-                        <Input
-                          placeholder="Label (optional)"
-                          value={step.name || ""}
-                          onChange={(e) =>
-                            updateStep(index, "name", e.target.value)
-                          }
-                        />
-                      </div>
-
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeStep(index)}
-                        disabled={steps.length <= 2}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                <Button variant="outline" onClick={addStep} className="w-full">
-                  <Plus className="mr-2 h-4 w-4" /> Add Step
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Query Funnel button on the left side */}
-            <Button
-              onClick={handleQueryFunnel}
-              disabled={isPending}
-              className="w-full"
-              variant="accent"
-            >
-              <Search className="mr-2 h-4 w-4" />
-              {isPending ? "Querying..." : "Query Funnel"}
-            </Button>
-          </div>
-
-          {/* Right side: Funnel visualization (if data exists) */}
-          {data?.data && data.data.length > 0 ? (
-            <Funnel
-              data={data}
-              isError={isError}
-              error={error}
-              isPending={isPending}
-              time={time}
-              setTime={setTime}
-            />
-          ) : (
-            <div className="flex items-center justify-center bg-neutral-50 dark:bg-neutral-900 rounded-lg h-full">
-              <div className="text-center p-6">
-                <div className="text-lg font-medium mb-2">Funnel Preview</div>
-                <p className="text-sm text-neutral-500">
-                  Configure your funnel steps and click "Query Funnel" to
-                  preview results
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <DialogFooter className="flex justify-between items-center">
-          <div className="text-sm text-red-500">
-            {(isError || saveError) &&
-              (error instanceof Error || saveError instanceof Error
-                ? (error || saveError)?.message
-                : "An error occurred")}
-          </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleUpdateFunnel}
-              disabled={isSaving}
-              variant="success"
-            >
-              <Save className="mr-2 h-4 w-4" />
-              {isSaving ? "Saving..." : "Update Funnel"}
-            </Button>
-          </div>
-        </DialogFooter>
+        <FunnelForm
+          name={name}
+          setName={setName}
+          steps={steps}
+          setSteps={setSteps}
+          time={time}
+          setTime={setTime}
+          filters={filters}
+          setFilters={setFilters}
+          onSave={handleUpdateFunnel}
+          onCancel={onClose}
+          onQuery={handleQueryFunnel}
+          saveButtonText="Update Funnel"
+          isSaving={isSaving}
+          isError={isError}
+          isPending={isPending}
+          error={error}
+          saveError={saveError}
+          funnelData={data}
+        />
       </DialogContent>
     </Dialog>
   );

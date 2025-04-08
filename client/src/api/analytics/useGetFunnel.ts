@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { BACKEND_URL } from "../../lib/const";
 import { authedFetch } from "../utils";
-import { useStore } from "../../lib/store";
+import { useStore, Filter } from "../../lib/store";
 
 export type FunnelStep = {
   value: string;
@@ -14,6 +14,7 @@ export type FunnelRequest = {
   startDate: string | null;
   endDate: string | null;
   name?: string;
+  filters?: Filter[];
 };
 
 export type SaveFunnelRequest = {
@@ -22,6 +23,7 @@ export type SaveFunnelRequest = {
   endDate: string;
   name: string;
   reportId?: number;
+  filters?: Filter[];
 };
 
 export type FunnelResponse = {
@@ -41,7 +43,6 @@ export function useGetFunnel(config?: FunnelRequest) {
   return useQuery<{ data: FunnelResponse[] }, Error>({
     queryKey: ["funnel", site, config],
     queryFn: async () => {
-      console.info(config);
       if (!config) {
         throw new Error("Funnel configuration is required");
       }

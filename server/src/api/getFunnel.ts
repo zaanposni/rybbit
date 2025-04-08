@@ -10,11 +10,18 @@ type FunnelStep = {
   type: "page" | "event";
 };
 
+type Filter = {
+  parameter: string;
+  type: string;
+  value: string[];
+};
+
 type Funnel = {
   steps: FunnelStep[];
   startDate: string;
   endDate: string;
   timezone: string;
+  filters?: Filter[];
 };
 
 type FunnelResponse = {
@@ -34,7 +41,7 @@ export async function getFunnel(
   }>,
   reply: FastifyReply
 ) {
-  const { steps, startDate, endDate, timezone } = request.body;
+  const { steps, startDate, endDate, timezone, filters } = request.body;
   const { site } = request.params;
 
   // Validate request
@@ -56,6 +63,51 @@ export async function getFunnel(
     const timeStatement = getTimeStatement({
       date: { startDate, endDate, timezone },
     });
+
+    // Build filter conditions if any
+    let filterConditions = "";
+    if (filters && filters.length > 0) {
+      const filterClauses = filters
+        .map((filter) => {
+          // Ensure values array exists and has items
+          if (!filter.value || filter.value.length === 0) {
+            return null;
+          }
+
+          // Build different conditions based on filter type
+          switch (filter.type) {
+            case "equals":
+              return `${filter.parameter} = '${filter.value[0]}'`;
+            case "notEquals":
+              return `${filter.parameter} != '${filter.value[0]}'`;
+            case "contains":
+              return `${filter.parameter} LIKE '%${filter.value[0]}%'`;
+            case "notContains":
+              return `${filter.parameter} NOT LIKE '%${filter.value[0]}%'`;
+            case "startsWith":
+              return `${filter.parameter} LIKE '${filter.value[0]}%'`;
+            case "endsWith":
+              return `${filter.parameter} LIKE '%${filter.value[0]}'`;
+            case "in":
+              // Join values with quotes for SQL IN clause
+              const values = filter.value.map((v) => `'${v}'`).join(", ");
+              return `${filter.parameter} IN (${values})`;
+            case "notIn":
+              const excludeValues = filter.value
+                .map((v) => `'${v}'`)
+                .join(", ");
+              return `${filter.parameter} NOT IN (${excludeValues})`;
+            default:
+              return null;
+          }
+        })
+        .filter(Boolean); // Remove null values
+
+      // Combine all filter conditions
+      if (filterClauses.length > 0) {
+        filterConditions = "AND " + filterClauses.join(" AND ");
+      }
+    }
 
     // Build conditional statements for each step
     const stepConditions = steps.map((step) => {
@@ -81,6 +133,7 @@ export async function getFunnel(
       WHERE
         site_id = ${site}
         ${timeStatement}
+        ${filterConditions}
         AND user_id != ''
     ),
     -- Initial step (all users who completed step 1)
@@ -147,8 +200,6 @@ export async function getFunnel(
     ) as prev_step ON s1.step_number = prev_step.next_step_number
     ORDER BY s1.step_number
     `;
-
-    console.info(query);
 
     // Execute the query
     const result = await clickhouse.query({
