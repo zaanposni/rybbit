@@ -1,7 +1,11 @@
 import { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
 import clickhouse from "../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "./utils.js";
+import {
+  getTimeStatement,
+  processResults,
+  getFilterStatement,
+} from "./utils.js";
 import { getUserHasAccessToSite } from "../lib/auth-utils.js";
 
 type FunnelStep = {
@@ -64,50 +68,11 @@ export async function getFunnel(
       date: { startDate, endDate, timezone },
     });
 
-    // Build filter conditions if any
-    let filterConditions = "";
-    if (filters && filters.length > 0) {
-      const filterClauses = filters
-        .map((filter) => {
-          // Ensure values array exists and has items
-          if (!filter.value || filter.value.length === 0) {
-            return null;
-          }
-
-          // Build different conditions based on filter type
-          switch (filter.type) {
-            case "equals":
-              return `${filter.parameter} = '${filter.value[0]}'`;
-            case "notEquals":
-              return `${filter.parameter} != '${filter.value[0]}'`;
-            case "contains":
-              return `${filter.parameter} LIKE '%${filter.value[0]}%'`;
-            case "notContains":
-              return `${filter.parameter} NOT LIKE '%${filter.value[0]}%'`;
-            case "startsWith":
-              return `${filter.parameter} LIKE '${filter.value[0]}%'`;
-            case "endsWith":
-              return `${filter.parameter} LIKE '%${filter.value[0]}'`;
-            case "in":
-              // Join values with quotes for SQL IN clause
-              const values = filter.value.map((v) => `'${v}'`).join(", ");
-              return `${filter.parameter} IN (${values})`;
-            case "notIn":
-              const excludeValues = filter.value
-                .map((v) => `'${v}'`)
-                .join(", ");
-              return `${filter.parameter} NOT IN (${excludeValues})`;
-            default:
-              return null;
-          }
-        })
-        .filter(Boolean); // Remove null values
-
-      // Combine all filter conditions
-      if (filterClauses.length > 0) {
-        filterConditions = "AND " + filterClauses.join(" AND ");
-      }
-    }
+    // Get filter conditions using the existing utility function
+    const filterConditions =
+      filters && filters.length > 0
+        ? getFilterStatement(JSON.stringify(filters))
+        : "";
 
     // Build conditional statements for each step
     const stepConditions = steps.map((step) => {
