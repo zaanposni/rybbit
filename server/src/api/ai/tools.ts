@@ -11,10 +11,10 @@ import {
   getOverviewToolSchema,
   getParameterStatsToolSchema
 } from "./toolSchemas.js";
-import { fetchLiveUserCount } from "../getLiveUserCount.js";
-import { fetchOverview } from "../getOverview.js";
-import { fetchOverviewBucketed } from "../getOverviewBucketed.js";
-import { fetchSingleCol } from "../getSingleCol.js";
+import { fetchLiveUserCount } from "../analytics/getLiveUserCount.js";
+import { fetchOverview } from "../analytics/getOverview.js";
+import { fetchOverviewBucketed } from "../analytics/getOverviewBucketed.js";
+import { fetchSingleCol } from "../analytics/getSingleCol.js";
 
 export function generateAnalyticsTools(timezone: string, site: string) {
   const getLiveUserCountTool = tool(

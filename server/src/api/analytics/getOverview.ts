@@ -6,7 +6,6 @@ import {
   processResults,
 } from "./utils.js";
 import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
-import { FilterParameter } from "./types.js";
 
 interface GetOverviewRequest {
   Params: {
