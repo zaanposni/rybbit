@@ -18,7 +18,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
   const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
-    <Card className="h-[493px]">
+    <Card className="h-[445px]">
       <CardContent className="mt-2">
         <Tabs
           defaultValue="referrers"

@@ -4,6 +4,7 @@ import { db } from "../../db/postgres/postgres.js";
 import { sites } from "../../db/postgres/schema.js";
 import { loadAllowedDomains } from "../../lib/allowedDomains.js";
 import { auth } from "../../lib/auth.js";
+import { publicSites } from "../../lib/publicSites.js";
 
 export async function addSite(
   request: FastifyRequest<{
@@ -88,7 +89,11 @@ export async function addSite(
       })
       .returning();
 
+    // Update allowed domains
     await loadAllowedDomains();
+
+    // Update publicSites cache with the new site
+    publicSites.addSite(newSite[0].siteId, newSite[0].public || false);
 
     return reply.status(201).send(newSite[0]);
   } catch (error) {

@@ -1,21 +1,56 @@
 import { Check } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import { useGetSites } from "../../../../api/admin/sites";
+import { useGetSite, useGetSites } from "../../../../api/admin/sites";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../../../../components/ui/dropdown-menu";
+import { userStore } from "../../../../lib/userStore";
 
-export function SiteSelector() {
+function SiteSelectorContent() {
   const { data: sites } = useGetSites();
   const pathname = usePathname();
   const router = useRouter();
-
   const currentSiteId = Number(pathname.split("/")[1]);
 
-  const site = sites?.find((site) => site.siteId === currentSiteId);
+  return (
+    <DropdownMenuContent align="start">
+      {sites?.map((site) => {
+        const isSelected = site.siteId === currentSiteId;
+        return (
+          <DropdownMenuItem
+            key={site.siteId}
+            onClick={() => {
+              router.push(`/${site.siteId}`);
+            }}
+            className={`flex items-center justify-between ${
+              isSelected ? "bg-neutral-800" : ""
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <img
+                className="w-4 h-4"
+                src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
+                alt={site.domain}
+              />
+              <span>{site.domain}</span>
+            </div>
+            {isSelected && <Check size={16} />}
+          </DropdownMenuItem>
+        );
+      })}
+    </DropdownMenuContent>
+  );
+}
+
+export function SiteSelector() {
+  const pathname = usePathname();
+
+  const { user } = userStore();
+  const currentSiteId = Number(pathname.split("/")[1]);
+  const { data: site } = useGetSite(currentSiteId);
 
   return (
     <DropdownMenu>
@@ -31,32 +66,7 @@ export function SiteSelector() {
           </div>
         )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start">
-        {sites?.map((site) => {
-          const isSelected = site.siteId === currentSiteId;
-          return (
-            <DropdownMenuItem
-              key={site.siteId}
-              onClick={() => {
-                router.push(`/${site.siteId}`);
-              }}
-              className={`flex items-center justify-between ${
-                isSelected ? "bg-neutral-800" : ""
-              }`}
-            >
-              <div className="flex items-center gap-2">
-                <img
-                  className="w-4 h-4"
-                  src={`https://www.google.com/s2/favicons?domain=${site.domain}&sz=64`}
-                  alt={site.domain}
-                />
-                <span>{site.domain}</span>
-              </div>
-              {isSelected && <Check size={16} />}
-            </DropdownMenuItem>
-          );
-        })}
-      </DropdownMenuContent>
+      {user && <SiteSelectorContent />}
     </DropdownMenu>
   );
 }

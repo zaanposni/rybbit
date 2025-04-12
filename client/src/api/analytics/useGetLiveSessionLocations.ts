@@ -10,12 +10,14 @@ export type LiveSessionLocation = {
   city: string;
 };
 
-export function useGetLiveSessionLocations() {
+export function useGetLiveSessionLocations(minutes = 5) {
   const { site } = useStore();
   return useQuery<LiveSessionLocation[]>({
-    queryKey: ["live-session-locations", site],
+    queryKey: ["live-session-locations", site, minutes],
     queryFn: () =>
-      authedFetch(`${BACKEND_URL}/live-session-locations/${site}`)
+      authedFetch(
+        `${BACKEND_URL}/live-session-locations/${site}?time=${minutes}`
+      )
         .then((res) => res.json())
         .then((data) => data.data),
   });

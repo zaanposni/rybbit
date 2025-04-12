@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { auth } from "../lib/auth.js";
+import { auth } from "../../lib/auth.js";
 
 interface CreateAccountRequest {
   Body: {

@@ -3,7 +3,7 @@ import { clickhouse } from "../db/clickhouse/clickhouse.js";
 import { STRIPE_PRICES } from "../lib/const.js";
 import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
-import { processResults } from "../api/utils.js";
+import { processResults } from "../api/analytics/utils.js";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 20_000;

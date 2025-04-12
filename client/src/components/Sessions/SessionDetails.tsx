@@ -9,10 +9,11 @@ import {
   FileText,
   MousePointerClick,
   ArrowRight,
+  Loader2,
 } from "lucide-react";
 import Avatar from "boring-avatars";
 import {
-  useGetSessionDetails,
+  useGetSessionDetailsInfinite,
   PageviewEvent,
   GetSessionsResponse,
 } from "../../api/analytics/userSessions";
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import CopyText from "@/components/CopyText";
-import { memo } from "react";
+import { memo, useMemo } from "react";
 import { Button } from "../ui/button";
 import { useParams } from "next/navigation";
 
@@ -90,7 +91,7 @@ function PageviewItem({
           <div className="flex-1 min-w-0 mr-4">
             {item.type === "pageview" ? (
               <Link
-                href={`${item.hostname}${item.pathname}${
+                href={`https://${item.hostname}${item.pathname}${
                   item.querystring ? `${item.querystring}` : ""
                 }`}
                 target="_blank"
@@ -189,7 +190,7 @@ const SessionDetailsTimelineSkeleton = memo(
           </div>
 
           {/* Timeline items skeleton */}
-          {Array.from({ length: itemCount }).map((_, i) => (
+          {Array.from({ length: Math.min(itemCount, 100) }).map((_, i) => (
             <div key={i} className="flex mb-3">
               <Skeleton className="h-8 w-8 rounded-full" />
               <div className="ml-3 flex-1">
@@ -223,24 +224,36 @@ interface SessionDetailsProps {
 
 export function SessionDetails({ session, userId }: SessionDetailsProps) {
   const {
-    data: sessionDetails,
+    data: sessionDetailsData,
     isLoading,
     error,
-  } = useGetSessionDetails(session.session_id);
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetSessionDetailsInfinite(session.session_id);
   const { site } = useParams();
 
-  // Calculate session duration for the details section
-  const getDurationFormatted = () => {
-    if (!sessionDetails?.data) return "";
-    const start = DateTime.fromSQL(sessionDetails.data.session.session_start, {
-      zone: "utc",
-    }).toLocal();
-    const end = DateTime.fromSQL(sessionDetails.data.session.session_end, {
-      zone: "utc",
-    }).toLocal();
-    const duration = end.diff(start, ["minutes", "seconds"]);
-    return `${Math.floor(duration.minutes)}m ${Math.floor(duration.seconds)}s`;
-  };
+  // Flatten all pageview pages into a single array
+  const allPageviews = useMemo(() => {
+    if (!sessionDetailsData?.pages) return [];
+    return sessionDetailsData.pages.flatMap(
+      (page) => page.data?.pageviews || []
+    );
+  }, [sessionDetailsData?.pages]);
+
+  // Get session details from the first page
+  const sessionDetails = sessionDetailsData?.pages[0]?.data?.session;
+
+  // Calculate total pageviews and events
+  const totalPageviews = useMemo(() => {
+    return allPageviews.filter((p: PageviewEvent) => p.type === "pageview")
+      .length;
+  }, [allPageviews]);
+
+  const totalEvents = useMemo(() => {
+    return allPageviews.filter((p: PageviewEvent) => p.type !== "pageview")
+      .length;
+  }, [allPageviews]);
 
   return (
     <div className="px-4 bg-neutral-900 border-t border-neutral-800">
@@ -254,7 +267,7 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
             Error loading session details. Please try again.
           </AlertDescription>
         </Alert>
-      ) : sessionDetails?.data ? (
+      ) : sessionDetailsData?.pages[0]?.data ? (
         <Tabs defaultValue="timeline" className="mt-4">
           <div className="flex justify-between items-center mb-6">
             <TabsList className="bg-neutral-800">
@@ -275,43 +288,33 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
               <div className="flex gap-2 mb-2">
                 <Badge
                   variant="outline"
-                  className="flex items-center gap-1  text-gray-300 bg-blue-500/60"
+                  className="flex items-center gap-1 text-gray-300 bg-blue-500/60"
                 >
                   <FileText className="w-3 h-3" />
                   <span>
-                    Pageviews:{" "}
-                    {
-                      sessionDetails.data.pageviews.filter(
-                        (p) => p.type === "pageview"
-                      ).length
-                    }
+                    Pageviews: {totalPageviews}
+                    {sessionDetailsData.pages[0]?.data?.pagination?.total >
+                      allPageviews.length &&
+                      ` of ${sessionDetailsData.pages[0]?.data?.pagination?.total}`}
                   </span>
                 </Badge>
                 <Badge
                   variant="outline"
-                  className="flex items-center gap-1  text-gray-300 bg-amber-500/60"
+                  className="flex items-center gap-1 text-gray-300 bg-amber-500/60"
                 >
                   <MousePointerClick className="w-3 h-3" />
-                  <span>
-                    Events:{" "}
-                    {
-                      sessionDetails.data.pageviews.filter(
-                        (p) => p.type !== "pageview"
-                      ).length
-                    }
-                  </span>
+                  <span>Events: {totalEvents}</span>
                 </Badge>
               </div>
               <div className="px-1 pt-2 pb-1">
-                {sessionDetails.data.pageviews.map((pageview, index) => {
+                {allPageviews.map((pageview: PageviewEvent, index: number) => {
                   // Determine the next timestamp for duration calculation
                   // For the last item, use the session end time
                   let nextTimestamp;
-                  if (index < sessionDetails.data.pageviews.length - 1) {
-                    nextTimestamp =
-                      sessionDetails.data.pageviews[index + 1].timestamp;
-                  } else {
-                    nextTimestamp = sessionDetails.data.session.session_end;
+                  if (index < allPageviews.length - 1) {
+                    nextTimestamp = allPageviews[index + 1].timestamp;
+                  } else if (sessionDetails) {
+                    nextTimestamp = sessionDetails.session_end;
                   }
 
                   return (
@@ -319,13 +322,39 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                       key={`${pageview.timestamp}-${index}`}
                       item={pageview}
                       index={index}
-                      isLast={
-                        index === sessionDetails.data.pageviews.length - 1
-                      }
+                      isLast={index === allPageviews.length - 1 && !hasNextPage}
                       nextTimestamp={nextTimestamp}
                     />
                   );
                 })}
+
+                {hasNextPage && (
+                  <div className="flex justify-center mt-6 mb-4">
+                    <Button
+                      onClick={() => fetchNextPage()}
+                      disabled={isFetchingNextPage}
+                      variant="outline"
+                      className="flex items-center gap-2"
+                    >
+                      {isFetchingNextPage ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading...</span>
+                        </>
+                      ) : (
+                        <span>Load More</span>
+                      )}
+                    </Button>
+                  </div>
+                )}
+
+                {sessionDetailsData.pages[0]?.data?.pagination?.total > 0 && (
+                  <div className="text-center text-xs text-gray-500 mt-2">
+                    Showing {allPageviews.length} of{" "}
+                    {sessionDetailsData.pages[0]?.data?.pagination?.total}{" "}
+                    events
+                  </div>
+                )}
               </div>
             </div>
           </TabsContent>
@@ -338,12 +367,12 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                   User Information
                 </h4>
                 <div className="space-y-3">
-                  {sessionDetails.data.session.user_id && (
+                  {sessionDetails?.user_id && (
                     <div className="flex items-center gap-2">
                       <div className="h-7 w-7 bg-neutral-800 rounded-full flex items-center justify-center flex-shrink-0">
                         <Avatar
                           size={24}
-                          name={sessionDetails.data.session.user_id}
+                          name={sessionDetails.user_id}
                           variant="marble"
                           colors={[
                             "#92A1C6",
@@ -360,7 +389,7 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                             User ID:
                           </span>
                           <CopyText
-                            text={sessionDetails.data.session.user_id}
+                            text={sessionDetails.user_id}
                             maxLength={24}
                             className="inline-flex ml-2"
                           />
@@ -370,7 +399,7 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                             Session ID:
                           </span>
                           <CopyText
-                            text={sessionDetails.data.session.session_id}
+                            text={sessionDetails.session_id}
                             maxLength={20}
                             className="inline-flex ml-2"
                           />
@@ -380,35 +409,27 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                   )}
 
                   <div className="space-y-2">
-                    {sessionDetails.data.session.language && (
+                    {sessionDetails?.language && (
                       <div className="text-sm flex items-center gap-2">
                         <span className="font-medium text-gray-300 min-w-[80px]">
                           Language:
                         </span>
                         <span className="text-gray-400">
-                          {sessionDetails.data.session.language}
+                          {sessionDetails.language}
                         </span>
                       </div>
                     )}
 
-                    {sessionDetails.data.session.country && (
+                    {sessionDetails?.country && (
                       <div className="flex items-center gap-2 text-sm">
                         <span className="font-medium text-gray-300 min-w-[80px]">
                           Location:
                         </span>
                         <div className="flex items-center gap-1 text-gray-400">
-                          <CountryFlag
-                            country={sessionDetails.data.session.country}
-                          />
-                          <span>
-                            {getCountryName(
-                              sessionDetails.data.session.country
-                            )}
-                          </span>
-                          {sessionDetails.data.session.iso_3166_2 && (
-                            <span>
-                              ({sessionDetails.data.session.iso_3166_2})
-                            </span>
+                          <CountryFlag country={sessionDetails.country} />
+                          <span>{getCountryName(sessionDetails.country)}</span>
+                          {sessionDetails.iso_3166_2 && (
+                            <span>({sessionDetails.iso_3166_2})</span>
                           )}
                         </div>
                       </div>
@@ -429,9 +450,7 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                     </span>
                     <div className="flex items-center gap-1.5 text-gray-400">
                       <MonitorSmartphone className="w-4 h-4 text-gray-500" />
-                      <span>
-                        {sessionDetails.data.session.device_type || "Unknown"}
-                      </span>
+                      <span>{sessionDetails?.device_type || "Unknown"}</span>
                     </div>
                   </div>
 
@@ -440,16 +459,12 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                       Browser:
                     </span>
                     <div className="flex items-center gap-1.5 text-gray-400">
-                      <Browser
-                        browser={
-                          sessionDetails.data.session.browser || "Unknown"
-                        }
-                      />
+                      <Browser browser={sessionDetails?.browser || "Unknown"} />
                       <span>
-                        {sessionDetails.data.session.browser || "Unknown"}
-                        {sessionDetails.data.session.browser_version && (
+                        {sessionDetails?.browser || "Unknown"}
+                        {sessionDetails?.browser_version && (
                           <span className="ml-1">
-                            v{sessionDetails.data.session.browser_version}
+                            v{sessionDetails.browser_version}
                           </span>
                         )}
                       </span>
@@ -462,103 +477,31 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                     </span>
                     <div className="flex items-center gap-1.5 text-gray-400">
                       <OperatingSystem
-                        os={sessionDetails.data.session.operating_system || ""}
+                        os={sessionDetails?.operating_system || ""}
                       />
                       <span>
-                        {sessionDetails.data.session.operating_system ||
-                          "Unknown"}
-                        {sessionDetails.data.session
-                          .operating_system_version && (
+                        {sessionDetails?.operating_system || "Unknown"}
+                        {sessionDetails?.operating_system_version && (
                           <span className="ml-1">
-                            {
-                              sessionDetails.data.session
-                                .operating_system_version
-                            }
+                            {sessionDetails.operating_system_version}
                           </span>
                         )}
                       </span>
                     </div>
                   </div>
 
-                  {sessionDetails.data.session.screen_width &&
-                  sessionDetails.data.session.screen_height ? (
+                  {sessionDetails?.screen_width &&
+                  sessionDetails?.screen_height ? (
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium text-gray-300 min-w-[80px]">
                         Screen:
                       </span>
                       <span className="text-gray-400">
-                        {sessionDetails.data.session.screen_width} ×{" "}
-                        {sessionDetails.data.session.screen_height}
+                        {sessionDetails.screen_width} ×{" "}
+                        {sessionDetails.screen_height}
                       </span>
                     </div>
                   ) : null}
-                </div>
-              </div>
-
-              {/* Session Information */}
-              <div className="col-span-2 mt-2">
-                <h4 className="text-sm font-medium mb-3 text-gray-300 border-b border-neutral-800 pb-2">
-                  Session Information
-                </h4>
-                <div className="grid grid-cols-2 gap-x-8 gap-y-3">
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-300 min-w-[80px]">
-                      Duration:
-                    </span>
-                    <div className="flex items-center gap-1.5 text-gray-400">
-                      <Clock className="w-4 h-4 text-gray-500" />
-                      <span>{getDurationFormatted()}</span>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-300 min-w-[80px]">
-                      Start:
-                    </span>
-                    <span className="text-gray-400">
-                      {DateTime.fromSQL(
-                        sessionDetails.data.session.session_start,
-                        { zone: "utc" }
-                      )
-                        .toLocal()
-                        .toFormat("MMM d, yyyy h:mm:ss a")}
-                    </span>
-                  </div>
-
-                  {sessionDetails.data.session.referrer ? (
-                    <div className="flex items-start gap-2 text-sm col-span-2">
-                      <span className="font-medium text-gray-300 min-w-[80px] mt-0.5">
-                        Referrer:
-                      </span>
-                      <CopyText
-                        text={sessionDetails.data.session.referrer}
-                        maxLength={60}
-                        className="text-gray-400"
-                      >
-                        <span className="font-normal text-gray-400 break-all">
-                          {sessionDetails.data.session.referrer}
-                        </span>
-                      </CopyText>
-                    </div>
-                  ) : (
-                    <div />
-                  )}
-
-                  <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium text-gray-300 min-w-[80px]">
-                      End:
-                    </span>
-                    <span className="text-gray-400">
-                      {DateTime.fromSQL(
-                        sessionDetails.data.session.session_end,
-                        {
-                          zone: "utc",
-                        }
-                      )
-                        .toLocal()
-                        .toFormat("MMM d, yyyy h:mm:ss a")}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>

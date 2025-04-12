@@ -29,11 +29,10 @@ export function useGetOverview({
     queryKey: ["overview", timeToUse, site, filters],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/overview`, {
+      return authedFetch(`${BACKEND_URL}/overview/${site}`, {
         startDate,
         endDate,
         timezone,
-        site,
         filters,
       }).then((res) => res.json());
     },
@@ -62,10 +61,9 @@ export function useGetOverviewPastMinutes({
     queryKey: ["overview-past-minutes", pastMinutes, site],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/overview`, {
+      return authedFetch(`${BACKEND_URL}/overview/${site}`, {
         pastMinutes,
         timezone,
-        site,
       }).then((res) => res.json());
     },
     staleTime: Infinity,

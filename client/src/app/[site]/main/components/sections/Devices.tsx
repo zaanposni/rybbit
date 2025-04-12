@@ -18,7 +18,7 @@ type Tab = "devices" | "browsers" | "os" | "dimensions";
 export function Devices() {
   const [tab, setTab] = useState<Tab>("devices");
   return (
-    <Card className="h-[493px]">
+    <Card className="h-[445px]">
       <CardContent className="mt-2">
         <Tabs
           defaultValue="devices"

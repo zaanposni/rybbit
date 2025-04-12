@@ -59,6 +59,7 @@ export const sites = pgTable(
       .notNull()
       .references(() => user.id),
     organizationId: text("organization_id").references(() => organization.id),
+    public: boolean().default(false),
   },
   (table) => [
     foreignKey({

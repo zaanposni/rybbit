@@ -57,7 +57,7 @@ export default function SessionsList({ userId }: { userId?: string }) {
     <div
       ref={containerRef}
       className="overflow-auto pr-2"
-      style={{ height: "calc(100vh - 200px)" }}
+      style={{ height: "calc(100vh - 130px)" }}
     >
       {isLoading ? (
         // Show skeleton cards while loading

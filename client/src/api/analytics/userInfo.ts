@@ -27,7 +27,7 @@ export function useUserInfo(siteId: number, userId: string) {
     queryFn: () => {
       console.info("Fetching user info");
 
-      return authedFetch(`${BACKEND_URL}/user/info/${siteId}/${userId}`)
+      return authedFetch(`${BACKEND_URL}/user/info/${userId}/${siteId}`)
         .then((res) => res.json())
         .then((res) => res.data);
     },

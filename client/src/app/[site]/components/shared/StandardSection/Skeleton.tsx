@@ -34,7 +34,7 @@ export const Skeleton = memo(() => {
         <div className="h-3 bg-neutral-800 rounded animate-pulse w-12"></div>
       </div>
       {Array.from({ length: 10 }).map((_, index) => (
-        <div key={index} className="relative h-7 flex items-center">
+        <div key={index} className="relative h-6 flex items-center">
           <div
             className="absolute inset-0 bg-neutral-800 py-2 rounded-md animate-pulse"
             style={{ width: `${widths[index]}%` }}

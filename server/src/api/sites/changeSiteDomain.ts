@@ -3,6 +3,7 @@ import { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../../db/postgres/postgres.js";
 import { sites } from "../../db/postgres/schema.js";
 import { loadAllowedDomains } from "../../lib/allowedDomains.js";
+import { getUserHasAccessToSite } from "../../lib/auth-utils.js";
 
 export async function changeSiteDomain(
   request: FastifyRequest<{
@@ -14,6 +15,14 @@ export async function changeSiteDomain(
   reply: FastifyReply
 ) {
   const { siteId, newDomain } = request.body;
+
+  const userHasAccessToSite = await getUserHasAccessToSite(
+    request,
+    String(siteId)
+  );
+  if (!userHasAccessToSite) {
+    return reply.status(403).send({ error: "Forbidden" });
+  }
 
   // Validate domain format using regex
   const domainRegex =

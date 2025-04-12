@@ -1,5 +1,5 @@
 "use client";
-import { useGetSiteMetadata } from "../../../api/admin/sites";
+import { useGetSite } from "../../../api/admin/sites";
 import { useStore } from "../../../lib/store";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import { MainSection } from "./components/MainSection/MainSection";
@@ -21,15 +21,14 @@ export default function MainPage() {
 }
 
 function MainPageContent() {
-  const { siteMetadata, isLoading: isLoadingSiteMetadata } =
-    useGetSiteMetadata();
+  const { data: siteMetadata, isLoading: isLoadingSiteMetadata } = useGetSite();
 
   if (isLoadingSiteMetadata || !siteMetadata) {
     return null;
   }
 
   return (
-    <>
+    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
       <SubHeader />
       <MainSection />
       <div className="grid grid-cols-2 gap-4 mt-4">
@@ -41,6 +40,6 @@ function MainPageContent() {
         <Map />
         {/* <Chloropleth /> */}
       </div>
-    </>
+    </div>
   );
 }

@@ -1,30 +1,29 @@
 "use client";
+import { Funnel } from "@phosphor-icons/react/dist/ssr";
 import {
   BrainCircuit,
   ChartBarDecreasing,
-  ChartLine,
+  Globe,
   LayoutDashboard,
   LayoutGrid,
   Radio,
+  Rewind,
   Settings,
   User,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useGetSites } from "../../../../api/admin/sites";
-import LiveUserCount from "./LiveUserCount";
+import { useGetSite } from "../../../../api/admin/sites";
 import { SiteSettings } from "../../../../components/SiteSettings/SiteSettings";
-import { Button } from "../../../../components/ui/button";
+import LiveUserCount from "./LiveUserCount";
 import { SiteSelector } from "./SiteSelector";
-import { Funnel } from "@phosphor-icons/react/dist/ssr";
+import { authClient } from "../../../../lib/auth";
 
 export function Sidebar() {
-  const { data: sites } = useGetSites();
+  const session = authClient.useSession();
   const pathname = usePathname();
 
-  const site = sites?.find(
-    (site) => site.siteId === Number(pathname.split("/")[1])
-  );
+  const { data: site } = useGetSite(Number(pathname.split("/")[1]));
 
   // Check which tab is active based on the current path
   const getTabPath = (tabName: string) => {
@@ -57,13 +56,19 @@ export function Sidebar() {
           label="Sessions"
           active={isActiveTab("sessions")}
           href={getTabPath("sessions")}
+          icon={<Rewind className="w-4 h-4" />}
+        />
+        <SidebarLink
+          label="Users"
+          active={isActiveTab("users")}
+          href={getTabPath("users")}
           icon={<User className="w-4 h-4" />}
         />
         <SidebarLink
           label="Realtime"
           active={isActiveTab("realtime")}
           href={getTabPath("realtime")}
-          icon={<Radio className="w-4 h-4" />}
+          icon={<Globe className="w-4 h-4" />}
         />
         <SidebarLink
           label="Retention"
@@ -89,17 +94,19 @@ export function Sidebar() {
           href={getTabPath("ai")}
           icon={<BrainCircuit className="w-4 h-4" />}
         />
-        <SiteSettings
-          siteId={site?.siteId ?? 0}
-          trigger={
-            <div className="px-3 py-2 rounded-lg transition-colors w-full text-neutral-200 hover:text-white hover:bg-neutral-800/50">
-              <div className="flex items-center gap-2">
-                <Settings className="h-4 w-4" />
-                <span className="text-sm">Settings</span>
+        {session.data && (
+          <SiteSettings
+            siteId={site?.siteId ?? 0}
+            trigger={
+              <div className="px-3 py-2 rounded-lg transition-colors w-full text-neutral-200 hover:text-white hover:bg-neutral-800/50 cursor-pointer">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span className="text-sm">Settings</span>
+                </div>
               </div>
-            </div>
-          }
-        />
+            }
+          />
+        )}
       </div>
     </div>
   );

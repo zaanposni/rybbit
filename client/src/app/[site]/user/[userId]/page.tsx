@@ -32,7 +32,7 @@ export default function UserPage() {
   const { getRegionName } = useGetRegionName();
 
   return (
-    <div className="mx-auto py-4">
+    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
       <div className="mb-4">
         <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <Avatar

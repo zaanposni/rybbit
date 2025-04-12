@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
-import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 import { processResults } from "./utils.js";
 
 export async function fetchLiveUserCount (site: string, minutes: number) {
@@ -28,7 +28,7 @@ export async function getLiveUserCount (
   const { site } = req.params;
   const { minutes } = req.query;
 
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
   }

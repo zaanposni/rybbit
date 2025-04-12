@@ -1,18 +1,22 @@
 import { AlertTriangle, ArrowRight } from "lucide-react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useGetSites } from "../../../../api/admin/sites";
 import {
   Alert,
   AlertDescription,
   AlertTitle,
 } from "../../../../components/ui/alert";
 import { Button } from "../../../../components/ui/button";
-import { GetSitesResponse } from "../../../../api/admin/sites";
 
-interface UsageBannersProps {
-  site: GetSitesResponse[0] | undefined;
-}
+export function UsageBanners() {
+  const { data: sites } = useGetSites();
+  const pathname = usePathname();
 
-export function UsageBanners({ site }: UsageBannersProps) {
+  const site = sites?.find(
+    (site) => site.siteId === Number(pathname.split("/")[1])
+  );
+
   if (!site) return null;
 
   // Format numbers with commas
@@ -55,7 +59,7 @@ export function UsageBanners({ site }: UsageBannersProps) {
                 </AlertDescription>
                 <Button
                   variant="outline"
-                  className="bg-white hover:bg-white/90 text-neutral-100 border-white/20 hover:border-white/30 py-1 h-auto text-sm"
+                  className="text-neutral-100 border-white/20 hover:border-white/30 py-1 h-auto text-sm"
                   asChild
                 >
                   <Link href="/settings/subscription">

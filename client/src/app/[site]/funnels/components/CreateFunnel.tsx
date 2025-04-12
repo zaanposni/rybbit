@@ -1,29 +1,36 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus, Trash2 } from "lucide-react";
+  FunnelStep,
+  useGetFunnel,
+  useSaveFunnel,
+} from "@/api/analytics/useGetFunnel";
 import { Time } from "@/components/DateSelector/types";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Plus } from "lucide-react";
 import { DateTime } from "luxon";
-import { useGetFunnel, FunnelStep } from "@/api/analytics/useGetFunnel";
-import { Funnel } from "./Funnel";
+import { useState } from "react";
+import { toast } from "sonner";
+import { getStartAndEndDate } from "../../../../api/utils";
+import { FunnelForm } from "./FunnelForm";
+import { Filter } from "../../../../lib/store";
 
-export function CreateFunnel() {
-  // Initial date state - last 30 days
+export function CreateFunnelDialog() {
+  const [open, setOpen] = useState(false);
+
+  // Initial date state - last 7 days
   const [time, setTime] = useState<Time>({
     mode: "range",
-    startDate: DateTime.now().minus({ days: 30 }).toISODate(),
+    startDate: DateTime.now().minus({ days: 7 }).toISODate(),
     endDate: DateTime.now().toISODate(),
-    wellKnown: "Last 30 days",
+    wellKnown: "Last 7 days",
   });
 
   // Funnel steps state
@@ -32,48 +39,56 @@ export function CreateFunnel() {
     { type: "page", value: "", name: "" },
   ]);
 
-  // Funnel analysis mutation
+  // Funnel filters state
+  const [filters, setFilters] = useState<Filter[]>([]);
+
+  // Funnel name
+  const [name, setName] = useState("New Funnel");
+
+  const { startDate, endDate } = getStartAndEndDate(time);
+
+  // Funnel analysis query
   const {
-    mutate: analyzeFunnel,
     data,
     isError,
     error,
-    isPending,
-  } = useGetFunnel();
+    isLoading: isPending,
+  } = useGetFunnel(
+    steps.some((step) => !step.value)
+      ? undefined
+      : {
+          steps,
+          startDate,
+          endDate,
+          filters,
+        }
+  );
 
-  // Handle adding a new step
-  const addStep = () => {
-    setSteps([...steps, { type: "page", value: "", name: "" }]);
+  // Funnel save mutation
+  const {
+    mutate: saveFunnel,
+    isPending: isSaving,
+    error: saveError,
+  } = useSaveFunnel();
+
+  // Query funnel without saving
+  const handleQueryFunnel = () => {
+    // Validate steps have values
+    const hasEmptySteps = steps.some((step) => !step.value);
+    if (hasEmptySteps) {
+      alert("All steps must have values");
+      return;
+    }
   };
 
-  // Handle removing a step
-  const removeStep = (index: number) => {
-    if (steps.length <= 2) return; // Maintain at least 2 steps
-    const newSteps = [...steps];
-    newSteps.splice(index, 1);
-    setSteps(newSteps);
-  };
+  // Save funnel configuration
+  const handleSaveFunnel = () => {
+    // Validate name
+    if (!name.trim()) {
+      alert("Please enter a funnel name");
+      return;
+    }
 
-  // Handle step input changes
-  const updateStep = (
-    index: number,
-    field: keyof FunnelStep,
-    value: string
-  ) => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], [field]: value };
-    setSteps(newSteps);
-  };
-
-  // Handle step type changes
-  const updateStepType = (index: number, type: "page" | "event") => {
-    const newSteps = [...steps];
-    newSteps[index] = { ...newSteps[index], type };
-    setSteps(newSteps);
-  };
-
-  // Handle form submission
-  const handleSubmit = () => {
     // Validate steps have values
     const hasEmptySteps = steps.some((step) => !step.value);
     if (hasEmptySteps) {
@@ -81,8 +96,7 @@ export function CreateFunnel() {
       return;
     }
 
-    // Get timezone and dates
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    // Get dates based on time selection
     let startDate = "",
       endDate = "";
 
@@ -111,107 +125,76 @@ export function CreateFunnel() {
         .toISODate();
       endDate = endDateValue || DateTime.now().toISODate();
     } else {
-      // Fall back to last 30 days for all-time
-      startDate = DateTime.now().minus({ days: 30 }).toISODate();
+      // Fall back to last 7 days for all-time
+      startDate = DateTime.now().minus({ days: 7 }).toISODate();
       endDate = DateTime.now().toISODate();
     }
 
-    // Create funnel analysis
-    analyzeFunnel({
-      steps,
-      startDate,
-      endDate,
-      timezone,
-    });
+    // Save funnel directly without analyzing
+    saveFunnel(
+      {
+        steps,
+        startDate,
+        endDate,
+        name,
+        filters: filters.length > 0 ? filters : undefined,
+      },
+      {
+        onSuccess: () => {
+          // Close dialog on successful save
+          setOpen(false);
+          // Optional: Show success message
+          toast?.success("Funnel saved successfully");
+        },
+        onError: (error) => {
+          // Show error but don't close dialog
+          toast?.error(`Failed to save funnel: ${error.message}`);
+        },
+      }
+    );
+  };
+
+  // Reset form when dialog closes
+  const handleOpenChange = (open: boolean) => {
+    setOpen(open);
+    if (!open) {
+      // Reset analysis
+    }
   };
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-      {/* Left side: Funnel configuration form */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Create Funnel</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {steps.map((step, index) => (
-              <div key={index} className="flex flex-col space-y-2">
-                <div className="flex items-center gap-2">
-                  <div className="flex-shrink-0 w-6 h-6 rounded-full bg-neutral-800 flex items-center justify-center text-xs">
-                    {index + 1}
-                  </div>
-                  <Select
-                    value={step.type}
-                    onValueChange={(value) =>
-                      updateStepType(index, value as "page" | "event")
-                    }
-                  >
-                    <SelectTrigger className="w-[120px]">
-                      <SelectValue placeholder="Type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="page">Page Path</SelectItem>
-                      <SelectItem value="event">Event</SelectItem>
-                    </SelectContent>
-                  </Select>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogTrigger asChild>
+        <Button className="flex gap-2">
+          <Plus className="w-4 h-4" /> Create Funnel
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[80vw]">
+        <DialogHeader>
+          <DialogTitle>Create Funnel</DialogTitle>
+        </DialogHeader>
 
-                  <div className="flex-grow flex gap-2">
-                    <Input
-                      placeholder={
-                        step.type === "page"
-                          ? "Path (e.g. /pricing)"
-                          : "Event name"
-                      }
-                      value={step.value}
-                      onChange={(e) =>
-                        updateStep(index, "value", e.target.value)
-                      }
-                    />
-                    <Input
-                      placeholder="Label (optional)"
-                      value={step.name || ""}
-                      onChange={(e) =>
-                        updateStep(index, "name", e.target.value)
-                      }
-                    />
-                  </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => removeStep(index)}
-                    disabled={steps.length <= 2}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-
-            <Button variant="outline" onClick={addStep} className="w-full mt-2">
-              <Plus className="mr-2 h-4 w-4" /> Add Step
-            </Button>
-
-            <Button
-              onClick={handleSubmit}
-              className="w-full mt-4"
-              disabled={isPending}
-            >
-              {isPending ? "Analyzing..." : "Analyze Funnel"}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Right side: Funnel visualization */}
-      <Funnel
-        data={data}
-        isError={isError}
-        error={error}
-        isPending={isPending}
-        time={time}
-        setTime={setTime}
-      />
-    </div>
+        <FunnelForm
+          name={name}
+          setName={setName}
+          steps={steps}
+          setSteps={setSteps}
+          time={time}
+          setTime={setTime}
+          filters={filters}
+          setFilters={setFilters}
+          onSave={handleSaveFunnel}
+          onCancel={() => setOpen(false)}
+          onQuery={handleQueryFunnel}
+          saveButtonText="Save Funnel"
+          isSaving={isSaving}
+          isError={isError}
+          isPending={isPending}
+          error={error}
+          saveError={saveError}
+          funnelData={data}
+        />
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -43,6 +43,34 @@ export type FilterParameter =
   | "exit_page"
   | "dimensions";
 
+export const SESSION_PAGE_FILTERS: FilterParameter[] = [
+  "browser",
+  "operating_system",
+  "language",
+  "country",
+  "region",
+  "city",
+  "device_type",
+  "referrer",
+  "iso_3166_2",
+  "event_name",
+  "channel",
+  "entry_page",
+  "exit_page",
+];
+
+export const USER_PAGE_FILTERS: FilterParameter[] = [
+  "browser",
+  "operating_system",
+  "language",
+  "country",
+  "region",
+  "city",
+  "device_type",
+  "referrer",
+  "iso_3166_2",
+];
+
 export type Filter = {
   parameter: FilterParameter;
   value: string[];
@@ -314,4 +342,9 @@ export const removeFilter = (filter: Filter) => {
 export const updateFilter = (filter: Filter, index: number) => {
   const { filters, setFilters } = useStore.getState();
   setFilters(filters.map((f, i) => (i === index ? filter : f)));
+};
+
+export const getFilteredFilters = (parameters: FilterParameter[]) => {
+  const { filters } = useStore.getState();
+  return filters.filter((f) => parameters.includes(f.parameter));
 };

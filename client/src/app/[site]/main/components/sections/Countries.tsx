@@ -64,6 +64,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
           <TabsList>
             <TabsTrigger value="countries">Countries</TabsTrigger>
             <TabsTrigger value="regions">Regions</TabsTrigger>
+            <TabsTrigger value="cities">Cities</TabsTrigger>
             <TabsTrigger value="languages">Languages</TabsTrigger>
           </TabsList>
           <TabsContent value="countries">
@@ -107,6 +108,20 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
                     {region?.name}
                   </div>
                 );
+              }}
+            />
+          </TabsContent>
+          <TabsContent value="cities">
+            <ComponentToUse
+              filterParameter="city"
+              title="Cities"
+              getValue={(e) => e.value}
+              getKey={(e) => e.value}
+              getLabel={(e) => {
+                if (!e.value) {
+                  return "Unknown";
+                }
+                return <div className="flex gap-2 items-center">{e.value}</div>;
               }}
             />
           </TabsContent>

@@ -34,9 +34,11 @@ import { Switch } from "@/components/ui/switch";
 
 import {
   changeSiteDomain,
+  changeSitePublic,
   deleteSite,
   GetSitesResponse,
-  useGetSiteMetadata,
+  SiteResponse,
+  useGetSite,
   useGetSites,
 } from "@/api/admin/sites";
 import { BACKEND_URL } from "@/lib/const";
@@ -48,9 +50,9 @@ export function SiteSettings({
   siteId: number;
   trigger?: React.ReactNode;
 }) {
-  const { siteMetadata } = useGetSiteMetadata(siteId);
+  const { data: siteMetadata, isLoading, error } = useGetSite(siteId);
 
-  if (!siteMetadata) {
+  if (isLoading || !siteMetadata || error) {
     return null;
   }
 
@@ -61,13 +63,15 @@ export function SiteSettingsInner({
   siteMetadata,
   trigger,
 }: {
-  siteMetadata: GetSitesResponse[number];
+  siteMetadata: SiteResponse | GetSitesResponse[number];
   trigger?: React.ReactNode;
 }) {
   const { refetch } = useGetSites();
   const router = useRouter();
   const [newDomain, setNewDomain] = useState(siteMetadata.domain);
   const [isChangingDomain, setIsChangingDomain] = useState(false);
+  const [isPublic, setIsPublic] = useState(siteMetadata.public || false);
+  const [isChangingPublic, setIsChangingPublic] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -126,6 +130,24 @@ export function SiteSettingsInner({
       toast.error("Failed to delete site");
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handlePublicToggle = async (checked: boolean) => {
+    try {
+      setIsChangingPublic(true);
+      await changeSitePublic(siteMetadata.siteId, checked);
+      setIsPublic(checked);
+      toast.success(
+        checked ? "Site analytics made public" : "Site analytics made private"
+      );
+      refetch();
+    } catch (error) {
+      console.error("Error changing public status:", error);
+      toast.error("Failed to update public status");
+      setIsPublic(!checked); // Revert UI state on error
+    } finally {
+      setIsChangingPublic(false);
     }
   };
 
@@ -218,8 +240,30 @@ export function SiteSettingsInner({
             </div>
           </div>
 
+          {/* Public Analytics Section */}
+          <div className="flex items-center justify-between">
+            <div>
+              <Label
+                htmlFor="publicAnalytics"
+                className="text-sm font-medium text-foreground block"
+              >
+                Public Analytics
+              </Label>
+              <p className="text-xs text-muted-foreground mt-1">
+                When enabled, anyone can view your site analytics without
+                logging in
+              </p>
+            </div>
+            <Switch
+              id="publicAnalytics"
+              checked={isPublic}
+              disabled={isChangingPublic}
+              onCheckedChange={handlePublicToggle}
+            />
+          </div>
+
           {/* Domain Settings Section */}
-          <div className="space-y-3 pt-3">
+          <div className="space-y-3">
             <div>
               <h4 className="text-sm font-semibold text-foreground">
                 Change Domain

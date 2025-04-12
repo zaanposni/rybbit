@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import { clickhouse } from "../db/clickhouse/clickhouse.js";
+import { clickhouse } from "../../db/clickhouse/clickhouse.js";
 import { processResults } from "./utils.js";
 
 interface UserPageviewData {
@@ -24,13 +24,13 @@ interface UserPageviewData {
 export async function getUserInfo(
   req: FastifyRequest<{
     Params: {
-      siteId: number;
+      site: string;
       userId: string;
     };
   }>,
   res: FastifyReply
 ) {
-  const { userId, siteId } = req.params;
+  const { userId, site } = req.params;
 
   try {
     const queryResult = await clickhouse.query({
@@ -61,7 +61,7 @@ export async function getUserInfo(
             pageviews
         WHERE
             user_id = {userId:String}
-            AND site_id = {siteId:Int32}
+            AND site_id = {site:Int32}
         GROUP BY
             session_id,
             user_id
@@ -90,7 +90,7 @@ export async function getUserInfo(
       `,
       query_params: {
         userId,
-        siteId: Number(siteId),
+        site,
       },
       format: "JSONEachRow",
     });

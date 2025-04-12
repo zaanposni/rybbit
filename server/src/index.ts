@@ -6,35 +6,44 @@ import cron from "node-cron";
 import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
-import { createAccount } from "./api/createAccount.js";
-import { getLiveUserCount } from "./api/getLiveUserCount.js";
-import { getOverview } from "./api/getOverview.js";
-import { getOverviewBucketed } from "./api/getOverviewBucketed.js";
-import { getSessions } from "./api/getSessions.js";
-import { getSession } from "./api/getSession.js";
-import { getSingleCol } from "./api/getSingleCol.js";
-import { getUserSessions } from "./api/getUserSessions.js";
-import { listUsers } from "./api/listUsers.js";
+import { createFunnel } from "./api/analytics/createFunnel.js";
+import { deleteReport } from "./api/analytics/deleteReport.js";
+import { getEvents } from "./api/analytics/getEvents.js";
+import { getFunnel } from "./api/analytics/getFunnel.js";
+import { getFunnels } from "./api/analytics/getFunnels.js";
+import { getLiveSessionLocations } from "./api/analytics/getLiveSessionLocations.js";
+import { getLiveUserCount } from "./api/analytics/getLiveUserCount.js";
+import { getOverview } from "./api/analytics/getOverview.js";
+import { getOverviewBucketed } from "./api/analytics/getOverviewBucketed.js";
+import { getRetention } from "./api/analytics/getRetention.js";
+import { getSession } from "./api/analytics/getSession.js";
+import { getSessions } from "./api/analytics/getSessions.js";
+import { getSingleCol } from "./api/analytics/getSingleCol.js";
+import { getUserInfo } from "./api/analytics/getUserInfo.js";
+import { getUserSessions } from "./api/analytics/getUserSessions.js";
+import { getUsers } from "./api/analytics/getUsers.js";
 import { addSite } from "./api/sites/addSite.js";
 import { changeSiteDomain } from "./api/sites/changeSiteDomain.js";
+import { changeSitePublic } from "./api/sites/changeSitePublic.js";
 import { deleteSite } from "./api/sites/deleteSite.js";
+import { getSite } from "./api/sites/getSite.js";
 import { getSiteHasData } from "./api/sites/getSiteHasData.js";
 import { getSites } from "./api/sites/getSites.js";
+import { createAccount } from "./api/user/createAccount.js";
+import { getUserOrganizations } from "./api/user/getUserOrganizations.js";
+import { getUserSubscription } from "./api/user/getUserSubscription.js";
+import { listOrganizationMembers } from "./api/user/listOrganizationMembers.js";
+import { initializeCronJobs } from "./cron/index.js";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
 import { initializePostgres } from "./db/postgres/postgres.js";
 import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
-import { auth } from "./lib/auth.js";
 import { mapHeaders } from "./lib/auth-utils.js";
+import { auth } from "./lib/auth.js";
 import { trackEvent } from "./tracker/trackEvent.js";
-import { listOrganizationMembers } from "./api/listOrganizationMembers.js";
-import { getUserOrganizations } from "./api/user/getUserOrganizations.js";
-import { initializeCronJobs } from "./cron/index.js";
-import { getUserSubscription } from "./api/user/getUserSubscription.js";
-import { getUserInfo } from "./api/getUserInfo.js";
-import { getLiveSessionLocations } from "./api/getLiveSessionLocations.js";
-import { getRetention } from "./api/getRetention.js";
-import { getFunnel } from "./api/getFunnel.js";
+import { extractSiteId, isSitePublic } from "./utils.js";
+import { publicSites } from "./lib/publicSites.js";
+import { getSiteIsPublic } from "./api/sites/getSiteIsPublic.js";
 import { handleMessage } from "./api/ai/handleMessage.js";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -93,18 +102,52 @@ server.register(
   { auth: auth! }
 );
 
+const PUBLIC_ROUTES = ["/health", "/track", "/script", "/auth", "/api/auth"];
+
+// Define analytics routes that can be public
+const ANALYTICS_ROUTES = [
+  "/live-user-count/",
+  "/overview/",
+  "/overview-bucketed/",
+  "/single-col/",
+  "/retention/",
+  "/site-has-data/",
+  "/site-is-public/",
+  "/sessions/",
+  "/session/",
+  "/recent-events/",
+  "/users/",
+  "/user/info/",
+  "/live-session-locations/",
+  "/funnels/",
+  "/funnel/",
+
+  "/get-site",
+];
+
+// Check if a route is an analytics route
+const isAnalyticsRoute = (path: string) => {
+  return ANALYTICS_ROUTES.some((route) => path.startsWith(route));
+};
+
 server.addHook("onRequest", async (request, reply) => {
   const { url } = request.raw;
 
+  if (!url) return;
+
   // Bypass auth for health check and tracking
-  if (
-    url?.startsWith("/health") ||
-    url?.startsWith("/track") ||
-    url?.startsWith("/script") ||
-    url?.startsWith("/auth") ||
-    url?.startsWith("/api/auth")
-  ) {
+  if (PUBLIC_ROUTES.some((route) => url.includes(route))) {
     return;
+  }
+
+  // Check if it's an analytics route and get site ID
+  if (isAnalyticsRoute(url)) {
+    const siteId = extractSiteId(url);
+
+    if (siteId && (await isSitePublic(siteId))) {
+      // Skip auth check for public sites
+      return;
+    }
   }
 
   try {
@@ -126,27 +169,35 @@ server.addHook("onRequest", async (request, reply) => {
   }
 });
 
+// Analytics
 server.get("/live-user-count/:site", getLiveUserCount);
-server.get("/overview", getOverview);
-server.get("/overview-bucketed", getOverviewBucketed);
-server.get("/single-col", getSingleCol);
+server.get("/overview/:site", getOverview);
+server.get("/overview-bucketed/:site", getOverviewBucketed);
+server.get("/single-col/:site", getSingleCol);
 server.get("/retention/:site", getRetention);
 server.get("/site-has-data/:site", getSiteHasData);
-server.get("/sessions", getSessions);
-server.get("/session/:sessionId", getSession);
-server.get("/user/:userId/sessions", getUserSessions);
-server.get("/user/info/:siteId/:userId", getUserInfo);
-server.get("/live-session-locations/:siteId", getLiveSessionLocations);
+server.get("/site-is-public/:site", getSiteIsPublic);
+server.get("/sessions/:site", getSessions);
+server.get("/session/:sessionId/:site", getSession);
+server.get("/users/:site", getUsers);
+server.get("/user/:userId/sessions/:site", getUserSessions);
+server.get("/user/info/:userId/:site", getUserInfo);
+server.get("/live-session-locations/:site", getLiveSessionLocations);
+server.get("/funnels/:site", getFunnels);
+server.get("/recent-events/:site", getEvents);
 server.post("/funnel/:site", getFunnel);
+server.post("/funnel/create/:site", createFunnel);
+server.delete("/report/:reportId", deleteReport);
 
 server.post("/handle-message", handleMessage);
 
 // Administrative
 server.post("/add-site", addSite);
 server.post("/change-site-domain", changeSiteDomain);
+server.post("/change-site-public", changeSitePublic);
 server.post("/delete-site/:id", deleteSite);
 server.get("/get-sites", getSites);
-server.get("/list-users", listUsers);
+server.get("/get-site/:id", getSite);
 server.post("/create-account", createAccount);
 server.get(
   "/list-organization-members/:organizationId",
@@ -163,6 +214,10 @@ const start = async () => {
     // Initialize the database
     await Promise.all([initializeClickhouse(), initializePostgres()]);
     await loadAllowedDomains();
+
+    // Load public sites cache
+    await publicSites.loadPublicSites();
+
     // Start the server
     await server.listen({ port: 3001, host: "0.0.0.0" });
 

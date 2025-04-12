@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import {
-  GetSitesResponse,
-  useGetSiteMetadata,
-} from "../../../../../api/admin/sites";
-import {
   Tabs,
   TabsContent,
   TabsList,
@@ -14,17 +10,18 @@ import {
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
 import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
+import { useGetSite } from "../../../../../api/admin/sites";
 
 type Tab = "pages" | "entry_pages" | "exit_pages";
 
 export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
-  const { siteMetadata } = useGetSiteMetadata();
+  const { data: siteMetadata } = useGetSite();
   const [tab, setTab] = useState<Tab>("pages");
 
   const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
-    <Card className="h-[493px]">
+    <Card className="h-[445px]">
       <CardContent className="mt-2">
         <Tabs
           defaultValue="pages"

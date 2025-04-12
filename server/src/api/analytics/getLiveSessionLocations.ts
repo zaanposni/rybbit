@@ -1,16 +1,22 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
 import { processResults } from "./utils.js";
 
 export async function getLiveSessionLocations(
   req: FastifyRequest<{
     Params: {
-      siteId: string;
+      site: string;
+    };
+    Querystring: {
+      time: number;
     };
   }>,
   res: FastifyReply
 ) {
-  const { siteId } = req.params;
+  const { site } = req.params;
+  if (isNaN(Number(req.query.time))) {
+    return res.status(400).send({ error: "Invalid time" });
+  }
 
   const result = await clickhouse.query({
     query: `
@@ -23,8 +29,8 @@ WITH stuff AS (
     FROM
         pageviews
     WHERE
-        site_id = {siteId:Int32}
-        AND timestamp > now() - interval '30 minute'
+        site_id = {site:Int32}
+        AND timestamp > now() - interval '${req.query.time} minute'
     GROUP BY
         session_id
 )
@@ -40,7 +46,7 @@ GROUP BY
     lon,
     city`,
     query_params: {
-      siteId: Number(siteId),
+      site,
     },
     format: "JSONEachRow",
   });

@@ -1,8 +1,12 @@
 import { FastifyRequest } from "fastify";
 import { FastifyReply } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "./utils.js";
-import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
+import {
+  getTimeStatement,
+  processResults,
+  getFilterStatement,
+} from "./utils.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 
 type FunnelStep = {
   value: string;
@@ -10,11 +14,18 @@ type FunnelStep = {
   type: "page" | "event";
 };
 
+type Filter = {
+  parameter: string;
+  type: string;
+  value: string[];
+};
+
 type Funnel = {
   steps: FunnelStep[];
   startDate: string;
   endDate: string;
   timezone: string;
+  filters?: Filter[];
 };
 
 type FunnelResponse = {
@@ -34,7 +45,7 @@ export async function getFunnel(
   }>,
   reply: FastifyReply
 ) {
-  const { steps, startDate, endDate, timezone } = request.body;
+  const { steps, startDate, endDate, timezone, filters } = request.body;
   const { site } = request.params;
 
   // Validate request
@@ -45,7 +56,7 @@ export async function getFunnel(
   }
 
   // Check user access to site
-  const userHasAccessToSite = await getUserHasAccessToSite(request, site);
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(request, site);
   if (!userHasAccessToSite) {
     return reply.status(403).send({ error: "Forbidden" });
   }
@@ -56,6 +67,12 @@ export async function getFunnel(
     const timeStatement = getTimeStatement({
       date: { startDate, endDate, timezone },
     });
+
+    // Get filter conditions using the existing utility function
+    const filterConditions =
+      filters && filters.length > 0
+        ? getFilterStatement(JSON.stringify(filters))
+        : "";
 
     // Build conditional statements for each step
     const stepConditions = steps.map((step) => {
@@ -81,6 +98,7 @@ export async function getFunnel(
       WHERE
         site_id = ${site}
         ${timeStatement}
+        ${filterConditions}
         AND user_id != ''
     ),
     -- Initial step (all users who completed step 1)
@@ -147,8 +165,6 @@ export async function getFunnel(
     ) as prev_step ON s1.step_number = prev_step.next_step_number
     ORDER BY s1.step_number
     `;
-
-    console.info(query);
 
     // Execute the query
     const result = await clickhouse.query({

@@ -1,8 +1,8 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { db } from "../db/postgres/postgres.js";
-import { member, user } from "../db/postgres/schema.js";
+import { db } from "../../db/postgres/postgres.js";
+import { member, user } from "../../db/postgres/schema.js";
 import { eq, and } from "drizzle-orm";
-import { auth } from "../lib/auth.js";
+import { auth } from "../../lib/auth.js";
 
 interface ListOrganizationMembersRequest {
   Params: {

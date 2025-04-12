@@ -4,7 +4,7 @@ import { useEffect } from "react";
 import { useStore } from "../../lib/store";
 import { useSyncStateWithUrl } from "../../lib/urlParams";
 import { Header } from "./components/Header/Header";
-import { useSiteHasData, useGetSiteMetadata } from "../../api/admin/sites";
+import { useSiteHasData, useGetSite } from "../../api/admin/sites";
 import { NoData } from "./components/NoData";
 import { TopBar } from "../../components/TopBar";
 import { Sidebar } from "./components/Sidebar/Sidebar";
@@ -18,14 +18,14 @@ export default function SiteLayout({
   const { setSite, site } = useStore();
   const { data: siteHasData, isLoading } = useSiteHasData(site);
 
-  const { siteMetadata, isLoading: isLoadingSiteMetadata } =
-    useGetSiteMetadata();
+  const { data: siteMetadata, isLoading: isLoadingSiteMetadata } =
+    useGetSite(site);
 
   // Sync store state with URL parameters
   useSyncStateWithUrl();
 
   useEffect(() => {
-    if (pathname.includes("/")) {
+    if (pathname.includes("/") && pathname.split("/")[1] !== site) {
       setSite(pathname.split("/")[1]);
     }
   }, [pathname]);
@@ -48,7 +48,8 @@ export default function SiteLayout({
       <div className="flex flex-1 overflow-hidden">
         <Sidebar />
         <div className="flex-1 overflow-auto">
-          <div className="px-4 py-2 max-w-[1400px] mx-auto w-full">
+          <div>
+            {/* <div className="px-4 py-2 max-w-[1400px] mx-auto w-full mb-4"> */}
             <Header />
             <div>{children}</div>
           </div>

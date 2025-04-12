@@ -33,12 +33,11 @@ export function useGetOverviewBucketed({
     queryKey: ["overview-bucketed", timeToUse, bucket, site, filters],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/overview-bucketed`, {
+      return authedFetch(`${BACKEND_URL}/overview-bucketed/${site}`, {
         startDate,
         endDate,
         timezone,
         bucket,
-        site,
         filters,
       }).then((res) => res.json());
     },
@@ -71,10 +70,9 @@ export function useGetOverviewBucketedPastMinutes({
     queryKey: ["overview-bucketed-past-minutes", pastMinutes, site, bucket],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/overview-bucketed`, {
+      return authedFetch(`${BACKEND_URL}/overview-bucketed/${site}`, {
         timezone,
         bucket,
-        site,
         pastMinutes,
       }).then((res) => res.json());
     },

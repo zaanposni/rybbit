@@ -1,18 +1,21 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
 import {
   getFilterStatement,
   getTimeStatement,
   processResults,
 } from "./utils.js";
-import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
+import { FilterParameter } from "./types.js";
 
 interface GetOverviewRequest {
+  Params: {
+    site: string;
+  };
   Querystring: {
     startDate: string;
     endDate: string;
     timezone: string;
-    site: string;
     filters: string;
     pastMinutes?: number;
   };
@@ -34,7 +37,7 @@ const getQuery = ({
   site,
   filters,
   pastMinutes,
-}: GetOverviewRequest["Querystring"]) => {
+}: GetOverviewRequest["Params"] & GetOverviewRequest["Querystring"]) => {
   const filterStatement = getFilterStatement(filters);
 
   return `SELECT   
@@ -102,7 +105,7 @@ export async function fetchOverview({
   site,
   filters,
   pastMinutes,
-}: GetOverviewRequest["Querystring"]) {
+}: GetOverviewRequest["Params"] & GetOverviewRequest["Querystring"]) {
   const query = getQuery({
     startDate,
     endDate,
@@ -130,9 +133,10 @@ export async function getOverview(
   req: FastifyRequest<GetOverviewRequest>,
   res: FastifyReply
 ) {
-  const { startDate, endDate, timezone, site, filters, pastMinutes } = req.query;
+  const { startDate, endDate, timezone, filters, pastMinutes } = req.query;
+  const site = req.params.site;
 
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
   }

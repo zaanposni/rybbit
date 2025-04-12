@@ -39,7 +39,7 @@ export function MainSection() {
           <Overview />
           <BucketSelection />
         </div>
-        <div className="h-[350px] relative">
+        <div className="h-[310px] relative">
           <div className="absolute top-0 left-0 w-full h-full">
             <PreviousChart data={previousData} max={maxOfDataAndPreviousData} />
           </div>

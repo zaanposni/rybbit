@@ -1,17 +1,11 @@
 "use client";
-import { usePathname } from "next/navigation";
-import { useGetSites } from "../../../../api/admin/sites";
+
+import { userStore } from "../../../../lib/userStore";
 import { UsageBanners } from "./UsageBanners";
 
 export function Header() {
-  const { data: sites } = useGetSites();
-  const pathname = usePathname();
+  const { user } = userStore();
 
-  const site = sites?.find(
-    (site) => site.siteId === Number(pathname.split("/")[1])
-  );
-
-  return (
-    <div className="flex flex-col">{/* <UsageBanners site={site} /> */}</div>
-  );
+  return null;
+  // return <div className="flex flex-col">{user && <UsageBanners />}</div>;
 }

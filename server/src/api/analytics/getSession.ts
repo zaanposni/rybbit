@@ -1,6 +1,6 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
-import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 import { processResults } from "./utils.js";
 
 export interface SessionDetails {
@@ -41,14 +41,22 @@ export interface PageviewEvent {
 export interface SessionPageviewsAndEvents {
   session: SessionDetails;
   pageviews: PageviewEvent[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
 }
 
 export interface GetSessionRequest {
   Params: {
     sessionId: string;
+    site: string;
   };
   Querystring: {
-    site: string;
+    limit?: string;
+    offset?: string;
   };
 }
 
@@ -56,10 +64,11 @@ export async function getSession(
   req: FastifyRequest<GetSessionRequest>,
   res: FastifyReply
 ) {
-  const { sessionId } = req.params;
-  const { site } = req.query;
+  const { sessionId, site } = req.params;
+  const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+  const offset = req.query.offset ? parseInt(req.query.offset) : 0;
 
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
   }
@@ -93,7 +102,17 @@ WHERE
 LIMIT 1
     `;
 
-    // 2. Second query: Get all pageviews and events for this session
+    // 2. Query to get total count of pageviews
+    const countQuery = `
+SELECT
+    COUNT(*) as total
+FROM pageviews
+WHERE
+    site_id = ${site}
+    AND session_id = '${sessionId}'
+    `;
+
+    // 3. Query to get paginated pageviews
     const pageviewsQuery = `
 SELECT
     timestamp,
@@ -110,13 +129,19 @@ WHERE
     site_id = ${site}
     AND session_id = '${sessionId}'
 ORDER BY timestamp ASC
+LIMIT ${limit}
+OFFSET ${offset}
     `;
 
-    // Execute both queries in parallel
-    const [sessionResultSettled, pageviewsResultSettled] =
+    // Execute queries in parallel
+    const [sessionResultSettled, countResultSettled, pageviewsResultSettled] =
       await Promise.allSettled([
         clickhouse.query({
           query: sessionQuery,
+          format: "JSONEachRow",
+        }),
+        clickhouse.query({
+          query: countQuery,
           format: "JSONEachRow",
         }),
         clickhouse.query({
@@ -129,24 +154,35 @@ ORDER BY timestamp ASC
     if (sessionResultSettled.status === "rejected") {
       throw sessionResultSettled.reason;
     }
+    if (countResultSettled.status === "rejected") {
+      throw countResultSettled.reason;
+    }
     if (pageviewsResultSettled.status === "rejected") {
       throw pageviewsResultSettled.reason;
     }
 
     const sessionResult = sessionResultSettled.value;
+    const countResult = countResultSettled.value;
     const pageviewsResult = pageviewsResultSettled.value;
 
     const sessionData = await processResults<SessionDetails>(sessionResult);
+    const countData = await processResults<{ total: number }>(countResult);
     const pageviewsData = await processResults<PageviewEvent>(pageviewsResult);
 
     if (!sessionData || sessionData.length === 0) {
       return res.status(404).send({ error: "Session not found" });
     }
 
-    // Combine both results
+    // Combine results
     const response: SessionPageviewsAndEvents = {
       session: sessionData[0],
       pageviews: pageviewsData,
+      pagination: {
+        total: countData[0].total,
+        limit,
+        offset,
+        hasMore: offset + pageviewsData.length < countData[0].total,
+      },
     };
 
     return res.send({ data: response });

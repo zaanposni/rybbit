@@ -30,6 +30,7 @@ import {
 import { HelpCircle } from "lucide-react";
 import { Skeleton } from "../../../components/ui/skeleton";
 import { RetentionChart } from "./RetentionChart";
+import { ThreeDotLoader } from "../../../components/Loaders";
 
 // Available time range options (in days)
 const RANGE_OPTIONS = [
@@ -82,66 +83,6 @@ const getRetentionColor = (
     backgroundColor: `hsl(${hue}, ${saturation}%, ${lightness}%)`,
     textColor,
   };
-};
-
-// Loading skeleton for the retention grid
-const RetentionGridSkeleton = () => {
-  const periodHeaders = Array.from(
-    { length: DEFAULT_SKELETON_PERIODS + 1 },
-    (_, i) => (i === 0 ? "Cohort" : `Week ${i - 1}`)
-  );
-
-  return (
-    <div className="overflow-x-auto">
-      <div
-        className="inline-grid gap-px bg-neutral-900 border border-neutral-800 rounded-lg shadow-lg"
-        style={{
-          gridTemplateColumns: `minmax(120px, auto) repeat(${DEFAULT_SKELETON_PERIODS}, minmax(90px, auto))`,
-        }}
-      >
-        {/* Header Row */}
-        {periodHeaders.map((header, i) => (
-          <div
-            key={`header-${i}`}
-            className={`p-3 font-semibold bg-neutral-900 text-center border-b border-neutral-700 ${
-              i === 0 ? "sticky left-0 z-10 border-r" : ""
-            }`}
-          >
-            <Skeleton className="h-4 w-16 mx-auto bg-neutral-700/50 animate-pulse" />
-          </div>
-        ))}
-
-        {/* Data Rows */}
-        {Array.from({ length: DEFAULT_SKELETON_COHORTS }).map((_, rowIndex) => (
-          <Fragment key={`row-${rowIndex}`}>
-            {/* Cohort Info Cell */}
-            <div className="p-3 bg-neutral-900 text-sm sticky left-0 z-10 border-r border-neutral-700">
-              <Skeleton className="h-4 w-24 mb-2 bg-neutral-700/50 animate-pulse" />
-              <Skeleton className="h-3 w-16 bg-neutral-700/50 animate-pulse" />
-            </div>
-            {/* Retention Cells */}
-            {Array.from({ length: DEFAULT_SKELETON_PERIODS }).map(
-              (_, cellIndex) => (
-                <div
-                  key={`cell-${rowIndex}-${cellIndex}`}
-                  className="m-[2px] p-3 flex items-center justify-center bg-neutral-800 rounded-md"
-                >
-                  <Skeleton
-                    className={`h-4 w-10 bg-neutral-700/50 animate-pulse`}
-                    style={{
-                      animationDelay: `${
-                        (rowIndex * DEFAULT_SKELETON_PERIODS + cellIndex) * 50
-                      }ms`,
-                    }}
-                  />
-                </div>
-              )
-            )}
-          </Fragment>
-        ))}
-      </div>
-    </div>
-  );
 };
 
 export default function RetentionPage() {
@@ -308,7 +249,7 @@ export default function RetentionPage() {
       : [];
 
   return (
-    <div className="pt-1">
+    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
       {/* Single Card containing both chart and grid */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between pb-2">
@@ -317,19 +258,13 @@ export default function RetentionPage() {
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Retention Chart */}
-          {isLoading ? (
-            <div className="h-[400px]">
-              <div className="w-full h-full space-y-3">
-                <Skeleton className="h-[350px] w-full bg-neutral-900 rounded-md animate-pulse" />
-              </div>
-            </div>
-          ) : data ? (
+          {isLoading ? null : data ? (
             <RetentionChart data={data} isLoading={false} mode={mode} />
           ) : null}
 
           <div>
             {isLoading ? (
-              <RetentionGridSkeleton />
+              <ThreeDotLoader />
             ) : data ? (
               <div className="overflow-x-auto">
                 <div

@@ -1,6 +1,10 @@
 import { useQuery, useInfiniteQuery } from "@tanstack/react-query";
 import { BACKEND_URL } from "../../lib/const";
-import { useStore } from "../../lib/store";
+import {
+  getFilteredFilters,
+  SESSION_PAGE_FILTERS,
+  useStore,
+} from "../../lib/store";
 import { APIResponse } from "../types";
 import { getStartAndEndDate, authedFetch } from "../utils";
 
@@ -30,11 +34,10 @@ export function useGetUserSessions(userId: string) {
     queryKey: ["user-sessions", userId, time, site, filters],
     queryFn: () => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/user/${userId}/sessions`, {
+      return authedFetch(`${BACKEND_URL}/user/${userId}/sessions/${site}`, {
         startDate,
         endDate,
         timezone,
-        site,
         filters,
       }).then((res) => res.json());
     },
@@ -46,12 +49,14 @@ export type GetSessionsResponse = {
   session_id: string;
   user_id: string;
   country: string;
+  city: string;
   iso_3166_2: string;
   language: string;
   device_type: string;
   browser: string;
   operating_system: string;
   referrer: string;
+  channel: string;
   session_end: string;
   session_start: string;
   session_duration: number;
@@ -65,16 +70,17 @@ export function useGetSessionsInfinite(userId?: string) {
   const { time, site, filters } = useStore();
   const { startDate, endDate } = getStartAndEndDate(time);
 
+  const filteredFilters = getFilteredFilters(SESSION_PAGE_FILTERS);
+
   return useInfiniteQuery<APIResponse<GetSessionsResponse>>({
-    queryKey: ["sessions-infinite", time, site, filters, userId],
+    queryKey: ["sessions-infinite", time, site, filteredFilters, userId],
     queryFn: ({ pageParam = 1 }) => {
       const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-      return authedFetch(`${BACKEND_URL}/sessions`, {
+      return authedFetch(`${BACKEND_URL}/sessions/${site}`, {
         startDate: userId ? undefined : startDate,
         endDate: userId ? undefined : endDate,
         timezone,
-        site,
-        filters,
+        filters: filteredFilters,
         page: pageParam,
         userId,
       }).then((res) => res.json());
@@ -130,19 +136,54 @@ export interface PageviewEvent {
 export interface SessionPageviewsAndEvents {
   session: SessionDetails;
   pageviews: PageviewEvent[];
+  pagination: {
+    total: number;
+    limit: number;
+    offset: number;
+    hasMore: boolean;
+  };
 }
 
-export function useGetSessionDetails(sessionId: string | null) {
+export function useGetSessionDetails(
+  sessionId: string | null,
+  limit = 100,
+  offset = 0
+) {
   const { site } = useStore();
 
   return useQuery<APIResponse<SessionPageviewsAndEvents>>({
-    queryKey: ["session-details", sessionId, site],
+    queryKey: ["session-details", sessionId, site, limit, offset],
     queryFn: () => {
       if (!sessionId) throw new Error("Session ID is required");
 
-      return authedFetch(`${BACKEND_URL}/session/${sessionId}`, {
-        site,
-      }).then((res) => res.json());
+      return authedFetch(
+        `${BACKEND_URL}/session/${sessionId}/${site}?limit=${limit}&offset=${offset}`
+      ).then((res) => res.json());
+    },
+    enabled: !!sessionId && !!site,
+    staleTime: Infinity,
+  });
+}
+
+export function useGetSessionDetailsInfinite(sessionId: string | null) {
+  const { site } = useStore();
+
+  return useInfiniteQuery<APIResponse<SessionPageviewsAndEvents>>({
+    queryKey: ["session-details-infinite", sessionId, site],
+    queryFn: ({ pageParam = 0 }) => {
+      if (!sessionId) throw new Error("Session ID is required");
+      const limit = 100;
+
+      return authedFetch(
+        `${BACKEND_URL}/session/${sessionId}/${site}?limit=${limit}&offset=${pageParam}`
+      ).then((res) => res.json());
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage) => {
+      if (lastPage?.data?.pagination?.hasMore) {
+        return lastPage.data.pagination.offset + lastPage.data.pagination.limit;
+      }
+      return undefined;
     },
     enabled: !!sessionId && !!site,
     staleTime: Infinity,

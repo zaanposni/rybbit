@@ -1,22 +1,27 @@
-import { FastifyReply } from "fastify";
-
-import { FastifyRequest } from "fastify";
+import { FastifyReply, FastifyRequest } from "fastify";
 import clickhouse from "../../db/clickhouse/clickhouse.js";
 
 export async function getSiteHasData(
-  req: FastifyRequest<{ Params: { site: string } }>,
+  request: FastifyRequest<{ Params: { site: string } }>,
   reply: FastifyReply
 ) {
+  const { site } = request.params;
+
   try {
-    const sites: { count: number }[] = await clickhouse
+    // Check if site has data using original method
+    const pageviewsData: { count: number }[] = await clickhouse
       .query({
-        query: `SELECT count(*) as count FROM pageviews WHERE site_id = ${req.params.site}`,
+        query: `SELECT count(*) as count FROM pageviews WHERE site_id = ${site}`,
         format: "JSONEachRow",
       })
       .then((res) => res.json());
 
-    return reply.status(200).send(sites[0].count > 0);
-  } catch (err) {
-    return reply.status(500).send(String(err));
+    const hasData = pageviewsData[0].count > 0;
+    return {
+      hasData,
+    };
+  } catch (error) {
+    console.error("Error checking if site has data:", error);
+    return reply.status(500).send({ error: "Internal server error" });
   }
 }

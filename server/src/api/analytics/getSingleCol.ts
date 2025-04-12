@@ -1,21 +1,23 @@
 import { FastifyReply, FastifyRequest } from "fastify";
-import clickhouse from "../db/clickhouse/clickhouse.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
 import {
   geSqlParam,
   getFilterStatement,
   getTimeStatement,
   processResults,
 } from "./utils.js";
-import { getUserHasAccessToSite } from "../lib/auth-utils.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 import { FilterParameter } from "./types.js";
 
 interface GetSingleColRequest {
+  Params: {
+    site: string;
+  };
   Querystring: {
     startDate: string;
     endDate: string;
     minutes: number;
     timezone: string;
-    site: string;
     filters: string;
     parameter: FilterParameter;
     limit?: number;
@@ -30,7 +32,7 @@ type GetSingleColResponse = {
   bounce_rate?: number;
 }[];
 
-const getQuery = (request: GetSingleColRequest["Querystring"]) => {
+const getQuery = (request: GetSingleColRequest["Params"] & GetSingleColRequest["Querystring"]) => {
   const {
     startDate,
     endDate,
@@ -58,6 +60,8 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
     FROM pageviews
     WHERE
       site_id = ${site}
+      AND event_name IS NOT NULL 
+      AND event_name <> ''
       ${filterStatement}
       ${getTimeStatement(
         minutes
@@ -99,6 +103,7 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
           // AND type = 'pageview'
         GROUP BY session_id
     ) AS query
+    WHERE pathname IS NOT NULL AND pathname <> ''
     GROUP BY value ORDER BY count desc
     ${limit ? `LIMIT ${limit}` : ""};`;
   }
@@ -111,6 +116,8 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
     FROM pageviews
     WHERE
         site_id = ${site}
+        AND ${geSqlParam(parameter)} IS NOT NULL
+        AND ${geSqlParam(parameter)} <> ''
         ${filterStatement}
         ${getTimeStatement(
           minutes
@@ -145,7 +152,7 @@ const getQuery = (request: GetSingleColRequest["Querystring"]) => {
   // `;
 };
 
-export async function fetchSingleCol(params: GetSingleColRequest["Querystring"]) {
+export async function fetchSingleCol(params: GetSingleColRequest["Params"] & GetSingleColRequest["Querystring"]) {
   const query = getQuery(params);
 
   try {
@@ -165,14 +172,15 @@ export async function getSingleCol(
   req: FastifyRequest<GetSingleColRequest>,
   res: FastifyReply
 ) {
-  const { site, parameter } = req.query;
+  const { parameter } = req.query;
+  const site = req.params.site;
 
-  const userHasAccessToSite = await getUserHasAccessToSite(req, site);
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
   }
 
-  const data = await fetchSingleCol(req.query);
+  const data = await fetchSingleCol({ ...req.query, ...req.params });
   if (!data) {
     return res.status(500).send({ error: `Failed to fetch ${parameter}` });
   }
