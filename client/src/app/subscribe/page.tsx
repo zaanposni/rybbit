@@ -18,6 +18,7 @@ import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { StandardPage } from "../../components/StandardPage";
+import { toast } from "sonner";
 
 // Available event tiers for the slider
 const EVENT_TIERS = [
@@ -192,13 +193,14 @@ export default function Subscribe() {
   const [selectedTier, setSelectedTier] = useState<"free" | "basic">("free");
   const [eventLimitIndex, setEventLimitIndex] = useState<number>(0); // Default to 20k (index 0)
   const [selectedPrice, setSelectedPrice] = useState<StripePrice | null>(null);
-  const [isAnnual, setIsAnnual] = useState<boolean>(false);
+  const [isAnnual, setIsAnnual] = useState<boolean>(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: sessionData } = authClient.useSession();
 
-  // Get the actual event limit value from the index
   const eventLimit = EVENT_TIERS[eventLimitIndex];
 
-  // Check if free plan is available based on event limit
-  const isFreeAvailable = eventLimit <= 20_000;
+  // TODO: Implement proper check if user already has an active subscription
+  const isFreeAvailable = !!sessionData?.user; // Placeholder check based on login
 
   // Group plans by type and interval
   const basicMonthlyPlans = STRIPE_PRICES.filter(
@@ -230,58 +232,72 @@ export default function Subscribe() {
   }, [selectedTier, eventLimit, isAnnual]);
 
   // Handle subscription
-  function handleSubscribe(planId: "free" | "basic"): void {
-    setSelectedTier(planId);
-
-    if (planId === "free") return;
-
-    // Use the direct plan mapping approach with the new naming scheme
-    const planName = getDirectPlanID("basic", eventLimit, isAnnual);
-
-    console.log(
-      `Direct plan mapping selected: ${planName}, interval=${
-        isAnnual ? "year" : "month"
-      }`
-    );
-
-    // Find the specific plan object in STRIPE_PRICES
-    const interval = isAnnual ? "year" : "month";
-
-    // The filter should match the new naming convention for annual plans
-    const matchingPlans = STRIPE_PRICES.filter((p) => {
-      const nameMatches = p.name === planName;
-      const intervalMatches = p.interval === interval;
-      return nameMatches && intervalMatches;
-    });
-
-    console.log(
-      `Found ${matchingPlans.length} matching plans for ${planName} (${interval})`
-    );
-
-    if (matchingPlans.length === 0) {
-      console.error(
-        `No matching plan found for name=${planName}, interval=${interval}`
-      );
+  async function handleSubscribe(planId: "free" | "basic"): Promise<void> {
+    if (planId === "free") {
       return;
     }
 
-    const selectedPlan = matchingPlans[0];
-    console.log(`Selected plan: `, selectedPlan);
+    // Check if user is logged in directly
+    if (!sessionData?.user) {
+      toast.error("Please log in to subscribe.");
+      return;
+    }
 
-    // Log the selected plan to verify
-    console.log(
-      `Subscribing to ${selectedPlan.name} (${selectedPlan.interval}) - $${selectedPlan.price} - ${selectedPlan.limits.events} events`
-    );
+    if (planId === "basic") {
+      const selectedTierPrice = findPriceForTier(
+        "basic",
+        eventLimit,
+        isAnnual ? "year" : "month"
+      );
 
-    authClient.subscription
-      .upgrade({
-        plan: selectedPlan.name,
-        successUrl: globalThis.location.origin + "/auth/subscription/success",
-        cancelUrl: globalThis.location.origin + "/subscribe",
-      })
-      .catch((error) => {
-        console.error("Subscription error:", error);
-      });
+      if (!selectedTierPrice) {
+        toast.error(
+          "Selected pricing plan not found. Please adjust the slider."
+        );
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Use NEXT_PUBLIC_BACKEND_URL if available, otherwise use relative path for same-origin requests
+        const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+        const baseUrl = window.location.origin;
+        const successUrl = `${baseUrl}/settings/subscription?session_id={CHECKOUT_SESSION_ID}`;
+        const cancelUrl = `${baseUrl}/subscribe`;
+
+        const response = await fetch(
+          `${backendBaseUrl}/api/stripe/create-checkout-session`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            credentials: "include", // Send cookies
+            body: JSON.stringify({
+              priceId: selectedTierPrice.priceId,
+              successUrl: successUrl,
+              cancelUrl: cancelUrl,
+            }),
+          }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to create checkout session.");
+        }
+
+        if (data.checkoutUrl) {
+          window.location.href = data.checkoutUrl; // Redirect to Stripe checkout
+        } else {
+          throw new Error("Checkout URL not received.");
+        }
+      } catch (error: any) {
+        console.error("Subscription Error:", error);
+        toast.error(`Subscription failed: ${error.message}`);
+        setIsLoading(false); // Stop loading on error
+      }
+    }
   }
 
   // Handle slider changes
@@ -470,8 +486,11 @@ export default function Subscribe() {
                     <Button
                       onClick={() => handleSubscribe(plan.id)}
                       className="w-full"
+                      disabled={isLoading}
                     >
-                      Subscribe to {plan.name}
+                      {isLoading
+                        ? "Processing..."
+                        : `Subscribe to ${plan.name}`}
                     </Button>
                   ) : (
                     <Button

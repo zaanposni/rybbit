@@ -4,7 +4,18 @@ dotenv.config();
 
 export const IS_CLOUD = process.env.CLOUD === "true";
 
-export const STRIPE_PRICES = [
+// Define a type for the plan objects
+export interface StripePlan {
+  priceId: string;
+  name: string;
+  interval: "month" | "year";
+  limits: {
+    events: number;
+  };
+  annualDiscountPriceId?: string; // Make this optional
+}
+
+export const STRIPE_PRICES: StripePlan[] = [
   {
     priceId: "price_1R1fIVDFVprnAny2yJtRRPBm",
     name: "basic100k",

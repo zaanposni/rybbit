@@ -11,18 +11,43 @@ import {
 } from "@/components/ui/dialog";
 import { AlertCircle, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Subscription } from "@/api/admin/subscription";
+// Assuming SubscriptionData is defined in the parent or imported
+// import { SubscriptionData } from "../page"; // Adjust path if needed
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner"; // For notifications
+
+// Define StripePlan locally if not imported
+interface StripePlan {
+  priceId: string;
+  price: number;
+  name: string;
+  interval: string;
+  limits: {
+    events: number;
+  };
+  annualDiscountPriceId?: string;
+}
+
+// Assuming SubscriptionData is defined in the parent or passed correctly
+// If not, define it here based on what `useStripeSubscription` returns
+interface SubscriptionData {
+  id: string;
+  planName: string;
+  status: string;
+  currentPeriodEnd: string;
+  eventLimit: number;
+  interval: string;
+  cancelAtPeriodEnd?: boolean;
+}
 
 interface ChangePlanDialogProps {
   showUpgradeDialog: boolean;
   setShowUpgradeDialog: (show: boolean) => void;
-  actionError: string | null;
-  upgradePlans: any[];
-  activeSubscription: Subscription | null | undefined;
-  isProcessing: boolean;
-  handleUpgradeSubscription: (planId: string) => Promise<void>;
+  actionError: string | null; // Keep for displaying errors from parent
+  upgradePlans: StripePlan[]; // Use StripePlan type
+  activeSubscription: SubscriptionData | null | undefined;
+  isProcessing: boolean; // Renaming local processing state
   router: {
     push: (url: string) => void;
   };
@@ -31,51 +56,117 @@ interface ChangePlanDialogProps {
 export function ChangePlanDialog({
   showUpgradeDialog,
   setShowUpgradeDialog,
-  actionError,
+  actionError: parentActionError, // Rename parent error prop
   upgradePlans,
   activeSubscription,
-  isProcessing,
-  handleUpgradeSubscription,
+  isProcessing: parentIsProcessing, // Rename parent processing prop
   router,
 }: ChangePlanDialogProps) {
-  // State to track if we're resuming a subscription
   const [resumingPlan, setResumingPlan] = useState<string | null>(null);
-  // State to track billing interval preference
   const [isAnnual, setIsAnnual] = useState<boolean>(false);
+  const [localIsProcessing, setLocalIsProcessing] = useState(false); // Local loading state
+  const [localActionError, setLocalActionError] = useState<string | null>(null); // Local error state
+
+  // Combined processing state
+  const isProcessing = parentIsProcessing || localIsProcessing;
+  // Combined error state (prioritize local action error)
+  const actionError = localActionError || parentActionError;
 
   // When dialog opens and subscription is canceled, highlight the current plan
   useEffect(() => {
     if (
       showUpgradeDialog &&
       activeSubscription?.cancelAtPeriodEnd &&
-      activeSubscription?.plan
+      activeSubscription?.planName
     ) {
-      setResumingPlan(activeSubscription.plan);
+      setResumingPlan(activeSubscription.planName);
       // Initialize the annual toggle based on the current subscription
-      setIsAnnual(activeSubscription.plan.includes("-annual"));
-    } else if (showUpgradeDialog && activeSubscription?.plan) {
+      setIsAnnual(activeSubscription.interval === "year");
+    } else if (showUpgradeDialog && activeSubscription?.planName) {
       // Initialize the annual toggle based on the current subscription
-      setIsAnnual(activeSubscription.plan.includes("-annual"));
+      setIsAnnual(activeSubscription.interval === "year");
     } else {
       setResumingPlan(null);
     }
+    // Reset local errors when dialog opens
+    setLocalActionError(null);
   }, [showUpgradeDialog, activeSubscription]);
 
   // Filter plans based on the selected billing interval
-  const filteredPlans = upgradePlans.filter(
-    (plan) =>
-      plan.name.startsWith("basic") &&
-      (isAnnual
-        ? plan.name.includes("-annual")
-        : !plan.name.includes("-annual"))
+  const filteredPlans = upgradePlans.filter((plan) =>
+    isAnnual ? plan.interval === "year" : plan.interval === "month"
   );
+
+  // Plan selection handler
+  const handlePlanSelect = async (selectedPlan: StripePlan) => {
+    // Prevent action if already processing or it's the current active plan
+    if (
+      isProcessing ||
+      (activeSubscription?.planName === selectedPlan.name &&
+        !activeSubscription?.cancelAtPeriodEnd)
+    ) {
+      return;
+    }
+
+    setLocalIsProcessing(true);
+    setLocalActionError(null);
+
+    try {
+      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
+      const baseUrl = window.location.origin;
+      // Success URL brings user back to settings page
+      const successUrl = `${baseUrl}/settings/subscription?session_id={CHECKOUT_SESSION_ID}`;
+      // Cancel URL also brings user back to settings page
+      const cancelUrl = `${baseUrl}/settings/subscription`;
+
+      const response = await fetch(
+        `${backendUrl}/api/stripe/create-checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({
+            priceId: selectedPlan.priceId,
+            successUrl: successUrl,
+            cancelUrl: cancelUrl,
+          }),
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session.");
+      }
+
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl; // Redirect to Stripe
+      } else {
+        throw new Error("Checkout URL not received.");
+      }
+    } catch (error: any) {
+      console.error("Upgrade/Resume Error:", error);
+      const errorMessage = `Failed to ${
+        resumingPlan ? "resume" : "change"
+      } plan: ${error.message}`;
+      setLocalActionError(errorMessage);
+      toast.error(errorMessage);
+    } finally {
+      setLocalIsProcessing(false);
+    }
+  };
 
   return (
     <Dialog
       open={showUpgradeDialog}
       onOpenChange={(open) => {
         setShowUpgradeDialog(open);
-        if (!open) setResumingPlan(null);
+        if (!open) {
+          setResumingPlan(null);
+          setLocalActionError(null); // Clear local error on close
+        }
       }}
     >
       <DialogContent className="max-w-3xl">
@@ -88,7 +179,7 @@ export function ChangePlanDialog({
           <DialogDescription className="py-4">
             {activeSubscription?.cancelAtPeriodEnd
               ? "Select a plan to resume your subscription. Your current plan is highlighted."
-              : "Select a plan to switch to"}
+              : "Select a new plan or billing interval."}
           </DialogDescription>
         </DialogHeader>
 
@@ -105,8 +196,8 @@ export function ChangePlanDialog({
             <AlertCircle className="h-4 w-4" />
             <AlertTitle>Resuming Subscription</AlertTitle>
             <AlertDescription>
-              Your current plan is highlighted. Click "Select" to resume this
-              plan or choose a different one.
+              Your subscription is set to cancel. Select your current plan below
+              to resume, or choose a different plan.
             </AlertDescription>
           </Alert>
         )}
@@ -144,21 +235,24 @@ export function ChangePlanDialog({
           </div>
         </div>
 
-        <div className="grid gap-4">
-          {/* Pro Plans */}
-          <div>
-            <h3 className="font-medium mb-3 flex items-center">
-              <Shield className="h-4 w-4 mr-2 text-green-500" />
-              Pro Plans
-            </h3>
-            <div className="space-y-3">
-              {filteredPlans.map((plan) => (
+        <div className="grid gap-4 max-h-[40vh] overflow-y-auto pr-2">
+          {filteredPlans.length === 0 ? (
+            <p className="text-center text-neutral-500">
+              No plans available for this interval.
+            </p>
+          ) : (
+            filteredPlans.map((plan) => {
+              const isCurrentActivePlan =
+                activeSubscription?.planName === plan.name &&
+                !activeSubscription?.cancelAtPeriodEnd;
+              const isPlanToResume = resumingPlan === plan.name;
+              const isDisabled = isCurrentActivePlan || isProcessing;
+
+              return (
                 <Card
                   key={plan.priceId}
                   className={`cursor-pointer hover:shadow-md transition-shadow ${
-                    (activeSubscription?.plan === plan.name &&
-                      !activeSubscription?.cancelAtPeriodEnd) ||
-                    resumingPlan === plan.name
+                    isCurrentActivePlan || isPlanToResume
                       ? "ring-2 ring-green-400"
                       : ""
                   }`}
@@ -168,9 +262,9 @@ export function ChangePlanDialog({
                       <div>
                         <h3 className="font-bold">
                           {plan.limits.events.toLocaleString()} events
-                          {isAnnual && (
+                          {plan.interval === "year" && (
                             <Badge className="ml-2 bg-emerald-500 text-white border-0 text-xs">
-                              Save 17%
+                              Save ~17%
                             </Badge>
                           )}
                         </h3>
@@ -180,33 +274,13 @@ export function ChangePlanDialog({
                       </div>
                       <Button
                         size="sm"
-                        variant={
-                          (activeSubscription?.plan === plan.name &&
-                            !activeSubscription?.cancelAtPeriodEnd) ||
-                          (resumingPlan === plan.name &&
-                            resumingPlan === activeSubscription?.plan)
-                            ? "outline"
-                            : "default"
-                        }
-                        onClick={() => {
-                          if (
-                            activeSubscription?.plan !== plan.name ||
-                            activeSubscription?.cancelAtPeriodEnd
-                          ) {
-                            handleUpgradeSubscription(plan.name);
-                          }
-                        }}
-                        disabled={
-                          (activeSubscription?.plan === plan.name &&
-                            !activeSubscription?.cancelAtPeriodEnd) ||
-                          isProcessing
-                        }
+                        variant={isCurrentActivePlan ? "outline" : "default"}
+                        onClick={() => handlePlanSelect(plan)}
+                        disabled={isDisabled}
                       >
-                        {activeSubscription?.plan === plan.name &&
-                        !activeSubscription?.cancelAtPeriodEnd
+                        {isCurrentActivePlan
                           ? "Current"
-                          : resumingPlan === plan.name &&
-                            resumingPlan === activeSubscription?.plan
+                          : isPlanToResume
                           ? "Resume"
                           : isProcessing
                           ? "Processing..."
@@ -215,23 +289,14 @@ export function ChangePlanDialog({
                     </div>
                   </CardContent>
                 </Card>
-              ))}
-            </div>
-          </div>
+              );
+            })
+          )}
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
             Cancel
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              router.push("/subscribe");
-              setShowUpgradeDialog(false);
-            }}
-          >
-            View All Plans
           </Button>
         </DialogFooter>
       </DialogContent>

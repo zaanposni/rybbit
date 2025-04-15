@@ -7,7 +7,6 @@ import { db } from "../db/postgres/postgres.js";
 import { IS_CLOUD, STRIPE_PRICES } from "./const.js";
 import * as schema from "../db/postgres/schema.js";
 import { eq } from "drizzle-orm";
-import { stripe } from "@better-auth/stripe";
 import Stripe from "stripe";
 
 dotenv.config();
@@ -24,15 +23,6 @@ const pluginList = IS_CLOUD
         allowUserToCreateOrganization: true,
         // Set the creator role to owner
         creatorRole: "owner",
-      }),
-      stripe({
-        stripeClient,
-        stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
-        createCustomerOnSignUp: true,
-        subscription: {
-          enabled: true,
-          plans: STRIPE_PRICES,
-        },
       }),
     ]
   : [

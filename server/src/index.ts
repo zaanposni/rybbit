@@ -31,7 +31,6 @@ import { getSiteHasData } from "./api/sites/getSiteHasData.js";
 import { getSites } from "./api/sites/getSites.js";
 import { createAccount } from "./api/user/createAccount.js";
 import { getUserOrganizations } from "./api/user/getUserOrganizations.js";
-import { getUserSubscription } from "./api/user/getUserSubscription.js";
 import { listOrganizationMembers } from "./api/user/listOrganizationMembers.js";
 import { initializeCronJobs } from "./cron/index.js";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
@@ -45,6 +44,12 @@ import { extractSiteId, isSitePublic } from "./utils.js";
 import { publicSites } from "./lib/publicSites.js";
 import { getSiteIsPublic } from "./api/sites/getSiteIsPublic.js";
 import { getUserSessionCount } from "./api/analytics/getUserSessionCount.js";
+
+// Import Stripe handlers
+import { createCheckoutSession } from "./api/stripe/createCheckoutSession.js";
+import { createPortalSession } from "./api/stripe/createPortalSession.js";
+import { getSubscription } from "./api/stripe/getSubscription.js";
+import { handleWebhook } from "./api/stripe/webhook.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -102,7 +107,14 @@ server.register(
   { auth: auth! }
 );
 
-const PUBLIC_ROUTES = ["/health", "/track", "/script", "/auth", "/api/auth"];
+const PUBLIC_ROUTES: string[] = [
+  "/health",
+  "/track",
+  "/script",
+  "/auth",
+  "/api/auth",
+  "/api/stripe/webhook", // Add webhook to public routes
+];
 
 // Define analytics routes that can be public
 const ANALYTICS_ROUTES = [
@@ -204,7 +216,16 @@ server.get(
   listOrganizationMembers
 );
 server.get("/user/organizations", getUserOrganizations);
-server.get("/user/subscription", getUserSubscription);
+
+// Stripe Routes
+server.post("/api/stripe/create-checkout-session", createCheckoutSession);
+server.post("/api/stripe/create-portal-session", createPortalSession);
+server.get("/api/stripe/subscription", getSubscription);
+server.post(
+  "/api/stripe/webhook",
+  { config: { rawBody: true } },
+  handleWebhook
+); // Use rawBody parser config for webhook
 
 server.post("/track", trackEvent);
 

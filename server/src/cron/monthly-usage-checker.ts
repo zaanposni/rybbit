@@ -1,9 +1,11 @@
-import { user, member, sites, subscription } from "../db/postgres/schema.js";
+import { user, member, sites } from "../db/postgres/schema.js";
 import { clickhouse } from "../db/clickhouse/clickhouse.js";
-import { STRIPE_PRICES } from "../lib/const.js";
+import { STRIPE_PRICES, StripePlan } from "../lib/const.js";
 import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 import { processResults } from "../api/analytics/utils.js";
+import { stripe } from "../lib/stripe.js";
+import Stripe from "stripe";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 20_000;
@@ -53,42 +55,64 @@ async function getSiteIdsForUser(userId: string): Promise<number[]> {
 }
 
 /**
- * Gets event limit for a user based on their subscription plan
+ * Gets event limit and billing period start date for a user based on their Stripe subscription.
+ * Fetches directly from Stripe if the user has a stripeCustomerId.
  * @returns [eventLimit, periodStartDate]
  */
-async function getUserSubscriptionInfo(
-  userId: string
-): Promise<[number, string | null]> {
-  try {
-    // Find active subscription
-    const userSubscription = await db
-      .select()
-      .from(subscription)
-      .where(
-        and(
-          eq(subscription.referenceId, userId),
-          inArray(subscription.status, ["active", "trialing"])
-        )
-      )
-      .limit(1);
+async function getUserSubscriptionInfo(userData: {
+  id: string;
+  stripeCustomerId: string | null;
+}): Promise<[number, string | null]> {
+  if (!userData.stripeCustomerId) {
+    // No Stripe customer ID, use default limit and start of current month
+    return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
+  }
 
-    if (!userSubscription.length) {
-      return [DEFAULT_EVENT_LIMIT, null];
+  try {
+    // Fetch active subscriptions for the customer from Stripe
+    const subscriptions = await stripe.subscriptions.list({
+      customer: userData.stripeCustomerId,
+      status: "active",
+      limit: 1,
+    });
+
+    if (subscriptions.data.length === 0) {
+      // No active subscription, use default limit and start of current month
+      return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
     }
 
-    // Find the plan in STRIPE_PLANS
-    const plan = STRIPE_PRICES.find((p) => p.name === userSubscription[0].plan);
-    const eventLimit = plan ? plan.limits.events : DEFAULT_EVENT_LIMIT;
+    const sub = subscriptions.data[0];
+    const priceId = sub.items.data[0]?.price.id;
 
-    // Get period start date - if not available, use first day of month
-    const periodStart = userSubscription[0].periodStart
-      ? new Date(userSubscription[0].periodStart).toISOString().split("T")[0]
+    if (!priceId) {
+      console.error(
+        `Subscription item price ID not found for user ${userData.id}, sub ${sub.id}`
+      );
+      return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
+    }
+
+    // Find corresponding plan details from constants
+    const planDetails = STRIPE_PRICES.find(
+      (plan: StripePlan) =>
+        plan.priceId === priceId ||
+        (plan.annualDiscountPriceId && plan.annualDiscountPriceId === priceId)
+    );
+
+    const eventLimit = planDetails
+      ? planDetails.limits.events
+      : DEFAULT_EVENT_LIMIT;
+    const periodStart = sub.current_period_start
+      ? new Date(sub.current_period_start * 1000).toISOString().split("T")[0]
       : getStartOfMonth();
 
     return [eventLimit, periodStart];
-  } catch (error) {
-    console.error(`Error getting subscription info for user ${userId}:`, error);
-    return [DEFAULT_EVENT_LIMIT, null];
+  } catch (error: any) {
+    console.error(
+      `Error fetching Stripe subscription info for user ${userData.id}:`,
+      error
+    );
+    // Fallback to default limit and current month start on Stripe API error
+    return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
   }
 }
 
@@ -103,7 +127,7 @@ async function getMonthlyPageviews(
     return 0;
   }
 
-  // If no startDate is provided (no subscription), default to start of month
+  // If no startDate is provided (e.g., no subscription), default to start of month
   const periodStart = startDate || getStartOfMonth();
 
   try {
@@ -139,8 +163,14 @@ export async function updateUsersMonthlyUsage() {
     // Clear the previous list of sites over their limit
     sitesOverLimit.clear();
 
-    // Get all users
-    const users = await db.select().from(user);
+    // Get all users with their Stripe customer ID
+    const users = await db
+      .select({
+        id: user.id,
+        email: user.email,
+        stripeCustomerId: user.stripeCustomerId,
+      })
+      .from(user);
 
     for (const userData of users) {
       try {
@@ -154,10 +184,10 @@ export async function updateUsersMonthlyUsage() {
 
         // Get user's subscription information (limit and period start)
         const [eventLimit, periodStart] = await getUserSubscriptionInfo(
-          userData.id
+          userData
         );
 
-        // Get monthly pageview count from ClickHouse using the subscription period
+        // Get monthly pageview count from ClickHouse using the billing period start date
         const pageviewCount = await getMonthlyPageviews(siteIds, periodStart);
 
         // Check if over limit and update global set

@@ -1,22 +1,21 @@
 import { and, eq, inArray } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../../db/postgres/postgres.js";
-import { member, user, subscription } from "../../db/postgres/schema.js";
+import { member, user } from "../../db/postgres/schema.js";
 import { getSitesUserHasAccessTo } from "../../lib/auth-utils.js";
 import { STRIPE_PRICES } from "../../lib/const.js";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 20_000;
 
-/**
- * Get subscription event limit for a user
- */
+// Commenting out getUserEventLimit as it relies on the removed subscription table
+/*
 export async function getUserEventLimit(userId: string): Promise<number> {
   try {
     // Find active subscription
     const userSubscription = await db
       .select()
-      .from(subscription)
+      .from(subscription) // subscription table removed
       .where(
         and(
           eq(subscription.referenceId, userId),
@@ -37,77 +36,46 @@ export async function getUserEventLimit(userId: string): Promise<number> {
     return DEFAULT_EVENT_LIMIT;
   }
 }
+*/
 
 export async function getSites(req: FastifyRequest, reply: FastifyReply) {
   try {
     // Get sites the user has access to
     const sitesData = await getSitesUserHasAccessTo(req);
 
-    // Enhance sites data with usage limit information
+    // Enhance sites data - removing usage limit information for now
     const enhancedSitesData = await Promise.all(
       sitesData.map(async (site) => {
-        // Skip if no organization ID
-        if (!site.organizationId) {
-          return {
-            ...site,
-            overMonthlyLimit: false,
-            eventLimit: DEFAULT_EVENT_LIMIT,
-            isOwner: false,
-          };
-        }
+        let isOwner = false;
+        let ownerId: string | null = null;
 
-        // Get the organization owner
-        const orgOwner = await db
-          .select({ userId: member.userId })
-          .from(member)
-          .where(
-            and(
-              eq(member.organizationId, site.organizationId),
-              eq(member.role, "owner")
+        // Determine ownership if organization ID exists
+        if (site.organizationId) {
+          const orgOwnerResult = await db
+            .select({ userId: member.userId })
+            .from(member)
+            .where(
+              and(
+                eq(member.organizationId, site.organizationId),
+                eq(member.role, "owner")
+              )
             )
-          )
-          .limit(1);
+            .limit(1);
 
-        if (!orgOwner.length) {
-          return {
-            ...site,
-            overMonthlyLimit: false,
-            eventLimit: DEFAULT_EVENT_LIMIT,
-            isOwner: false,
-          };
+          if (orgOwnerResult.length > 0) {
+            ownerId = orgOwnerResult[0].userId;
+            isOwner = ownerId === req.user?.id;
+          }
         }
 
-        // Check if the current user is the organization owner
-        const isOwner = orgOwner[0].userId === req.user?.id;
+        // TODO: Re-implement limit checking later, possibly by fetching subscription
+        // data for the ownerId directly from Stripe where needed.
 
-        // Get the user data to check if they're over limit
-        const userData = await db
-          .select({
-            overMonthlyLimit: user.overMonthlyLimit,
-            monthlyEventCount: user.monthlyEventCount,
-          })
-          .from(user)
-          .where(eq(user.id, orgOwner[0].userId))
-          .limit(1);
-
-        if (!userData.length) {
-          return {
-            ...site,
-            overMonthlyLimit: false,
-            eventLimit: DEFAULT_EVENT_LIMIT,
-            isOwner,
-          };
-        }
-
-        // Get the user's event limit from their subscription
-        const eventLimit = await getUserEventLimit(orgOwner[0].userId);
-
-        // Return site with usage limit info
         return {
           ...site,
-          overMonthlyLimit: userData[0].overMonthlyLimit || false,
-          monthlyEventCount: userData[0].monthlyEventCount || 0,
-          eventLimit,
+          // overMonthlyLimit: false, // Removed for now
+          // monthlyEventCount: 0, // Removed for now
+          // eventLimit: DEFAULT_EVENT_LIMIT, // Removed for now
           isOwner,
         };
       })

@@ -231,20 +231,3 @@ export const session = pgTable(
     unique("session_token_unique").on(table.token),
   ]
 );
-
-export const subscription = pgTable("subscription", {
-  id: text().primaryKey().notNull(),
-  plan: text().notNull(),
-  referenceId: text().notNull(),
-  stripeCustomerId: text(),
-  stripeSubscriptionId: text(),
-  status: text().notNull(),
-  periodStart: timestamp({ mode: "string" }),
-  periodEnd: timestamp({ mode: "string" }),
-  cancelAtPeriodEnd: boolean(),
-  seats: integer(),
-  trialStart: timestamp({ mode: "string" }),
-  trialEnd: timestamp({ mode: "string" }),
-  createdAt: timestamp({ mode: "string" }).defaultNow().notNull(),
-  updatedAt: timestamp({ mode: "string" }).defaultNow().notNull(),
-});
