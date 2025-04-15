@@ -15,8 +15,8 @@ export default function SubscriptionPage() {
   } = useStripeSubscription();
 
   return (
-    <div className="container py-10 max-w-5xl mx-auto">
-      <div className="flex justify-between items-center mb-8">
+    <div className=" py-2">
+      <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subscription</h1>
           <p className="text-gray-500 dark:text-gray-400">

@@ -1,19 +1,13 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "../../../../components/ui/card";
+import { Card, CardContent } from "../../../../components/ui/card";
 import { Progress } from "../../../../components/ui/progress";
 import { DEFAULT_EVENT_LIMIT } from "../utils/constants";
 import { formatDate, getPlanDetails, PlanTemplate } from "../utils/planUtils";
 import { useStripeSubscription } from "../utils/useStripeSubscription";
 import { PlanFeaturesCard } from "./PlanFeaturesCard";
+import { Alert } from "../../../../components/ui/alert";
 
 export function ProPlan() {
   const {
@@ -103,33 +97,25 @@ export function ProPlan() {
 
   return (
     <div className="space-y-6">
+      {actionError && <Alert variant="destructive">{actionError}</Alert>}
       <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>
-                {currentPlanDetails?.name || activeSubscription.planName}
+        <CardContent>
+          <div className="space-y-6 mt-3">
+            <div className="flex justify-between items-start">
+              <div className="space-y-1">
+                <p className="text-3xl font-bold">
+                  {currentPlanDetails?.name || activeSubscription.planName}
+                </p>
+                <p className="text text-gray-300">{getFormattedPrice()}</p>
                 {isAnnualPlan && (
-                  <Badge className="ml-2 bg-emerald-500 text-white">
-                    Annual
-                  </Badge>
+                  <div className="mt-2 text-sm text-emerald-400">
+                    <p>You save by paying annually (2 months free)</p>
+                  </div>
                 )}
-                {activeSubscription.cancelAtPeriodEnd && (
-                  <Badge className="ml-2 bg-orange-500 text-white">
-                    Canceling
-                  </Badge>
-                )}
-              </CardTitle>
-              <CardDescription>
-                {activeSubscription.cancelAtPeriodEnd
-                  ? "Your subscription will end on " +
-                    formatDate(activeSubscription.currentPeriodEnd)
-                  : activeSubscription.status === "active"
-                  ? "Your subscription is active."
-                  : `Status: ${activeSubscription.status}`}
-              </CardDescription>
-            </div>
-            <div className="flex space-x-2">
+                <p className="text-neutral-400 text-sm">
+                  {formatRenewalDate()}
+                </p>
+              </div>
               <Button
                 variant="outline"
                 onClick={handleManageSubscription}
@@ -137,37 +123,6 @@ export function ProPlan() {
               >
                 {isProcessing ? "Processing..." : "Change Plan"}
               </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h3 className="font-medium">Plan</h3>
-                <p className="text-lg font-bold">
-                  {currentPlanDetails?.name || activeSubscription.planName}
-                </p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {getFormattedPrice()}
-                </p>
-                {isAnnualPlan && (
-                  <div className="mt-2 text-sm text-emerald-600 dark:text-emerald-400">
-                    <p>You save by paying annually (2 months free)</p>
-                  </div>
-                )}
-              </div>
-              <div>
-                <h3 className="font-medium">Billing Period</h3>
-                <p className="text-lg font-bold">{formatRenewalDate()}</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  {activeSubscription.cancelAtPeriodEnd
-                    ? "Your subscription will not renew after this date"
-                    : isAnnualPlan
-                    ? "Your plan renews once per year"
-                    : "Your plan renews monthly"}
-                </p>
-              </div>
             </div>
 
             <div className="space-y-2">

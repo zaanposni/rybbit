@@ -33,26 +33,11 @@ export function FreePlan() {
         <CardHeader>
           <CardTitle>Free Plan</CardTitle>
           <CardDescription>
-            You are currently on the Free Plan. Upgrade to unlock premium
-            features.
+            You are currently on the Free Plan. Upgrade to unlock more events.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <h3 className="font-medium">Plan</h3>
-                <p className="text-lg font-bold">Free</p>
-                <p className="text-sm text-gray-500 dark:text-gray-400">
-                  $0/month
-                </p>
-              </div>
-              <div>
-                <h3 className="font-medium">Renewal Date</h3>
-                <p className="text-lg font-bold">Never expires</p>
-              </div>
-            </div>
-
             <div className="space-y-2">
               <h3 className="font-medium mb-2">Usage</h3>
               <div className="space-y-4">
@@ -73,7 +58,7 @@ export function FreePlan() {
           </div>
         </CardContent>
         <CardFooter>
-          <Button onClick={() => router.push("/subscribe")}>
+          <Button onClick={() => router.push("/subscribe")} variant={"success"}>
             Upgrade Plan <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
         </CardFooter>
