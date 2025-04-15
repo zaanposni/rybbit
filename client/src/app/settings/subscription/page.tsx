@@ -16,10 +16,6 @@ import { AlertCircle, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { authClient } from "../../../lib/auth";
-import { ChangePlanDialog } from "./components/ChangePlanDialog";
-import { CurrentPlanCard } from "./components/CurrentPlanCard";
-import { ErrorDialog } from "./components/ErrorDialog";
-import { HelpSection } from "./components/HelpSection";
 import { PlanFeaturesCard } from "./components/PlanFeaturesCard";
 import { DEFAULT_EVENT_LIMIT } from "./utils/constants";
 import { getPlanDetails, formatDate } from "./utils/planUtils";
@@ -47,6 +43,18 @@ interface SubscriptionData {
   eventLimit: number;
   interval: string;
   cancelAtPeriodEnd?: boolean;
+}
+
+// Define PlanTemplate locally to match getPlanDetails return type
+interface PlanTemplate {
+  id: string;
+  name: string;
+  price: string;
+  interval: string;
+  description: string;
+  features: string[];
+  color: string;
+  icon: React.ReactNode;
 }
 
 function useStripeSubscription() {
@@ -171,7 +179,7 @@ export default function SubscriptionPage() {
 
   const getFormattedPrice = () => {
     if (!currentPlanDetails) return "$0/month";
-    return `$${currentPlanDetails.price}/${
+    return `${currentPlanDetails.price}/${
       currentPlanDetails.interval === "year" ? "year" : "month"
     }`;
   };
@@ -277,8 +285,6 @@ export default function SubscriptionPage() {
           </Card>
 
           <PlanFeaturesCard currentPlan={getPlanDetails("free")} />
-
-          <HelpSection router={router} />
         </div>
       ) : (
         <div className="space-y-6">
@@ -308,13 +314,13 @@ export default function SubscriptionPage() {
                       : `Status: ${activeSubscription.status}`}
                   </CardDescription>
                 </div>
-                <div>
+                <div className="flex space-x-2">
                   <Button
                     variant="outline"
                     onClick={handleManageSubscription}
                     disabled={isProcessing}
                   >
-                    {isProcessing ? "Processing..." : "Manage Billing"}
+                    {isProcessing ? "Processing..." : "Change Plan"}
                   </Button>
                 </div>
               </div>
@@ -385,31 +391,6 @@ export default function SubscriptionPage() {
           )}
         </div>
       )}
-
-      <HelpSection router={router} />
-
-      <ChangePlanDialog
-        showUpgradeDialog={showUpgradeDialog}
-        setShowUpgradeDialog={setShowUpgradeDialog}
-        actionError={actionError}
-        upgradePlans={upgradePlans}
-        activeSubscription={activeSubscription as any}
-        isProcessing={isProcessing}
-        router={router}
-      />
     </div>
   );
-}
-
-// Add PlanTemplate interface definition if not already present/imported
-// (Assuming it matches the structure returned by getPlanDetails)
-interface PlanTemplate {
-  id: string;
-  name: string;
-  price: string;
-  interval: string;
-  description: string;
-  features: string[];
-  color: string;
-  icon: React.ReactNode; // Or appropriate type for the icon
 }
