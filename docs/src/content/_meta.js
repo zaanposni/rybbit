@@ -1,7 +1,7 @@
 export default {
-  index: '',
-  'get-started': '',
-  features: '',
-  themes: '',
-  advanced: ''
-}
+  index: "",
+  "self-hosting": "",
+  features: "",
+  themes: "",
+  advanced: "",
+};

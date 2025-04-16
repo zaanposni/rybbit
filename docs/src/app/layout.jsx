@@ -33,8 +33,8 @@ export default async function RootLayout({ children }) {
           <span style={{ opacity: '60%' }}>The Next Docs Builder</span>
         </div>
       }
-      // Next.js discord server
       chatLink="https://discord.gg/hEM84NMkRv"
+      projectLink="https://github.com/goldflag/frogstats"
     />
   )
   const pageMap = await getPageMap()
@@ -43,9 +43,9 @@ export default async function RootLayout({ children }) {
       <Head faviconGlyph="✦" />
       <body>
         <Layout
-          banner={<Banner storageKey="Nextra 2">Nextra 2 Alpha</Banner>}
+          banner={<Banner storageKey="Frogstats">Frogstats Alpha</Banner>}
           navbar={navbar}
-          footer={<Footer>MIT {new Date().getFullYear()} © Nextra.</Footer>}
+          footer={<Footer>Copyright {new Date().getFullYear()} © Frogstats.</Footer>}
           editLink="Edit this page on GitHub"
           docsRepositoryBase="https://github.com/shuding/nextra/blob/main/examples/docs"
           sidebar={{ defaultMenuCollapseLevel: 1 }}
