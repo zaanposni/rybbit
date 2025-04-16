@@ -29,7 +29,7 @@ export const getPlanDetails = (
       price: "$0",
       interval: "month",
       description: "Get started with basic analytics",
-      features: ["20,000 events per month", "6 month data retention"],
+      features: ["10,000 events per month", "6 month data retention"],
       color:
         "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900",
       icon: <Clock className="h-5 w-5" />,

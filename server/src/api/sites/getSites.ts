@@ -6,7 +6,7 @@ import { getSitesUserHasAccessTo } from "../../lib/auth-utils.js";
 import { getSubscriptionInner } from "../stripe/getSubscription.js";
 
 // Default event limit for users without an active subscription
-const DEFAULT_EVENT_LIMIT = 20_000;
+const DEFAULT_EVENT_LIMIT = 10_000;
 
 export async function getSites(req: FastifyRequest, reply: FastifyReply) {
   try {

@@ -5,10 +5,9 @@ import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 import { processResults } from "../api/analytics/utils.js";
 import { stripe } from "../lib/stripe.js";
-import Stripe from "stripe";
 
 // Default event limit for users without an active subscription
-const DEFAULT_EVENT_LIMIT = 20_000;
+const DEFAULT_EVENT_LIMIT = 10_000;
 
 // Global set to track site IDs that have exceeded their monthly limits
 export const sitesOverLimit = new Set<number>();
