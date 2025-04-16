@@ -21,9 +21,9 @@ export function ProPlan() {
   const [actionError, setActionError] = useState<string | null>(null);
 
   const eventLimit = activeSubscription?.eventLimit || DEFAULT_EVENT_LIMIT;
-  const currentUsage = activeSubscription?.eventLimit || 0;
+  const currentUsage = activeSubscription?.monthlyEventCount || 0;
   const usagePercentage =
-    eventLimit > 0 ? (currentUsage / eventLimit) * 100 : 0;
+    eventLimit > 0 ? Math.min((currentUsage / eventLimit) * 100, 100) : 0;
   const isAnnualPlan = activeSubscription?.interval === "year";
 
   const currentPlanDetails: PlanTemplate | null = activeSubscription

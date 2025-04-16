@@ -23,7 +23,7 @@ export function FreePlan() {
     refetch,
   } = useStripeSubscription();
 
-  const currentUsage = activeSubscription?.eventLimit || 0;
+  const currentUsage = activeSubscription?.monthlyEventCount || 0;
 
   const router = useRouter();
 
@@ -50,7 +50,10 @@ export function FreePlan() {
                     </span>
                   </div>
                   <Progress
-                    value={(currentUsage / DEFAULT_EVENT_LIMIT) * 100}
+                    value={Math.min(
+                      (currentUsage / DEFAULT_EVENT_LIMIT) * 100,
+                      100
+                    )}
                   />
                 </div>
               </div>

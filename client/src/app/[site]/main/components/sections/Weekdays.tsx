@@ -55,7 +55,6 @@ export function Weekdays() {
 
       // Parse the timestamp
       const date = DateTime.fromSQL(item.time);
-      console.log(date);
       if (!date.isValid) return;
 
       const dayOfWeek = date.weekday % 7; // 0 = Monday, 6 = Sunday in Luxon
