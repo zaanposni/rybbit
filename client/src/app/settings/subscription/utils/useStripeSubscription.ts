@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { BACKEND_URL } from "../../../../lib/const";
 
 interface SubscriptionData {
   id: string;
@@ -12,10 +13,8 @@ interface SubscriptionData {
 }
 
 export function useStripeSubscription() {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
-
   const fetchSubscription = async () => {
-    const response = await fetch(`${backendUrl}/api/stripe/subscription`, {
+    const response = await fetch(`${BACKEND_URL}/stripe/subscription`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",

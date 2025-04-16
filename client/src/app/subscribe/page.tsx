@@ -18,6 +18,7 @@ import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { StandardPage } from "../../components/StandardPage";
+import { BACKEND_URL } from "../../lib/const";
 
 // Available event tiers for the slider
 const EVENT_TIERS = [
@@ -186,13 +187,12 @@ export default function Subscribe() {
       setIsLoading(true);
       try {
         // Use NEXT_PUBLIC_BACKEND_URL if available, otherwise use relative path for same-origin requests
-        const backendBaseUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
         const baseUrl = window.location.origin;
         const successUrl = `${baseUrl}/settings/subscription?session_id={CHECKOUT_SESSION_ID}`;
         const cancelUrl = `${baseUrl}/subscribe`;
 
         const response = await fetch(
-          `${backendBaseUrl}/api/stripe/create-checkout-session`,
+          `${BACKEND_URL}/stripe/create-checkout-session`,
           {
             method: "POST",
             headers: {

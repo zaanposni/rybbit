@@ -218,9 +218,9 @@ server.get(
 server.get("/user/organizations", getUserOrganizations);
 
 // Stripe Routes
-server.post("/api/stripe/create-checkout-session", createCheckoutSession);
-server.post("/api/stripe/create-portal-session", createPortalSession);
-server.get("/api/stripe/subscription", getSubscription);
+server.post("/stripe/create-checkout-session", createCheckoutSession);
+server.post("/stripe/create-portal-session", createPortalSession);
+server.get("/stripe/subscription", getSubscription);
 server.post(
   "/api/stripe/webhook",
   { config: { rawBody: true } },

@@ -8,6 +8,7 @@ import { formatDate, getPlanDetails, PlanTemplate } from "../utils/planUtils";
 import { useStripeSubscription } from "../utils/useStripeSubscription";
 import { PlanFeaturesCard } from "./PlanFeaturesCard";
 import { Alert } from "../../../../components/ui/alert";
+import { BACKEND_URL } from "../../../../lib/const";
 
 export function ProPlan() {
   const {
@@ -34,9 +35,8 @@ export function ProPlan() {
     setActionError(null);
     setIsProcessing(true);
     try {
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "";
       const response = await fetch(
-        `${backendUrl}/api/stripe/create-portal-session`,
+        `${BACKEND_URL}/stripe/create-portal-session`,
         {
           method: "POST",
           headers: {
