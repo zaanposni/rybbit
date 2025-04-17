@@ -3,7 +3,7 @@
     # Optional: Email for ACME (Let's Encrypt) account
     # If CERTBOT_EMAIL is set in .env, Caddy will use it.
     # Remove this block if you don't want to provide an email.
-    acme_email {$CERTBOT_EMAIL}
+    email {$CERTBOT_EMAIL}
 
     # Enable staging endpoint for testing (remove for production)
     # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
