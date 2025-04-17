@@ -1,105 +1,68 @@
 import { Steps } from 'nextra/components'
+import { Callout } from 'nextra/components'
 
-# Self Hosting
+# Self Hosting Frogstats
 
-You can self-host Frogstats by following the steps below.
+This guide will walk you through setting up your own instance of Frogstats.
 
+## Prerequisites
 
-## Create manually
+Before you begin, ensure you have the following:
 
-Nextra works like a Next.js plugin, and it accepts a theme config (layout) to
-render the page. To start: [^3]
+-   **A Linux VPS:** We use [Hetzner Cloud](https://hetzner.cloud/?ref=QEdVqVpTLBDP) for everything (referral link - but Hetzner is legitimately the best value). CX11 for ~$4/month will be fine for small-medium sized projects.
+-   **A Domain Name:** You'll need a domain or subdomain (e.g., `tracking.yourdomain.com`) pointed to your VPS's IP address. HTTPS is required because browsers block tracking scripts served over insecure HTTP.
+-   **Docker Engine:** Docker is used to run the application stack. Installation instructions are in Step 1.
+-   **Git:** Needed to clone the repository.
+
+<Callout type="info">
+  This guide has been tested on Ubuntu 24 LTS. While it should work on other distributions, your mileage may vary.
+</Callout>
+
+## Setup Steps
 
 <Steps>
-### Install Next.js, Nextra and React [^1]
+### 1. Install Docker and Git
 
-{/* ```sh npm2yarn
-npm i react react-dom next nextra
-``` */}
+First, connect to your VPS via SSH.
 
-### Install the docs theme [^2]
+**Install Docker Engine:** Follow the official instructions for your Linux distribution:
+[https://docs.docker.com/engine/install/](https://docs.docker.com/engine/install/)
 
-```sh npm2yarn
-npm i nextra-theme-docs
+Make sure to complete the [post-installation steps for Linux](https://docs.docker.com/engine/install/linux-postinstall/) as well, particularly adding your user to the `docker` group so you don't have to use `sudo` for every Docker command.
+
+**Install Git:** If Git is not already installed, install it using your distribution's package manager. For Debian/Ubuntu:
+```bash
+sudo apt update && sudo apt install -y git
 ```
 
-### Create the following Next.js config and theme config under the root directory
+### 2. Clone the Frogstats Repository
 
-```js filename="next.config.mjs"
-import nextra from 'nextra'
-
-const withNextra = nextra({
-  theme: 'nextra-theme-blog',
-  themeConfig: './theme.config.js'
-})
-export default withNextra()
+Clone the project repository from GitHub:
+```bash
+git clone https://github.com/goldflag/frogstats.git
+cd frogstats
 ```
 
-### Create a `theme.config.js` file for the docs theme
+### 3. Run the Setup Script
 
-```js filename="theme.config.js"
-export default {
-  project: {
-    link: 'https://github.com/shuding/nextra' // GitHub link in the navbar
-  },
-  docsRepositoryBase: 'https://github.com/shuding/nextra/blob/master', // base URL for the docs repository
-  getNextSeoProps: () => ({ titleTemplate: '%s – Nextra' }),
-  navigation: true,
-  darkMode: true,
-  footer: {
-    text: `MIT ${new Date().getFullYear()} © Shu Ding.`
-  },
-  editLink: {
-    text: 'Edit this page on GitHub'
-  },
-  logo: (
-    <>
-      <svg>...</svg>
-      <span>Next.js Static Site Generator</span>
-    </>
-  ),
-  head: (
-    <>
-      <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-      <meta name="description" content="Nextra: the next docs builder" />
-      <meta name="og:title" content="Nextra: the next docs builder" />
-    </>
-  ),
-  primaryHue: {
-    dark: 204,
-    light: 212
-  }
-}
+The repository includes a setup script that configures the necessary environment variables (including generating a secure secret) and starts the application using Docker Compose.
+
+Run the script, replacing `your.domain.name` with the domain or subdomain you configured in the prerequisites:
+```bash
+chmod +x setup.sh
+./setup.sh your.domain.name
 ```
 
-> [!NOTE]
->
-> More configuration options for the docs theme can be found
-> [here](/themes/docs/configuration).
+The script will create a `.env` file and then build and start the containers. This might take a few minutes the first time.
 
-### You are good to go! Run `next dev` to start
+### 4. Sign Up
+
+Once the services are running, Caddy (the webserver) will automatically obtain an SSL certificate for your domain.
+
+Open your browser and navigate to `https://your.domain.name/signup` (using the domain you provided to the setup script).
+
+Create your admin account. You can then log in and start adding your websites!
 
 </Steps>
 
----
-
-<span id="sidebar-and-anchor-links" />
-
-> [!NOTE]
->
-> Any `.md` or `.mdx` file will turn into a doc page and be displayed in
-> sidebar. You can also create a `_meta.js` file to customize the page order and
-> title. <br /> Check the source code: https://github.com/shuding/nextra for
-> more information.
-
-> [!TIP]
->
-> You can also use
-> [`<style jsx>`](https://nextjs.org/docs/basic-features/built-in-css-support#css-in-js)
-> to style elements inside `theme.config.js`.
-
-[^1]: Install Next.js, Nextra and React.
-
-[^2]: Install the docs theme.
-
-[^3]: To start.
+Congratulations! You have successfully self-hosted Frogstats.
