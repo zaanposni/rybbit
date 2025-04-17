@@ -17,8 +17,6 @@ services:
       # Pass domain name for use in Caddyfile
       # Email is configured via Caddyfile global options
       - DOMAIN_NAME=${DOMAIN_NAME}
-      # Optional: Email for ACME account (Let's Encrypt). Set in .env if desired.
-      - CERTBOT_EMAIL=${CERTBOT_EMAIL} 
     depends_on:
       - backend
       - client
