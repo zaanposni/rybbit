@@ -1,0 +1,64 @@
+server {
+    listen 80;
+    server_name ${DOMAIN_NAME};
+
+    # Certbot ACME challenge handler
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    # Redirect all other HTTP traffic to HTTPS
+    location / {
+        return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+    }
+}
+
+server {
+    listen 443 ssl http2;
+    server_name ${DOMAIN_NAME};
+
+    # SSL Configuration - Paths managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN_NAME}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN_NAME}/privkey.pem;
+    # Use pre-generated dhparams
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    # Recommended SSL settings (consider using https://ssl-config.mozilla.org/)
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers off;
+    ssl_ciphers ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384;
+    ssl_session_timeout 1d;
+    ssl_session_cache shared:SSL:10m; # Adjust size as needed
+    ssl_session_tickets off;
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+
+
+    # Shared directory for Certbot challenges (needed if challenges use TLS-ALPN-01 in future, though unlikely with webroot)
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location /api/ {
+        proxy_pass http://backend:3001/; # Use service name
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+    }
+
+    location / {
+        proxy_pass http://client:3002/; # Use service name
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+    }
+} 

@@ -34,7 +34,7 @@ export async function getSubscriptionInner(userId: string) {
   }
 
   // 2. List active subscriptions for the customer from Stripe
-  const subscriptions = await stripe.subscriptions.list({
+  const subscriptions = await (stripe as Stripe).subscriptions.list({
     customer: user.stripeCustomerId,
     status: "active", // Only fetch active subscriptions
     limit: 1, // Users should only have one active subscription in this model

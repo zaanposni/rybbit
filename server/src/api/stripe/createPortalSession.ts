@@ -3,6 +3,7 @@ import { stripe } from "../../lib/stripe.js";
 import { db } from "../../db/postgres/postgres.js";
 import { user as userSchema } from "../../db/postgres/schema.js";
 import { eq } from "drizzle-orm";
+import Stripe from "stripe";
 
 interface PortalRequestBody {
   returnUrl: string;
@@ -44,7 +45,9 @@ export async function createPortalSession(
     }
 
     // 2. Create a Stripe Billing Portal Session
-    const portalSession = await stripe.billingPortal.sessions.create({
+    const portalSession = await (
+      stripe as Stripe
+    ).billingPortal.sessions.create({
       customer: user.stripeCustomerId,
       return_url: returnUrl, // The user will be redirected here after managing their billing
     });

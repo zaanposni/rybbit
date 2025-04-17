@@ -1,8 +1,9 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { stripe } from "../../lib/stripe.js";
+import { eq } from "drizzle-orm";
+import { FastifyReply, FastifyRequest } from "fastify";
+import Stripe from "stripe";
 import { db } from "../../db/postgres/postgres.js";
 import { user as userSchema } from "../../db/postgres/schema.js";
-import { eq } from "drizzle-orm";
+import { stripe } from "../../lib/stripe.js";
 
 interface CheckoutRequestBody {
   priceId: string;
@@ -49,7 +50,7 @@ export async function createCheckoutSession(
 
     // 2. If the user doesn't have a Stripe Customer ID, create one
     if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
+      const customer = await (stripe as Stripe).customers.create({
         email: user.email,
         metadata: {
           userId: user.id, // Link Stripe customer to your internal user ID
@@ -65,7 +66,7 @@ export async function createCheckoutSession(
     }
 
     // 4. Create a Stripe Checkout Session
-    const session = await stripe.checkout.sessions.create({
+    const session = await (stripe as Stripe).checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
       customer: stripeCustomerId,

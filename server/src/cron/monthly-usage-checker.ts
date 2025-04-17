@@ -5,6 +5,7 @@ import { eq, inArray, and } from "drizzle-orm";
 import { db } from "../db/postgres/postgres.js";
 import { processResults } from "../api/analytics/utils.js";
 import { stripe } from "../lib/stripe.js";
+import Stripe from "stripe";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 10_000;
@@ -69,7 +70,7 @@ async function getUserSubscriptionInfo(userData: {
 
   try {
     // Fetch active subscriptions for the customer from Stripe
-    const subscriptions = await stripe.subscriptions.list({
+    const subscriptions = await (stripe as Stripe).subscriptions.list({
       customer: userData.stripeCustomerId,
       status: "active",
       limit: 1,

@@ -29,7 +29,7 @@ export async function handleWebhook(
       return reply.status(400).send("Webhook error: No raw body available");
     }
 
-    event = stripe.webhooks.constructEvent(
+    event = (stripe as Stripe).webhooks.constructEvent(
       rawBody,
       sig as string,
       webhookSecret

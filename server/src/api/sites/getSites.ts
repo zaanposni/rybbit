@@ -4,6 +4,7 @@ import { db } from "../../db/postgres/postgres.js";
 import { member } from "../../db/postgres/schema.js";
 import { getSitesUserHasAccessTo } from "../../lib/auth-utils.js";
 import { getSubscriptionInner } from "../stripe/getSubscription.js";
+import { IS_CLOUD } from "../../lib/const.js";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 10_000;
@@ -13,12 +14,20 @@ export async function getSites(req: FastifyRequest, reply: FastifyReply) {
     // Get sites the user has access to
     const sitesData = await getSitesUserHasAccessTo(req);
 
-    // Enhance sites data - removing usage limit information for now
     const enhancedSitesData = await Promise.all(
       sitesData.map(async (site) => {
         let isOwner = false;
         let ownerId = "";
 
+        if (!IS_CLOUD) {
+          return {
+            ...site,
+            monthlyEventCount: 0,
+            eventLimit: Infinity,
+            overMonthlyLimit: false,
+            isOwner: true,
+          };
+        }
         // Determine ownership if organization ID exists
         if (site.organizationId) {
           const orgOwnerResult = await db
