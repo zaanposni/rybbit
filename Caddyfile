@@ -1,0 +1,34 @@
+# Caddyfile
+{
+    # Optional: Email for ACME (Let's Encrypt) account
+    # If CERTBOT_EMAIL is set in .env, Caddy will use it.
+    # Remove this block if you don't want to provide an email.
+    acme_email {$CERTBOT_EMAIL}
+
+    # Enable staging endpoint for testing (remove for production)
+    # acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# Use the domain name passed from docker-compose environment
+{$DOMAIN_NAME} {
+    # Enable compression
+    encode zstd gzip
+
+    # Proxy API requests to the backend service
+    handle_path /api/* {
+        reverse_proxy backend:3001
+    }
+
+    # Proxy all other requests to the client service
+    handle {
+        reverse_proxy client:3002
+    }
+
+    # Optional: Add security headers (example)
+    # header {
+    #     Strict-Transport-Security max-age=31536000;
+    #     X-Content-Type-Options nosniff
+    #     X-Frame-Options DENY
+    #     Referrer-Policy strict-origin-when-cross-origin
+    # }
+} 

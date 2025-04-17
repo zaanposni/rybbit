@@ -1,60 +1,27 @@
 version: '3.8'
 
 services:
-  nginx:
-    container_name: nginx
-    build:
-      context: ./nginx
-      dockerfile: Dockerfile
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
+      - "443:443/udp" # Needed for HTTP/3
     volumes:
-      - ./nginx/templates:/etc/nginx/templates # Mount template directory
-      - certbot-conf:/etc/letsencrypt # Mount cert volume
-      - certbot-www:/var/www/certbot # Mount webroot volume for challenges
+      - ./Caddyfile:/etc/caddy/Caddyfile # Mount Caddy config file
+      - caddy_data:/data # Mount persistent data volume for certs etc.
+      - caddy_config:/config # Mount persistent config volume
     environment:
-      - DOMAIN_NAME=${DOMAIN_NAME} # Pass domain name from .env
-    command: /entrypoint.sh # Explicitly run entrypoint
+      # Pass domain name for use in Caddyfile
+      # Email is configured via Caddyfile global options
+      - DOMAIN_NAME=${DOMAIN_NAME}
+      # Optional: Email for ACME account (Let's Encrypt). Set in .env if desired.
+      - CERTBOT_EMAIL=${CERTBOT_EMAIL} 
     depends_on:
       - backend
       - client
-    restart: unless-stopped
-
-  certbot:
-    image: certbot/certbot
-    container_name: certbot
-    volumes:
-      - certbot-conf:/etc/letsencrypt # Mount cert volume
-      - certbot-www:/var/www/certbot # Mount webroot volume for challenges
-    environment:
-      - DOMAIN_NAME=${DOMAIN_NAME}
-      - CERTBOT_EMAIL=${CERTBOT_EMAIL}
-    command: >
-      sh -c "
-        echo 'Waiting for Nginx to start...' && sleep 10s;
-        # Check if CERTBOT_EMAIL is set and non-empty
-        if [ -n \"${CERTBOT_EMAIL}\" ]; then
-          email_arg=\" --email ${CERTBOT_EMAIL} --no-eff-email \"
-        else
-          email_arg=\" --register-unsafely-without-email \"
-          echo 'Warning: Running Certbot without an email address. You will not receive expiration notices.'
-        fi;
-        echo \"Attempting to obtain/renew certificate for ${DOMAIN_NAME} using args: ${email_arg}\" &&
-        certbot certonly --webroot -w /var/www/certbot -d ${DOMAIN_NAME} \
-          ${email_arg} --agree-tos --keep-until-expiring --non-interactive \
-          --rsa-key-size 4096 --preferred-challenges http-01 \
-          || echo 'Initial certbot run failed or certificate already exists.';
-        echo 'Starting Certbot renewal loop...' &&
-        trap exit TERM;
-        while :; do
-          echo '[$(date)] Running certbot renew...' && certbot renew --webroot -w /var/www/certbot --quiet;
-          sleep 12h & wait $${!};
-        done;
-      "
-    depends_on:
-      - nginx
-    restart: unless-stopped
 
   clickhouse:
     container_name: clickhouse
@@ -74,6 +41,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
 
   postgres:
     image: postgres:latest
@@ -131,5 +99,5 @@ services:
 volumes:
   clickhouse-data:
   postgres-data:
-  certbot-conf: # Volume for Let's Encrypt certificates
-  certbot-www:  # Volume for ACME challenges
+  caddy_data:     # Persistent volume for Caddy's certificates and state
+  caddy_config:   # Persistent volume for Caddy's configuration cache (optional but good practice)
