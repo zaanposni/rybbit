@@ -13,7 +13,6 @@ services:
       - ./nginx/templates:/etc/nginx/templates # Mount template directory
       - certbot-conf:/etc/letsencrypt # Mount cert volume
       - certbot-www:/var/www/certbot # Mount webroot volume for challenges
-      - ./nginx/entrypoint.sh:/entrypoint.sh # Mount entrypoint script
     environment:
       - DOMAIN_NAME=${DOMAIN_NAME} # Pass domain name from .env
     command: /entrypoint.sh # Explicitly run entrypoint
