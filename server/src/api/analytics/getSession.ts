@@ -7,7 +7,7 @@ export interface SessionDetails {
   session_id: string;
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -80,7 +80,7 @@ SELECT
     session_id,
     user_id,
     country,
-    iso_3166_2,
+    region,
     language,
     device_type,
     browser,

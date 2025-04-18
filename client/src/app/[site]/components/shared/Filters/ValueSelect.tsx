@@ -39,7 +39,7 @@ export function ValueSelect({
               label: getCountryName(val),
             };
           }
-          if (parameter === "iso_3166_2") {
+          if (parameter === "region") {
             return {
               value: val,
               label: getRegionName(val),
@@ -64,7 +64,7 @@ export function ValueSelect({
         if (parameter === "country") {
           return { value: val, label: getCountryName(val) };
         }
-        if (parameter === "iso_3166_2") {
+        if (parameter === "region") {
           return { value: val, label: getRegionName(val) };
         }
         return { value: val, label: val };

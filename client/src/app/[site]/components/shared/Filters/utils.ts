@@ -25,8 +25,6 @@ export function getParameterNameLabel(parameter: FilterParameter) {
       return "City";
     case "region":
       return "Region";
-    case "iso_3166_2":
-      return "Region";
     case "entry_page":
       return "Entry Page";
     case "exit_page":
@@ -57,13 +55,13 @@ export const filterTypeToLabel = (type: FilterType) => {
 
 export function getParameterValueLabel(
   filter: Filter,
-  getRegionName: (iso_3166_2: string) => string | undefined
+  getRegionName: (region: string) => string | undefined
 ) {
   const formatValue = (value: string) => {
     if (filter.parameter === "country") {
       return getCountryName(value);
     }
-    if (filter.parameter === "iso_3166_2") {
+    if (filter.parameter === "region") {
       return getRegionName(value);
     }
     return value;

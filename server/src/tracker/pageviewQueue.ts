@@ -96,8 +96,7 @@ class PageviewQueue {
         screen_height: pv.screenHeight || 0,
         device_type: getDeviceType(pv.screenWidth, pv.screenHeight, pv.ua),
         country: countryCode,
-        iso_3166_2:
-          countryCode && regionCode ? countryCode + "-" + regionCode : "",
+        region: countryCode && regionCode ? countryCode + "-" + regionCode : "",
         city: city || "",
         lat: latitude || 0,
         lon: longitude || 0,

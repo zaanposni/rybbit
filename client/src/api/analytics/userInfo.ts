@@ -6,7 +6,7 @@ export type UserInfo = {
   duration: number;
   sessions: number;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;

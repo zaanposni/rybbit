@@ -10,7 +10,7 @@ import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 export type GetUsersResponse = {
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   city: string;
   language: string;
   browser: string;
@@ -86,7 +86,7 @@ WITH AggregatedUsers AS (
     SELECT
         user_id,
         argMax(country, timestamp) AS country,
-        argMax(iso_3166_2, timestamp) AS iso_3166_2,
+        argMax(region, timestamp) AS region,
         argMax(city, timestamp) AS city,
         argMax(language, timestamp) AS language,
         argMax(browser, timestamp) AS browser,

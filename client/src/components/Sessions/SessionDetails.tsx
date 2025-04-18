@@ -428,8 +428,8 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                         <div className="flex items-center gap-1 text-gray-400">
                           <CountryFlag country={sessionDetails.country} />
                           <span>{getCountryName(sessionDetails.country)}</span>
-                          {sessionDetails.iso_3166_2 && (
-                            <span>({sessionDetails.iso_3166_2})</span>
+                          {sessionDetails.region && (
+                            <span>({sessionDetails.region})</span>
                           )}
                         </div>
                       </div>

@@ -35,7 +35,6 @@ export type FilterParameter =
   | "pathname"
   | "page_title"
   | "querystring"
-  | "iso_3166_2"
   | "event_name"
   | "channel"
   // derivative parameters
@@ -52,7 +51,6 @@ export const SESSION_PAGE_FILTERS: FilterParameter[] = [
   "city",
   "device_type",
   "referrer",
-  "iso_3166_2",
   "event_name",
   "channel",
   "entry_page",
@@ -68,7 +66,6 @@ export const USER_PAGE_FILTERS: FilterParameter[] = [
   "city",
   "device_type",
   "referrer",
-  "iso_3166_2",
 ];
 
 export type Filter = {

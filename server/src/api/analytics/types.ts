@@ -12,7 +12,6 @@ export type FilterParameter =
   | "pathname"
   | "page_title"
   | "querystring"
-  | "iso_3166_2"
   | "event_name"
   | "channel"
   // derivative parameters

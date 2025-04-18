@@ -6,7 +6,7 @@ interface UserPageviewData {
   sessions: number;
   duration: number;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -40,7 +40,7 @@ export async function getUserInfo(
             session_id,
             user_id,
             argMax(country, timestamp) AS country,
-            argMax(iso_3166_2, timestamp) AS iso_3166_2,
+            argMax(region, timestamp) AS region,
             argMax(language, timestamp) AS language,
             argMax(device_type, timestamp) AS device_type,
             argMax(browser, timestamp) AS browser,
@@ -72,7 +72,7 @@ export async function getUserInfo(
         COUNT(DISTINCT session_id) AS sessions,
         ROUND(avg(session_duration)) AS duration,
         any(country) as country,
-        any(iso_3166_2) AS iso_3166_2,
+        any(region) AS region,
         any(language) AS language,
         any(device_type) AS device_type,
         any(browser) AS browser,

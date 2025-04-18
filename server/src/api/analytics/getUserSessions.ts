@@ -79,7 +79,7 @@ SELECT
     operating_system,
     device_type,
     country,
-    iso_3166_2
+    region
 FROM events
 WHERE
     site_id = ${site}

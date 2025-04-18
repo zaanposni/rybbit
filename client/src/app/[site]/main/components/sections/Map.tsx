@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardLoader,
-  CardTitle,
-} from "@/components/ui/card";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { scaleLinear } from "d3-scale";
 import React, { useEffect, useMemo, useState } from "react";
@@ -36,7 +29,7 @@ export function MapComponent() {
   });
   const { data: subdivisionData, isLoading: isSubdivisionLoading } =
     useSingleCol({
-      parameter: "iso_3166_2",
+      parameter: "region",
     });
 
   const [dataVersion, setDataVersion] = useState<number>(0);
@@ -152,7 +145,7 @@ export function MapComponent() {
         // Set filter based on the current map view
         const filterParameter: FilterParameter = isCountryView
           ? "country"
-          : "iso_3166_2";
+          : "region";
 
         addFilter({
           parameter: filterParameter,

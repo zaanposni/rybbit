@@ -70,7 +70,7 @@ export default function UserPage() {
               </div>
               <span className=" text-neutral-100">Region:</span>
               <div className="text-neutral-300">
-                {data?.iso_3166_2 ? getRegionName(data.iso_3166_2) : "N/A"}
+                {data?.region ? getRegionName(data.region) : "N/A"}
               </div>
             </div>
             <div className="grid grid-cols-[110px_1fr] gap-2">

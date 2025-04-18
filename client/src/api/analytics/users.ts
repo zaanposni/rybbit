@@ -12,7 +12,7 @@ import { APIResponse } from "../types";
 export type UsersResponse = {
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   city: string;
   language: string;
   browser: string;

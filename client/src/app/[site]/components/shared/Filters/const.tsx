@@ -1,32 +1,23 @@
-import React from "react";
-import { FilterParameter } from "../../../../../lib/store";
 import {
-  Globe,
-  Map,
+  AppWindow,
+  Brain,
   FileText,
-  Search,
-  ArrowUpRight,
-  Radio,
-  Flag,
-  MapPin,
-  Building,
-  Smartphone,
-  Laptop,
-  Chrome,
+  FolderInput,
+  Globe,
   Languages,
   LogIn,
   LogOut,
-  Maximize,
-  Zap,
   MapPinHouse,
   MapPinned,
+  Maximize,
+  MousePointerClick,
+  Radio,
+  Search,
   Share2,
   TabletSmartphone,
-  MousePointerClick,
-  FolderInput,
-  AppWindow,
-  Brain,
 } from "lucide-react";
+import React from "react";
+import { FilterParameter } from "../../../../../lib/store";
 
 export const FilterOptions: {
   label: string;
@@ -80,7 +71,7 @@ export const FilterOptions: {
   },
   {
     label: "Region",
-    value: "iso_3166_2",
+    value: "region",
     icon: <MapPinned className="h-4 w-4" />,
   },
   {

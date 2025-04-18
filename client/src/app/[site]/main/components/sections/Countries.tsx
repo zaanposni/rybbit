@@ -88,7 +88,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
           </TabsContent>
           <TabsContent value="regions">
             <ComponentToUse
-              filterParameter="iso_3166_2"
+              filterParameter="region"
               title="Regions"
               getValue={(e) => e.value}
               getKey={(e) => e.value}

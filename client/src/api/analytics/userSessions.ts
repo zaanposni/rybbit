@@ -50,7 +50,7 @@ export type GetSessionsResponse = {
   user_id: string;
   country: string;
   city: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -104,7 +104,7 @@ export interface SessionDetails {
   session_id: string;
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
