@@ -20,7 +20,7 @@ const parameterDescription = `The purpose of each parameter in the context of we
 - dimensions: The display resolution of the user's device. Useful for optimizing visual layout and responsiveness.
 - language: Useful for internationalization and understanding the linguistic demographics.
 - country: Provides insights into geographic distribution and regional traffic patterns.
-- iso_3166_2: A specific country subdivision, such as a state or province. Useful for granular geographic analysis beyond just the country level.
+- region: A specific country subdivision, such as a state or province. Useful for granular geographic analysis beyond just the country level.
 - referrer: The URL of the webpage that referred the user to the site. Helps in tracking traffic sources.
 - pathname: The path component of a URL that the user visited. Useful for analyzing which specific sections or pages of the site are most popular.
 - entry_page: Identifies the entry point for sessions, which is valuable for understanding the initial touchpoint of the user experience.
@@ -33,7 +33,7 @@ const parameterSchema = z.enum([
   "dimensions",
   "language",
   "country",
-  "iso_3166_2",
+  "region",
   "referrer",
   "pathname",
   "entry_page",
@@ -75,7 +75,7 @@ The allowable values for each parameter are described below.
     - Description: A string representing an ISO 3166-1 alpha-2 country code.
     - Examples: "US", "CA", "GB", "FR".
     - Notes: This standard ensures that only valid two-letter country codes are accepted.
-- iso_3166_2:
+- region:
     - Description: A string representing an ISO 3166-2 code for country subdivisions.
     - Examples: "US-CA" (for California), "FR-IDF" (for Île-de-France).
     - Notes: This value follows a standardized format with a country code and a subdivision code separated by a hyphen.
