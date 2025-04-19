@@ -57,7 +57,7 @@ const getQuery = (request: GetSingleColRequest["Params"] & GetSingleColRequest["
       event_name as value,
       COUNT(*) as count,
       ${percentageStatement}
-    FROM pageviews
+    FROM events
     WHERE
       site_id = ${site}
       AND event_name IS NOT NULL 
@@ -89,7 +89,7 @@ const getQuery = (request: GetSingleColRequest["Params"] & GetSingleColRequest["
             session_id,
             ${arg}(hostname, timestamp) AS hostname,
             ${arg}(pathname, timestamp) AS pathname
-        FROM pageviews 
+        FROM events 
         WHERE
           site_id = ${site} 
           ${filterStatement}
@@ -113,7 +113,7 @@ const getQuery = (request: GetSingleColRequest["Params"] & GetSingleColRequest["
       ${geSqlParam(parameter)} as value,
       COUNT(distinct(session_id)) as count,
       ${percentageStatement}
-    FROM pageviews
+    FROM events
     WHERE
         site_id = ${site}
         AND ${geSqlParam(parameter)} IS NOT NULL

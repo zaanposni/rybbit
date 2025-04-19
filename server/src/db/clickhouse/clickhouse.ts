@@ -1,5 +1,4 @@
 import { createClient } from "@clickhouse/client";
-import { Session } from "../postgres/types.js";
 
 export const clickhouse = createClient({
   host: process.env.CLICKHOUSE_HOST,
@@ -8,10 +7,10 @@ export const clickhouse = createClient({
 });
 
 export const initializeClickhouse = async () => {
-  // Create pageviews table
+  // Create events table
   await clickhouse.exec({
     query: `
-      CREATE TABLE IF NOT EXISTS pageviews (
+      CREATE TABLE IF NOT EXISTS events (
         site_id UInt16,
         timestamp DateTime,
         session_id String,
@@ -21,6 +20,11 @@ export const initializeClickhouse = async () => {
         querystring String,
         page_title String,
         referrer String,
+        utm_source LowCardinality(String),
+        utm_medium LowCardinality(String),
+        utm_campaign String,
+        utm_term String,
+        utm_content String,
         channel String,
         browser LowCardinality(String),
         browser_version LowCardinality(String),
@@ -28,7 +32,7 @@ export const initializeClickhouse = async () => {
         operating_system_version LowCardinality(String),
         language LowCardinality(String),
         country LowCardinality(FixedString(2)),
-        iso_3166_2 LowCardinality(String),
+        region LowCardinality(String),
         city String,
         latitude Float64,
         longitude Float64,
@@ -44,46 +48,6 @@ export const initializeClickhouse = async () => {
       ORDER BY (site_id, timestamp)
       `,
   });
-
-  // // Create sessions table
-  // await clickhouse.exec({
-  //   query: `
-  //     CREATE TABLE IF NOT EXISTS sessions (
-  //       site_id UInt16,
-  //       start_time DateTime,
-  //       end_time DateTime,
-  //       session_id String,
-  //       user_id String,
-  //       hostname String,
-  //       pathname String,
-  //       querystring String,
-  //       page_title String,
-  //       referrer String,
-  //       browser LowCardinality(String),
-  //       browser_version LowCardinality(String),
-  //       operating_system LowCardinality(String),
-  //       operating_system_version LowCardinality(String),
-  //       language LowCardinality(String),
-  //       country LowCardinality(FixedString(2)),
-  //       iso_3166_2 LowCardinality(String),
-  //       screen_width UInt16,
-  //       screen_height UInt16,
-  //       device_type LowCardinality(String),
-  //       entry_page String,
-  //       exit_page String,
-  //       pageviews UInt32,
-  //       events UInt32,
-  //       utm_source String,
-  //       utm_medium String,
-  //       utm_campaign String,
-  //       utm_term String,
-  //       utm_content String
-  //     )
-  //     ENGINE = MergeTree()
-  //     PARTITION BY toYYYYMM(start_time)
-  //     ORDER BY (site_id, start_time)
-  //   `,
-  // });
 
   await clickhouse.exec({
     query: `
@@ -106,7 +70,7 @@ export const initializeClickhouse = async () => {
         operating_system_version LowCardinality(String),
         language LowCardinality(String),
         country LowCardinality(FixedString(2)),
-        iso_3166_2 LowCardinality(String),
+        region LowCardinality(String),
         screen_width UInt16,
         screen_height UInt16,
         device_type LowCardinality(String),
@@ -123,7 +87,7 @@ export const initializeClickhouse = async () => {
     CREATE MATERIALIZED VIEW IF NOT EXISTS sessions_mv
     TO sessions
     AS
-    SELECT 
+    SELECT
         site_id,
         session_id,
         min(timestamp) AS session_start,
@@ -141,33 +105,18 @@ export const initializeClickhouse = async () => {
         any(operating_system_version) AS operating_system_version,
         any(language) AS language,
         any(country) AS country,
-        any(iso_3166_2) AS iso_3166_2,
+        any(region) AS region,
         any(screen_width) AS screen_width,
         any(screen_height) AS screen_height,
         any(device_type) AS device_type,
         -- Use the largest timestamp as the 'version'
         max(toUInt64(timestamp)) AS version
-    FROM pageviews
-    GROUP BY 
+    FROM events
+    GROUP BY
         site_id,
         session_id;
     `,
   });
-};
-
-// Function to insert session data
-export const insertSessions = async (sessions: Session[]) => {
-  try {
-    await clickhouse.insert({
-      table: "sessions",
-      values: sessions,
-      format: "JSONEachRow",
-    });
-    return true;
-  } catch (error) {
-    console.error("Error inserting session:", error);
-    return false;
-  }
 };
 
 export default clickhouse;

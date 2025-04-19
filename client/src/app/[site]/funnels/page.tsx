@@ -8,6 +8,7 @@ import { PlusCircle } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useStore } from "@/lib/store";
 import { FunnelRow } from "./components/FunnelRow";
+import { MobileSidebar } from "../../../components/MobileSidebar";
 
 export default function FunnelsPage() {
   const { site } = useStore();
@@ -16,8 +17,10 @@ export default function FunnelsPage() {
   if (isLoading) {
     return (
       <div className="p-4 max-w-[1300px] mx-auto space-y-4">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Funnels</h1>
+        <div className="flex justify-between items-center mb-3">
+          <div>
+            <MobileSidebar />
+          </div>
           <Skeleton className="h-10 w-32" />
         </div>
         {[1, 2, 3].map((i) => (
@@ -28,9 +31,11 @@ export default function FunnelsPage() {
   }
 
   return (
-    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Funnels</h1>
+    <div className="p-2 md:p-4  max-w-[1300px] mx-auto space-y-3">
+      <div className="flex justify-between items-center mb-3">
+        <div>
+          <MobileSidebar />
+        </div>
         <CreateFunnelDialog />
       </div>
 

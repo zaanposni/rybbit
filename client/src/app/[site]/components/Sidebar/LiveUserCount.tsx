@@ -21,7 +21,7 @@ export default function LiveUserCount() {
 
       <Tooltip>
         <TooltipTrigger>
-          <span className="text-sm text-neutral-400 ml-1">
+          <span className="text-sm text-neutral-300 ml-1">
             {
               <NumberFlow
                 respectMotionPreference={false}

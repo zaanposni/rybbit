@@ -1,10 +1,14 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { cn, formatSecondsAsMinutesAndSeconds, formatter } from "@/lib/utils";
-import { StatType, useStore } from "../../../../../lib/store";
+import { cn, formatSecondsAsMinutesAndSeconds } from "@/lib/utils";
+import NumberFlow from "@number-flow/react";
 import { useGetOverview } from "../../../../../api/analytics/useGetOverview";
+import { StatType, useStore } from "../../../../../lib/store";
+import { useGetOverviewBucketed } from "../../../../../api/analytics/useGetOverviewBucketed";
+import { SparklinesChart } from "./SparklinesChart";
+import { TrendingDown } from "lucide-react";
+import { TrendingUp } from "lucide-react";
 
 const ChangePercentage = ({
   current,
@@ -17,32 +21,29 @@ const ChangePercentage = ({
 
   if (previous === 0) {
     if (current === 0) {
-      return (
-        <Badge variant="minimal" className="text-xs">
-          0%
-        </Badge>
-      );
+      return <div className="text-sm">0%</div>;
     }
-    return (
-      <Badge className="text-xs" variant="green">
-        +999%
-      </Badge>
-    );
+    return <div className="text-sm">+999%</div>;
   }
 
   if (change === 0) {
-    return (
-      <Badge variant="minimal" className="text-xs">
-        0%
-      </Badge>
-    );
+    return <div className="text-sm">0%</div>;
   }
 
   return (
-    <Badge variant={change > 0 ? "green" : "red"} className="text-xs">
-      {change > 0 ? "+" : ""}
-      {change.toFixed(0)}%
-    </Badge>
+    <div
+      className={cn(
+        "text-xs flex items-center gap-1",
+        change > 0 ? "text-green-400" : "text-red-400"
+      )}
+    >
+      {change > 0 ? (
+        <TrendingUp className="w-4 h-4" />
+      ) : (
+        <TrendingDown className="w-4 h-4" />
+      )}
+      {Math.abs(change).toFixed(1)}%
+    </div>
   );
 };
 
@@ -53,6 +54,8 @@ const Stat = ({
   previous,
   valueFormatter,
   isLoading,
+  decimals,
+  postfix,
 }: {
   title: string;
   id: StatType;
@@ -60,29 +63,58 @@ const Stat = ({
   previous: number;
   valueFormatter?: (value: number) => string;
   isLoading: boolean;
+  decimals?: number;
+  postfix?: string;
 }) => {
-  const { selectedStat, setSelectedStat } = useStore();
+  const { selectedStat, setSelectedStat, site, bucket } = useStore();
+
+  const { data, isFetching, error } = useGetOverviewBucketed({ site, bucket });
+
+  const sparklinesData =
+    data?.data?.map((d) => ({
+      value: d[id],
+      time: d.time,
+    })) ?? [];
+
   return (
     <div
       className={cn(
-        "flex flex-col hover:bg-neutral-800 rounded-md px-3 py-2 cursor-pointer",
+        "flex flex-col hover:bg-neutral-800 cursor-pointer border-r border-neutral-800 last:border-r-0 text-nowrap",
         selectedStat === id && "bg-neutral-850"
       )}
       onClick={() => setSelectedStat(id)}
     >
-      <div className="text-sm font-medium text-muted-foreground">{title}</div>
-      <div className="text-2xl font-medium flex gap-2 items-center">
-        {isLoading ? (
-          <>
-            <Skeleton className="w-[60px] h-7 rounded-md" />
-            <Skeleton className="w-[30px] h-5 rounded-md" />
-          </>
-        ) : (
-          <>
-            {valueFormatter ? valueFormatter(value) : value}
-            <ChangePercentage current={value} previous={previous} />
-          </>
-        )}
+      <div className={cn("flex flex-col px-3 py-2")}>
+        <div className="text-sm font-medium text-muted-foreground">{title}</div>
+        <div className="text-2xl font-medium flex gap-2 items-center justify-between">
+          {isLoading ? (
+            <>
+              <Skeleton className="w-[60px] h-9 rounded-md" />
+              <Skeleton className="w-[50px] h-5 rounded-md" />
+            </>
+          ) : (
+            <>
+              {valueFormatter ? (
+                valueFormatter(value)
+              ) : (
+                <span>
+                  {
+                    <NumberFlow
+                      respectMotionPreference={false}
+                      value={decimals ? Number(value.toFixed(decimals)) : value}
+                      format={{ notation: "compact" }}
+                    />
+                  }
+                  {postfix && <span>{postfix}</span>}
+                </span>
+              )}
+              <ChangePercentage current={value} previous={previous} />
+            </>
+          )}
+        </div>
+      </div>
+      <div className="h-[40px] mt-[-16]">
+        <SparklinesChart data={sparklinesData} />
       </div>
     </div>
   );
@@ -122,14 +154,13 @@ export function Overview() {
     overviewDataPrevious?.data?.session_duration ?? 0;
 
   return (
-    <div className="flex gap-0 items-center">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-0 items-center">
       <Stat
         title="Unique Users"
         id="users"
         value={currentUsers}
         previous={previousUsers}
         isLoading={isLoading}
-        valueFormatter={formatter}
       />
       <Stat
         title="Sessions"
@@ -137,7 +168,6 @@ export function Overview() {
         value={currentSessions}
         previous={previousSessions}
         isLoading={isLoading}
-        valueFormatter={formatter}
       />
       <Stat
         title="Pageviews"
@@ -145,15 +175,14 @@ export function Overview() {
         value={currentPageviews}
         previous={previousPageviews}
         isLoading={isLoading}
-        valueFormatter={formatter}
       />
       <Stat
         title="Pages per Session"
         id="pages_per_session"
         value={currentPagesPerSession}
         previous={previousPagesPerSession}
+        decimals={1}
         isLoading={isLoading}
-        valueFormatter={(value) => value.toFixed(1)}
       />
       <Stat
         title="Bounce Rate"
@@ -161,7 +190,8 @@ export function Overview() {
         value={currentBounceRate}
         previous={previousBounceRate}
         isLoading={isLoading}
-        valueFormatter={(value) => `${value.toFixed(1)}%`}
+        postfix="%"
+        decimals={1}
       />
       <Stat
         title="Session Duration"

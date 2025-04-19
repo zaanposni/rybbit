@@ -25,7 +25,7 @@ export const MultiSelect = forwardRef<any, MultiSelectProps<any>>(
         classNames={{
           control: ({ isFocused }) =>
             cn(
-              "flex w-[300px] min-h-[36px] rounded-md px-3 py-[3px] text-sm shadow-sm transition-colors ",
+              "flex  min-h-[36px] rounded-md px-3 py-[3px] text-sm shadow-sm transition-colors ",
               "placeholder:text-muted-foreground ",
               "disabled:cursor-not-allowed disabled:opacity-50",
               isFocused && "ring-1 ring-ring",

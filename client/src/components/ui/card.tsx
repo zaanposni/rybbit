@@ -3,7 +3,10 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { useMeasure } from "@uidotdev/usehooks";
+import { Zoomies } from "ldrs/react";
+import "ldrs/react/Zoomies.css";
 
+// Default values shown
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -27,9 +30,8 @@ const CardLoader = React.forwardRef<
 
   return (
     <div ref={ref2} className="mt-[-15px] absolute top-0 left-0 w-full">
-      {/* @ts-ignore */}
-      <l-zoomies
-        size={1000}
+      <Zoomies
+        size={1400}
         stroke="3"
         bg-opacity="0.1"
         speed="1.4"

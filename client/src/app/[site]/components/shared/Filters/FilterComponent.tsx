@@ -26,7 +26,7 @@ export function FilterComponent({
   updateFilter: (filter: Filter | null, index: number) => void;
 }) {
   return (
-    <div className="flex gap-2">
+    <div className="grid grid-cols-[220px_auto] md:grid-cols-[160px_100px_250px_auto] gap-2">
       <Select
         onValueChange={(value) => {
           updateFilter(
@@ -46,7 +46,10 @@ export function FilterComponent({
         <SelectContent>
           {FilterOptions.map((option) => (
             <SelectItem key={option.value} value={option.value}>
-              {option.label}
+              <div className="flex items-center gap-2">
+                {option.icon}
+                {option.label}
+              </div>
             </SelectItem>
           ))}
         </SelectContent>

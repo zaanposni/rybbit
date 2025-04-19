@@ -13,10 +13,6 @@ import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const metadata: Metadata = {
-  title: "Frogstats Analytics",
-  description: "Analytics dashboard for your web applications",
-};
 const publicRoutes = ["/login", "/signup"];
 
 // Helper function to check if a site is public
@@ -83,35 +79,15 @@ export default function RootLayout({
   }, [isPending, user, pathname, isCheckingPublic, isPublicSite]);
 
   return (
-    <html lang="en" className="h-full dark">
-      <body
-        className={`${inter.className} h-full bg-background text-foreground`}
-      >
-        <Toaster />
-        {/* The ldrs are very pretty but it's super annoying to load them
-        https://github.com/GriffinJohnston/ldrs/blob/main/framework-guides.md#nextjs */}
-        <script
-          type="module"
-          defer
-          src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/zoomies.js"
-        ></script>
-        <script
-          type="module"
-          defer
-          src="https://cdn.jsdelivr.net/npm/ldrs/dist/auto/ping.js"
-        ></script>
-        <TooltipProvider>
-          <QueryProvider>
-            {pathname === "/login" || pathname === "/signup" ? (
-              <div className="min-h-full flex items-center justify-center">
-                {children}
-              </div>
-            ) : (
-              children
-            )}
-          </QueryProvider>
-        </TooltipProvider>
-      </body>
+    <html lang="en" className="dark">
+      <TooltipProvider>
+        <body
+          className={`${inter.className} bg-background text-foreground h-full`}
+        >
+          <QueryProvider>{children}</QueryProvider>
+          <Toaster />
+        </body>
+      </TooltipProvider>
     </html>
   );
 }

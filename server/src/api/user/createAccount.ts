@@ -38,9 +38,7 @@ export async function createAccount(
       body: {
         email,
         name,
-        username,
         password,
-        role: isAdmin ? "admin" : "user",
       },
     });
 

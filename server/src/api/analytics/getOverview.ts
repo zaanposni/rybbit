@@ -62,7 +62,7 @@ const getQuery = ({
                     MIN(timestamp) AS start_time,
                     MAX(timestamp) AS end_time,
                     COUNT(CASE WHEN type = 'pageview' THEN 1 END) AS pages_in_session
-                FROM pageviews
+                FROM events
                 WHERE
                     site_id = ${site}
                     ${filterStatement}
@@ -82,7 +82,7 @@ const getQuery = ({
             SELECT
                 COUNT(*)                   AS pageviews,
                 COUNT(DISTINCT user_id)    AS users
-            FROM pageviews
+            FROM events
             WHERE 
                 site_id = ${site}
                 ${filterStatement}

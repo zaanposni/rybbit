@@ -1,0 +1,113 @@
+# Tracking Script
+
+To start tracking user activity on your website, add the Rybbit tracking script to your site's HTML.
+
+## Installation
+The webpage should give you this script tag like this when you first add a website. Place it within the `<head>` section of your website. Include it on every page you wish to track.
+
+```html
+<script src="https://api.ribbit.io/api/script.js" async data-site-id="YOUR_SITE_ID"></script>
+```
+
+If you are self-hosting Rybbit `api.ribbit.io` will be instead the base URL of your Rybbit instance.
+
+## Configuration Options
+
+You can customize the script's behavior using `data-*` attributes on the `<script>` tag:
+
+### `data-track-spa`
+
+Set to `"false"` to disable automatic pageview tracking for single page applications (React, Vue, etc). You will need to manually call `window.rybbit.pageview()` or `window.rybbit.track()` for all but the initial pageview.
+
+-   **Default:** `"true"`
+-   **Example:** `data-track-spa="false"`
+
+### `data-track-query`
+
+Set to `"false"` to disable tracking of URL query strings. This enhances privacy by preventing potentially sensitive information in query parameters (such as session tokens, search queries, or UTM parameters) from being stored in your analytics data.
+
+-   **Default:** `"true"`
+-   **Example:** `data-track-query="false"`
+
+### `data-skip-patterns`
+
+A JSON string array of URL path patterns to ignore. Pageviews matching these patterns won't be tracked. Use `*` as a wildcard for path segments (e.g., `/admin/*`).
+
+-   **Default:** `[]`
+-   **Example:** `data-skip-patterns='["/admin", "/blog/*/edit"]'`
+
+### `data-mask-patterns`
+
+A JSON string array of URL path patterns to mask. Pageviews matching these patterns will be tracked, but the `pathname` sent will be replaced with the matching pattern string (e.g., `/users/*/profile`).
+
+-   **Default:** `[]`
+-   **Example:** `data-mask-patterns='["/users/*/settings", "/order/*"]'`
+
+### `data-debounce`
+
+The delay (in milliseconds) before tracking a pageview after URL changes via the History API (`pushState`, `replaceState`). Set to `0` to disable debouncing.
+
+-   **Default:** `"500"`
+-   **Example:** `data-debounce="1000"`
+
+
+**Example with multiple options:**
+
+```html
+<script
+  src="https://api.rybbit.io/api/script.js"
+  async
+  data-site-id="456"
+  data-host="https://rybbit.mycompany.com"
+  data-auto-track="false"
+  data-skip-patterns='["/admin"]'
+  data-mask-patterns='["/user/*/dashboard"]'
+  data-track-query="false"
+></script>
+```
+
+## Manual Tracking API
+
+The script exposes a global object `window.rybbit` with functions for manual tracking:
+
+### `window.rybbit.track(eventType, eventName, properties)`
+
+The core function to send tracking data.
+
+*   `eventType` (String): The type of event. Defaults to `"pageview"`. Use `"custom_event"` for custom events.
+*   `eventName` (String): The name of the custom event (max 255 characters). **Required** when `eventType` is `"custom_event"`.
+*   `properties` (Object, Optional): An object containing custom data (max 8192 characters / 8KB when stringified). This will be JSON-stringified before sending.
+
+```javascript
+// Track a simple pageview (usually handled automatically)
+window.rybbit.track("pageview");
+
+// Track a custom event
+window.rybbit.track("custom_event", "Signup Button Clicked");
+
+// Track a custom event with properties
+window.rybbit.track("custom_event", "Item Added To Cart", {
+  itemId: "PROD123",
+  price: 49.99,
+  category: "Clothing"
+});
+```
+
+### `window.rybbit.pageview()`
+
+A convenience function for tracking a pageview. Equivalent to `window.rybbit.track('pageview')`. Useful when `data-auto-track` is set to `"false"`.
+
+```javascript
+window.rybbit.pageview();
+```
+
+### `window.rybbit.event(eventName, properties)`
+
+A convenience function for tracking custom events. Equivalent to `window.rybbit.track('custom_event', eventName, properties)`.
+
+*   `eventName` (String): The name of the custom event (max 255 characters).
+*   `properties` (Object, Optional): An object containing custom data (max 2048 characters / 2KB when stringified).
+
+```javascript
+window.rybbit.event("Video Played", { videoId: "xyz789" });
+```

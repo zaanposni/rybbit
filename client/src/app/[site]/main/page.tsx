@@ -6,9 +6,10 @@ import { MainSection } from "./components/MainSection/MainSection";
 import { Countries } from "./components/sections/Countries";
 import { Devices } from "./components/sections/Devices";
 import { Events } from "./components/sections/Events";
-import { Map } from "./components/sections/Map";
+import { MapComponent } from "./components/sections/Map";
 import { Pages } from "./components/sections/Pages";
 import { Referrers } from "./components/sections/Referrers";
+import { Weekdays } from "./components/sections/Weekdays";
 
 export default function MainPage() {
   const { site } = useStore();
@@ -28,17 +29,16 @@ function MainPageContent() {
   }
 
   return (
-    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
+    <div className="p-2 md:p-3 max-w-[1100px] mx-auto space-y-3 ">
       <SubHeader />
       <MainSection />
-      <div className="grid grid-cols-2 gap-4 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3 mt-4">
         <Devices />
         <Pages />
         <Referrers />
         <Countries />
         <Events />
-        <Map />
-        {/* <Chloropleth /> */}
+        <Weekdays />
       </div>
     </div>
   );

@@ -54,7 +54,7 @@ export function PreviousChart({
         },
       ]}
       theme={nivoTheme}
-      margin={{ top: 20, right: 20, bottom: 20, left: 40 }}
+      margin={{ top: 10, right: 10, bottom: 20, left: 35 }}
       xScale={{
         type: "time",
         format: "%Y-%m-%d %H:%M:%S",
@@ -102,7 +102,8 @@ export function PreviousChart({
       enableTouchCrosshair={true}
       enablePoints={false}
       useMesh={true}
-      motionConfig="stiff"
+      animate={false}
+      // motionConfig="stiff"
       enableSlices={"x"}
       colors={["hsl(var(--neutral-700))"]}
     />

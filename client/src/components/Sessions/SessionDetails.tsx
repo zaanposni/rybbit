@@ -360,7 +360,7 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
           </TabsContent>
 
           <TabsContent value="info" className="mt-4">
-            <div className="grid grid-cols-2 gap-8 mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
               {/* User Information */}
               <div>
                 <h4 className="text-sm font-medium mb-3 text-gray-300 border-b border-neutral-800 pb-2">
@@ -428,8 +428,8 @@ export function SessionDetails({ session, userId }: SessionDetailsProps) {
                         <div className="flex items-center gap-1 text-gray-400">
                           <CountryFlag country={sessionDetails.country} />
                           <span>{getCountryName(sessionDetails.country)}</span>
-                          {sessionDetails.iso_3166_2 && (
-                            <span>({sessionDetails.iso_3166_2})</span>
+                          {sessionDetails.region && (
+                            <span>({sessionDetails.region})</span>
                           )}
                         </div>
                       </div>

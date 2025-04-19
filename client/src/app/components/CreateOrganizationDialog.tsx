@@ -107,7 +107,7 @@ export function CreateOrganizationDialog({
             Create Your Organization
           </DialogTitle>
           <DialogDescription>
-            Set up your organization to get started with Frogstats
+            Set up your organization to get started with Rybbit
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -147,7 +147,7 @@ export function CreateOrganizationDialog({
                 required
               />
               <p className="text-xs text-muted-foreground">
-                This will be used in your URL: frogstats.io/{slug}
+                This will be used in your URL: rybbit.io/{slug}
               </p>
             </div>
 

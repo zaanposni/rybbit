@@ -71,10 +71,10 @@ export const geSqlParam = (parameter: FilterParameter) => {
     return "domainWithoutWWW(referrer)";
   }
   if (parameter === "entry_page") {
-    return "(SELECT argMin(pathname, timestamp) FROM pageviews WHERE session_id = pageviews.session_id)";
+    return "(SELECT argMin(pathname, timestamp) FROM events WHERE session_id = events.session_id)";
   }
   if (parameter === "exit_page") {
-    return "(SELECT argMax(pathname, timestamp) FROM pageviews WHERE session_id = pageviews.session_id)";
+    return "(SELECT argMax(pathname, timestamp) FROM events WHERE session_id = events.session_id)";
   }
   if (parameter === "dimensions") {
     return "concat(toString(screen_width), 'x', toString(screen_height))";
@@ -107,7 +107,7 @@ export function getFilterStatement(filters: string) {
                 SELECT 
                   session_id, 
                   argMin(pathname, timestamp) AS entry_pathname
-                FROM pageviews 
+                FROM events 
                 GROUP BY session_id
               ) 
               WHERE entry_pathname ${filterTypeToOperator(filter.type)} '${x}${
@@ -129,7 +129,7 @@ export function getFilterStatement(filters: string) {
               SELECT 
                 session_id, 
                 argMin(pathname, timestamp) AS entry_pathname
-              FROM pageviews 
+              FROM events 
               GROUP BY session_id
             ) 
             WHERE (${valuesWithOperator.join(" OR ")})
@@ -144,7 +144,7 @@ export function getFilterStatement(filters: string) {
                 SELECT 
                   session_id, 
                   argMax(pathname, timestamp) AS exit_pathname
-                FROM pageviews 
+                FROM events 
                 GROUP BY session_id
               ) 
               WHERE exit_pathname ${filterTypeToOperator(filter.type)} '${x}${
@@ -166,7 +166,7 @@ export function getFilterStatement(filters: string) {
               SELECT 
                 session_id, 
                 argMax(pathname, timestamp) AS exit_pathname
-              FROM pageviews 
+              FROM events 
               GROUP BY session_id
             ) 
             WHERE (${valuesWithOperator.join(" OR ")})

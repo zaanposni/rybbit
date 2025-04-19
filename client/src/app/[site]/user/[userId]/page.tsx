@@ -23,18 +23,27 @@ import { formatDuration, getCountryName } from "../../../../lib/utils";
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../components/shared/icons/OperatingSystem";
+import { MobileSidebar } from "../../../../components/MobileSidebar";
+import { VisitCalendar } from "./components/Calendar";
+import { useGetUserSessionCount } from "../../../../api/analytics/userSessions";
 
 export default function UserPage() {
   const { userId } = useParams();
   const { site } = useParams();
 
   const { data } = useUserInfo(Number(site), userId as string);
+
+  const { data: sessionCount } = useGetUserSessionCount(userId as string);
+
   const { getRegionName } = useGetRegionName();
 
   return (
-    <div className="p-4 max-w-[1300px] mx-auto space-y-3">
+    <div className="p-2 md:p-4 max-w-[1300px] mx-auto space-y-3">
       <div className="mb-4">
         <h1 className="text-2xl font-bold mb-4 flex items-center gap-2">
+          <div>
+            <MobileSidebar />
+          </div>
           <Avatar
             size={40}
             name={userId as string}
@@ -43,8 +52,8 @@ export default function UserPage() {
           />
           {userId?.slice(0, 10)}
         </h1>
-        <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750 text-sm mb-4">
-          <div className="grid grid-cols-2 gap-2">
+        <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750 text-sm mb-3">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div className="grid grid-cols-[100px_auto] gap-2">
               <span className=" text-neutral-100">User ID:</span>
               <CopyText
@@ -61,7 +70,7 @@ export default function UserPage() {
               </div>
               <span className=" text-neutral-100">Region:</span>
               <div className="text-neutral-300">
-                {data?.iso_3166_2 ? getRegionName(data.iso_3166_2) : "N/A"}
+                {data?.region ? getRegionName(data.region) : "N/A"}
               </div>
             </div>
             <div className="grid grid-cols-[110px_1fr] gap-2">
@@ -103,8 +112,8 @@ export default function UserPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 justify-between">
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750 flex-grow">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 justify-between">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750 flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <Clock className="w-4 h-4" />
               Avg. Session Duration
@@ -113,28 +122,28 @@ export default function UserPage() {
               {data?.duration ? formatDuration(data.duration) : "N/A"}
             </div>
           </div>
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750  flex-grow">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800  flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <Files className="w-4 h-4" />
               Sessions
             </div>
             <div className="font-semibold">{data?.sessions}</div>
           </div>
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750  flex-grow">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800  flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <FileText className="w-4 h-4" />
               Pageviews
             </div>
             <div className="font-semibold">{data?.pageviews}</div>
           </div>
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750  flex-grow">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800  flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <MousePointerClick className="w-4 h-4" />
               Events
             </div>
             <div className="font-semibold">{data?.events}</div>
           </div>
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750  flex-grow">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800  flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <Calendar className="w-4 h-4" />
               First Seen
@@ -145,7 +154,7 @@ export default function UserPage() {
               )}
             </div>
           </div>
-          <div className="bg-neutral-850 p-3 rounded-lg flex flex-col gap-1 border border-neutral-750  flex-grow">
+          <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800  flex-grow">
             <div className="text-xs text-neutral-400 flex items-center gap-1">
               <CalendarCheck className="w-4 h-4" />
               Last Seen
@@ -157,6 +166,9 @@ export default function UserPage() {
             </div>
           </div>
         </div>
+      </div>
+      <div className="bg-neutral-900 p-3 rounded-lg flex flex-col gap-1 border border-neutral-800 h-[150px]">
+        <VisitCalendar sessionCount={sessionCount?.data ?? []} />
       </div>
 
       <h2 className="text-lg font-bold mb-4">Sessions</h2>

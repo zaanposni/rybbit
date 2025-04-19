@@ -58,8 +58,7 @@ export function NewFilterButton() {
     >
       <DropdownMenuTrigger asChild>
         <Button
-          variant="default"
-          className="px-3"
+          className="text-xs sm:text-sm h-8 sm:h-9 px-3 p-2 sm:p-3"
           onClick={() => {
             if (localFilters.length === 0) {
               addLocalFilter();
@@ -71,7 +70,10 @@ export function NewFilterButton() {
           Filter
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="start" className="flex flex-col  p-0">
+      <DropdownMenuContent
+        align="start"
+        className="flex flex-col p-0 max-w-[95vw]"
+      >
         <div className="flex flex-col gap-2 p-3">
           {localFilters.map((filter, index) => (
             <FilterComponent

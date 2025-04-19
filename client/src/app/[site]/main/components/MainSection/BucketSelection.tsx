@@ -108,8 +108,8 @@ export function BucketSelection() {
 
   return (
     <Select value={bucket} onValueChange={setBucket}>
-      <SelectTrigger className="w-[120px]" size="sm">
-        <SelectValue placeholder="Theme" />
+      <SelectTrigger className="w-[100px]" size="sm">
+        <SelectValue />
       </SelectTrigger>
       {getOptions(time)}
     </Select>

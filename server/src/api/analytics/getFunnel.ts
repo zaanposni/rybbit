@@ -94,7 +94,7 @@ export async function getFunnel(
         pathname,
         event_name,
         type
-      FROM pageviews
+      FROM events
       WHERE
         site_id = ${site}
         ${timeStatement}

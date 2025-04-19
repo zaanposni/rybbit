@@ -50,7 +50,7 @@ export type GetSessionsResponse = {
   user_id: string;
   country: string;
   city: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -104,7 +104,7 @@ export interface SessionDetails {
   session_id: string;
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -186,6 +186,27 @@ export function useGetSessionDetailsInfinite(sessionId: string | null) {
       return undefined;
     },
     enabled: !!sessionId && !!site,
+    staleTime: Infinity,
+  });
+}
+
+export interface UserSessionCountResponse {
+  date: string;
+  sessions: number;
+}
+
+export function useGetUserSessionCount(userId: string) {
+  const { site } = useStore();
+
+  return useQuery<APIResponse<UserSessionCountResponse[]>>({
+    queryKey: ["user-session-count", userId, site],
+    queryFn: () => {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      return authedFetch(`${BACKEND_URL}/user/session-count/${site}`, {
+        userId,
+        timezone,
+      }).then((res) => res.json());
+    },
     staleTime: Infinity,
   });
 }

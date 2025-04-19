@@ -124,14 +124,14 @@ export function Funnel({
               return (
                 <div
                   key={step.stepNumber}
-                  className=" rounded-md p-1 relative pl-3 border-l border-l-neutral-800 first:border-l-0"
+                  className="text-sm rounded-md p-1 relative pl-3 border-l border-l-neutral-800 first:border-l-0"
                 >
                   <div className="font-medium flex items-center gap-2">
                     {step.stepName}
                   </div>
 
                   {/* Entering users */}
-                  <div className="mt-3">
+                  <div className="mt-2">
                     <div className="flex items-center text-green-600 dark:text-green-500">
                       <ArrowRight className="w-4 h-4 mr-2" />
                       <div>

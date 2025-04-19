@@ -20,13 +20,3 @@ export const db = drizzle(client, { schema });
 
 // For compatibility with raw SQL if needed
 export const sql = client;
-
-export async function initializePostgres() {
-  try {
-    console.log("Initializing PostgreSQL database...");
-    console.log("PostgreSQL initialization completed successfully.");
-  } catch (error) {
-    console.error("Error initializing PostgreSQL:", error);
-    throw error;
-  }
-}

@@ -10,28 +10,30 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default:
-          "bg-neutral-50 text-neutral-950 shadow hover:bg-neutral-900/90 dark:bg-neutral-850 dark:text-neutral-50 dark:hover:bg-neutral-700",
+          "bg-neutral-50 text-neutral-950 border border-neutral-200 shadow hover:bg-neutral-900/90 dark:bg-neutral-850 dark:border-neutral-750 dark:text-neutral-50 dark:hover:bg-neutral-800/90 dark:hover:border-neutral-650",
         secondary:
           "bg-neutral-100 text-neutral-900 shadow-sm hover:bg-neutral-100/80 dark:bg-neutral-50 dark:text-neutral-800 dark:hover:bg-neutral-50/90",
         accent:
           "bg-neutral-500 text-neutral-900 shadow-sm hover:bg-neutral-500/80 dark:bg-accent-600 dark:text-neutral-50 dark:hover:bg-accent-600/90",
         success:
-          "bg-green-500 text-neutral-50 shadow-sm hover:bg-green-500/90 dark:bg-green-900 dark:text-neutral-50 dark:hover:bg-green-900/90",
+          "bg-green-500 text-neutral-50 border border-green-500 shadow-sm hover:bg-green-500/90 dark:bg-green-800 dark:border-green-600 dark:text-neutral-50 dark:hover:bg-green-800/90 dark:hover:border-green-500",
         destructive:
-          "bg-red-500 text-neutral-50 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:text-neutral-50 dark:hover:bg-red-900/90",
+          "bg-red-500 text-neutral-50 border border-red-500 shadow-sm hover:bg-red-500/90 dark:bg-red-900 dark:border-red-700 dark:text-neutral-50 dark:hover:bg-red-900/90 dark:hover:border-red-500",
         warning:
-          "bg-yellow-500 text-neutral-900 shadow-sm hover:bg-yellow-500/90 dark:bg-yellow-600 dark:text-neutral-50 dark:hover:bg-yellow-600/90",
+          "bg-yellow-500 text-neutral-900 border border-yellow-500 shadow-sm hover:bg-yellow-500/90 dark:bg-yellow-600 dark:border-yellow-500 dark:text-neutral-50 dark:hover:bg-yellow-600/90 dark:hover:border-yellow-400",
         outline:
-          "border border-neutral-200  shadow-sm hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-700  dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
+          "border border-neutral-200 shadow-sm hover:bg-neutral-100 hover:text-neutral-900 dark:border-neutral-700 dark:hover:bg-neutral-900 dark:hover:border-neutral-600 dark:hover:text-neutral-50",
         ghost:
-          "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50",
+          "hover:bg-neutral-100 hover:text-neutral-900 dark:hover:bg-neutral-800 dark:hover:text-neutral-50 border border-transparent",
         link: "text-neutral-900 underline-offset-4 hover:underline dark:text-neutral-50",
       },
       size: {
         default: "h-9 px-4 py-2",
         sm: "h-8 rounded-md px-3 text-xs",
+        xs: "h-6 rounded-sm px-2 text-xs",
         lg: "h-10 rounded-md px-8",
         icon: "h-9 w-9",
+        smIcon: "h-7 w-7",
       },
     },
     defaultVariants: {

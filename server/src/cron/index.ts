@@ -1,16 +1,17 @@
 import * as cron from "node-cron";
 import { updateUsersMonthlyUsage } from "./monthly-usage-checker.js";
+import { cleanupOldSessions } from "../db/postgres/session-cleanup.js";
+import { IS_CLOUD } from "../lib/const.js";
 
 export function initializeCronJobs() {
   console.log("Initializing cron jobs...");
 
-  // Schedule the monthly usage checker to run every 5 minutes
-  cron.schedule("*/5 * * * *", async () => {
-    console.log("Running monthly usage checker cron job");
-    await updateUsersMonthlyUsage();
-  });
-
-  updateUsersMonthlyUsage();
+  if (IS_CLOUD) {
+    // Schedule the monthly usage checker to run every 5 minutes
+    cron.schedule("*/5 * * * *", updateUsersMonthlyUsage);
+    updateUsersMonthlyUsage();
+  }
+  cron.schedule("*/60 * * * * *", cleanupOldSessions);
 
   console.log("Cron jobs initialized successfully");
 }

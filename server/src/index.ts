@@ -2,7 +2,6 @@ import cors from "@fastify/cors";
 import fastifyStatic from "@fastify/static";
 import { toNodeHandler } from "better-auth/node";
 import Fastify from "fastify";
-import cron from "node-cron";
 import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
@@ -20,6 +19,7 @@ import { getSession } from "./api/analytics/getSession.js";
 import { getSessions } from "./api/analytics/getSessions.js";
 import { getSingleCol } from "./api/analytics/getSingleCol.js";
 import { getUserInfo } from "./api/analytics/getUserInfo.js";
+import { getUserSessionCount } from "./api/analytics/getUserSessionCount.js";
 import { getUserSessions } from "./api/analytics/getUserSessions.js";
 import { getUsers } from "./api/analytics/getUsers.js";
 import { addSite } from "./api/sites/addSite.js";
@@ -28,23 +28,27 @@ import { changeSitePublic } from "./api/sites/changeSitePublic.js";
 import { deleteSite } from "./api/sites/deleteSite.js";
 import { getSite } from "./api/sites/getSite.js";
 import { getSiteHasData } from "./api/sites/getSiteHasData.js";
+import { getSiteIsPublic } from "./api/sites/getSiteIsPublic.js";
 import { getSites } from "./api/sites/getSites.js";
 import { createAccount } from "./api/user/createAccount.js";
 import { getUserOrganizations } from "./api/user/getUserOrganizations.js";
-import { getUserSubscription } from "./api/user/getUserSubscription.js";
 import { listOrganizationMembers } from "./api/user/listOrganizationMembers.js";
 import { initializeCronJobs } from "./cron/index.js";
 import { initializeClickhouse } from "./db/clickhouse/clickhouse.js";
-import { initializePostgres } from "./db/postgres/postgres.js";
-import { cleanupOldSessions } from "./db/postgres/session-cleanup.js";
 import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
 import { mapHeaders } from "./lib/auth-utils.js";
 import { auth } from "./lib/auth.js";
+import { publicSites } from "./lib/publicSites.js";
 import { trackEvent } from "./tracker/trackEvent.js";
 import { extractSiteId, isSitePublic } from "./utils.js";
-import { publicSites } from "./lib/publicSites.js";
-import { getSiteIsPublic } from "./api/sites/getSiteIsPublic.js";
 import { handleMessage } from "./api/ai/handleMessage.js";
+
+// Import Stripe handlers
+import { createCheckoutSession } from "./api/stripe/createCheckoutSession.js";
+import { createPortalSession } from "./api/stripe/createPortalSession.js";
+import { getSubscription } from "./api/stripe/getSubscription.js";
+import { handleWebhook } from "./api/stripe/webhook.js";
+import { IS_CLOUD } from "./lib/const.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -102,7 +106,14 @@ server.register(
   { auth: auth! }
 );
 
-const PUBLIC_ROUTES = ["/health", "/track", "/script", "/auth", "/api/auth"];
+const PUBLIC_ROUTES: string[] = [
+  "/health",
+  "/track",
+  "/script",
+  "/auth",
+  "/api/auth",
+  "/api/stripe/webhook", // Add webhook to public routes
+];
 
 // Define analytics routes that can be public
 const ANALYTICS_ROUTES = [
@@ -118,6 +129,7 @@ const ANALYTICS_ROUTES = [
   "/recent-events/",
   "/users/",
   "/user/info/",
+  "/user/session-count/",
   "/live-session-locations/",
   "/funnels/",
   "/funnel/",
@@ -181,6 +193,7 @@ server.get("/sessions/:site", getSessions);
 server.get("/session/:sessionId/:site", getSession);
 server.get("/users/:site", getUsers);
 server.get("/user/:userId/sessions/:site", getUserSessions);
+server.get("/user/session-count/:site", getUserSessionCount);
 server.get("/user/info/:userId/:site", getUserInfo);
 server.get("/live-session-locations/:site", getLiveSessionLocations);
 server.get("/funnels/:site", getFunnels);
@@ -204,7 +217,18 @@ server.get(
   listOrganizationMembers
 );
 server.get("/user/organizations", getUserOrganizations);
-server.get("/user/subscription", getUserSubscription);
+
+if (IS_CLOUD) {
+  // Stripe Routes
+  server.post("/stripe/create-checkout-session", createCheckoutSession);
+  server.post("/stripe/create-portal-session", createPortalSession);
+  server.get("/stripe/subscription", getSubscription);
+  server.post(
+    "/api/stripe/webhook",
+    { config: { rawBody: true } },
+    handleWebhook
+  ); // Use rawBody parser config for webhook
+}
 
 server.post("/track", trackEvent);
 
@@ -212,7 +236,7 @@ const start = async () => {
   try {
     console.info("Starting server...");
     // Initialize the database
-    await Promise.all([initializeClickhouse(), initializePostgres()]);
+    await Promise.all([initializeClickhouse()]);
     await loadAllowedDomains();
 
     // Load public sites cache
@@ -221,12 +245,6 @@ const start = async () => {
     // Start the server
     await server.listen({ port: 3001, host: "0.0.0.0" });
 
-    // Start session cleanup cron job
-    cron.schedule("*/60 * * * * *", () => {
-      cleanupOldSessions();
-    });
-
-    // Initialize all cron jobs including monthly usage checker
     initializeCronJobs();
   } catch (err) {
     server.log.error(err);

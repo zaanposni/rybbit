@@ -128,7 +128,7 @@ FROM
             MIN(timestamp) AS start_time,
             MAX(timestamp) AS end_time,
             COUNT(*) AS pages_in_session
-        FROM pageviews
+        FROM events
         WHERE 
             site_id = ${site}
             ${filterStatement}
@@ -161,7 +161,7 @@ FULL JOIN
          }(toTimeZone(timestamp, '${timezone}'))) AS time,
         COUNT(*) AS pageviews,
         COUNT(DISTINCT user_id) AS users
-    FROM pageviews
+    FROM events
     WHERE
         site_id = ${site}
         ${filterStatement}

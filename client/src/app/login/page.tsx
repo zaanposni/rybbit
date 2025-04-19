@@ -12,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { authClient } from "../../lib/auth";
 import { IS_CLOUD } from "../../lib/const";
 import { userStore } from "../../lib/userStore";
+import { GithubLogo, GoogleLogo } from "@phosphor-icons/react/dist/ssr";
 
 export default function Page() {
   const [email, setEmail] = useState("");
@@ -61,10 +62,10 @@ export default function Page() {
 
   return (
     <div className="flex justify-center items-center h-screen w-full">
-      <Card className="w-full max-w-sm">
+      <Card className="w-full max-w-sm p-1">
         <CardHeader>
           <CardTitle className="text-2xl flex justify-center">
-            Welcome back!
+            Sign in
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -75,7 +76,7 @@ export default function Page() {
                 <Input
                   id={"email"}
                   type={"email"}
-                  placeholder={"email"}
+                  placeholder={"example@email.com"}
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -94,13 +95,18 @@ export default function Page() {
                 <Input
                   id="password"
                   type="password"
-                  placeholder="password"
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
                 />
               </div>
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button
+                type="submit"
+                className="w-full"
+                disabled={isLoading}
+                variant={"success"}
+              >
                 {isLoading ? "Logging in..." : "Login"}
               </Button>
 
@@ -118,6 +124,7 @@ export default function Page() {
                       variant="outline"
                       onClick={() => handleSocialSignIn("google")}
                     >
+                      <GoogleLogo weight="bold" />
                       Google
                     </Button>
                     <Button
@@ -125,14 +132,8 @@ export default function Page() {
                       variant="outline"
                       onClick={() => handleSocialSignIn("github")}
                     >
+                      <GithubLogo weight="bold" />
                       GitHub
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => handleSocialSignIn("twitter")}
-                    >
-                      X (Twitter)
                     </Button>
                   </div>
                 </>
@@ -146,14 +147,12 @@ export default function Page() {
                 </Alert>
               )}
 
-              {IS_CLOUD && (
-                <div className="text-center text-sm">
-                  Don't have an account?{" "}
-                  <Link href="/signup" className="underline">
-                    Sign up
-                  </Link>
-                </div>
-              )}
+              <div className="text-center text-sm">
+                Don't have an account?{" "}
+                <Link href="/signup" className="underline">
+                  Sign up
+                </Link>
+              </div>
             </div>
           </form>
         </CardContent>

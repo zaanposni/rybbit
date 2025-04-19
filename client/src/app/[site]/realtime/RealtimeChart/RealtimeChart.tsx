@@ -48,58 +48,56 @@ export function RealtimeChart() {
   }
 
   return (
-    <div style={{ height: 70 }}>
-      <ResponsiveBar
-        data={chartData}
-        keys={["users"]}
-        indexBy="time"
-        margin={{ top: 0, right: 0, bottom: 12, left: 0 }}
-        padding={0.3}
-        valueScale={{ type: "linear" }}
-        indexScale={{ type: "band", round: true }}
-        colors={["hsl(var(--amber-200))"]}
-        theme={nivoTheme}
-        axisTop={null}
-        axisRight={null}
-        axisBottom={null}
-        axisLeft={null}
-        enableLabel={false}
-        enableGridX={false}
-        enableGridY={false}
-        tooltip={({
-          id,
-          value,
-          data,
-        }: {
-          id: string | number;
-          value: number;
-          data: { time: string; users: number };
-        }) => {
-          const currentTime = DateTime.fromFormat(
-            data.time,
-            "yyyy-MM-dd HH:mm:ss",
-            { zone: "utc" }
-          ).toLocal();
-          const currentY = Number(value);
+    <ResponsiveBar
+      data={chartData}
+      keys={["users"]}
+      indexBy="time"
+      margin={{ top: 0, right: 0, bottom: 12, left: 0 }}
+      padding={0.3}
+      valueScale={{ type: "linear" }}
+      indexScale={{ type: "band", round: true }}
+      colors={["hsl(var(--amber-200))"]}
+      theme={nivoTheme}
+      axisTop={null}
+      axisRight={null}
+      axisBottom={null}
+      axisLeft={null}
+      enableLabel={false}
+      enableGridX={false}
+      enableGridY={false}
+      tooltip={({
+        id,
+        value,
+        data,
+      }: {
+        id: string | number;
+        value: number;
+        data: { time: string; users: number };
+      }) => {
+        const currentTime = DateTime.fromFormat(
+          data.time,
+          "yyyy-MM-dd HH:mm:ss",
+          { zone: "utc" }
+        ).toLocal();
+        const currentY = Number(value);
 
-          return (
-            <div className="bg-neutral-950 p-2 rounded-md text-xs">
-              <div className="font-semibold mb-1">
-                {currentTime.isValid
-                  ? currentTime.toFormat("h:mm")
-                  : "Invalid Time"}
-              </div>
-              <div className="flex justify-between items-center">
-                <span className="font-medium">{currentY.toLocaleString()}</span>
-                <span className="text-muted-foreground ml-1">{id}</span>
-              </div>
+        return (
+          <div className="bg-neutral-950 p-2 rounded-md text-xs">
+            <div className="font-semibold mb-1">
+              {currentTime.isValid
+                ? currentTime.toFormat("h:mm")
+                : "Invalid Time"}
             </div>
-          );
-        }}
-        animate={true}
-        motionConfig="gentle"
-        borderRadius={2}
-      />
-    </div>
+            <div className="flex justify-between items-center">
+              <span className="font-medium">{currentY.toLocaleString()}</span>
+              <span className="text-muted-foreground ml-1">{id}</span>
+            </div>
+          </div>
+        );
+      }}
+      animate={true}
+      motionConfig="gentle"
+      borderRadius={2}
+    />
   );
 }

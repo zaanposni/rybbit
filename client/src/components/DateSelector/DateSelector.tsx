@@ -17,7 +17,11 @@ const getLabel = (time: Time) => {
     if (time.wellKnown) {
       return `${time.wellKnown}`;
     }
-    return `${time.startDate} - ${time.endDate}`;
+    const startFormatted = DateTime.fromISO(time.startDate).toFormat(
+      "EEEE, MMM d"
+    );
+    const endFormatted = DateTime.fromISO(time.endDate).toFormat("EEEE, MMM d");
+    return `${startFormatted} - ${endFormatted}`;
   }
 
   if (time.mode === "day") {
@@ -27,7 +31,7 @@ const getLabel = (time: Time) => {
     if (time.day === DateTime.now().minus({ days: 1 }).toISODate()) {
       return "Yesterday";
     }
-    return time.day;
+    return DateTime.fromISO(time.day).toFormat("EEEE, MMM d");
   }
   if (time.mode === "week") {
     if (time.week === DateTime.now().startOf("week").toISODate()) {
@@ -39,9 +43,11 @@ const getLabel = (time: Time) => {
     ) {
       return "Last Week";
     }
-    return `${time.week} - ${DateTime.fromISO(time.week)
+    const startDate = DateTime.fromISO(time.week).toFormat("EEEE, MMM d");
+    const endDate = DateTime.fromISO(time.week)
       .endOf("week")
-      .toISODate()}`;
+      .toFormat("EEEE, MMM d");
+    return `${startDate} - ${endDate}`;
   }
   if (time.mode === "month") {
     if (time.month === DateTime.now().startOf("month").toISODate()) {
@@ -53,13 +59,13 @@ const getLabel = (time: Time) => {
     ) {
       return "Last Month";
     }
-    return time.month;
+    return DateTime.fromISO(time.month).toFormat("MMMM yyyy");
   }
   if (time.mode === "year") {
     if (time.year === DateTime.now().startOf("year").toISODate()) {
       return "This Year";
     }
-    return time.year;
+    return DateTime.fromISO(time.year).toFormat("yyyy");
   }
   if (time.mode === "all-time") {
     return "All Time";
@@ -75,8 +81,11 @@ export function DateSelector({
 }) {
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger>
-        <Calendar className="w-4 h-4" />
+      <DropdownMenuTrigger
+        className="text-xs sm:text-sm p-2 sm:p-3 h-8 sm:h-9"
+        variant={"default"}
+      >
+        <Calendar className="hidden sm:block w-4 h-4" />
         {getLabel(time)}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">

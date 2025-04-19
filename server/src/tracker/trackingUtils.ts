@@ -1,13 +1,15 @@
 import crypto from "crypto";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { FastifyRequest } from "fastify";
 import UAParser, { UAParser as userAgentParser } from "ua-parser-js";
-import { db, sql } from "../db/postgres/postgres.js";
+import { z } from "zod";
+import { sitesOverLimit } from "../cron/monthly-usage-checker.js";
+import { db } from "../db/postgres/postgres.js";
 import { activeSessions } from "../db/postgres/schema.js";
 import { TrackingPayload } from "../types.js";
 import { getDeviceType, getIpAddress, getUserId } from "../utils.js";
 import { pageviewQueue } from "./pageviewQueue.js";
-import { sitesOverLimit } from "../cron/monthly-usage-checker.js";
+import { trackingPayloadSchema } from "./trackEvent.js";
 
 // Define extended payload types
 export type BaseTrackingPayload = TrackingPayload & {
@@ -25,25 +27,30 @@ export type TotalTrackingPayload = BaseTrackingPayload & {
   ipAddress: string;
 };
 
-// Extended type for database active sessions
-export type ActiveSession = {
-  session_id: string;
-  site_id: number | null;
-  user_id: string;
-  pageviews: number;
-  hostname: string | null;
-  start_time: Date | null;
-  last_activity: Date | null;
-  entry_page: string | null;
-  exit_page: string | null;
-  device_type: string | null;
-  screen_width: number | null;
-  screen_height: number | null;
-  browser: string | null;
-  operating_system: string | null;
-  language: string | null;
-  referrer: string | null;
-};
+// Infer type from Zod schema
+export type ValidatedTrackingPayload = z.infer<typeof trackingPayloadSchema>;
+
+// UTM and URL parameter parsing utilities
+export function getUTMParams(querystring: string): Record<string, string> {
+  const params: Record<string, string> = {};
+
+  if (!querystring) return params;
+
+  try {
+    const searchParams = new URLSearchParams(querystring);
+
+    // Extract UTM parameters
+    for (const [key, value] of searchParams.entries()) {
+      if (key.startsWith("utm_") || key === "gclid" || key === "gad_source") {
+        params[key.toLowerCase()] = value.toLowerCase();
+      }
+    }
+  } catch (e) {
+    console.error("Error parsing query string:", e);
+  }
+
+  return params;
+}
 
 // Clear referrer if it's from the same domain
 export function clearSelfReferrer(referrer: string, hostname: string): string {
@@ -68,27 +75,43 @@ export function isSiteOverLimit(siteId: number | string): boolean {
 }
 
 // Get existing user session
-export async function getExistingSession(
-  userId: string,
-  siteId: string
-): Promise<ActiveSession | null> {
-  const [existingSession] = await sql<ActiveSession[]>`
-    SELECT * FROM active_sessions WHERE user_id = ${userId} AND site_id = ${siteId}
-  `;
-  return existingSession;
+export async function getExistingSession(userId: string, siteId: string) {
+  const siteIdNumber = parseInt(siteId, 10); // Ensure siteId is a number for the query
+
+  const [existingSession] = await db
+    .select()
+    .from(activeSessions)
+    .where(
+      and(
+        eq(activeSessions.userId, userId),
+        eq(activeSessions.siteId, siteIdNumber)
+      )
+    )
+    .limit(1);
+
+  return existingSession || null; // Return the session or null if not found
 }
 
 // Create base tracking payload from request
 export function createBasePayload(
   request: FastifyRequest,
-  eventType: "pageview" | "custom_event" = "pageview"
+  eventType: "pageview" | "custom_event" = "pageview",
+  validatedBody: ValidatedTrackingPayload
 ): TotalTrackingPayload {
   const userAgent = request.headers["user-agent"] || "";
   const ipAddress = getIpAddress(request);
   const userId = getUserId(ipAddress, userAgent);
 
   return {
-    ...(request.body as BaseTrackingPayload),
+    ...validatedBody,
+    hostname: validatedBody.hostname || "",
+    pathname: validatedBody.pathname || "",
+    querystring: validatedBody.querystring || "",
+    screenWidth: validatedBody.screenWidth || 0,
+    screenHeight: validatedBody.screenHeight || 0,
+    language: validatedBody.language || "",
+    page_title: validatedBody.page_title || "",
+    referrer: validatedBody.referrer || "",
     type: eventType,
     ipAddress: ipAddress,
     timestamp: new Date().toISOString(),
@@ -101,7 +124,7 @@ export function createBasePayload(
 // Update session for both pageviews and events
 export async function updateSession(
   payload: TotalTrackingPayload,
-  existingSession: ActiveSession | null,
+  existingSession: any | null,
   isPageview: boolean = true
 ): Promise<void> {
   if (existingSession) {
@@ -118,7 +141,7 @@ export async function updateSession(
     await db
       .update(activeSessions)
       .set(updateData)
-      .where(eq(activeSessions.userId, payload.userId));
+      .where(eq(activeSessions.userId, existingSession.userId));
     return;
   }
 
@@ -156,12 +179,12 @@ export async function updateSession(
 // Process tracking event and add to queue
 export async function processTrackingEvent(
   payload: TotalTrackingPayload,
-  existingSession: ActiveSession | null,
+  existingSession: any | null,
   isPageview: boolean = true
 ): Promise<void> {
   // If session exists, use its ID instead of generated one
   if (existingSession) {
-    payload.sessionId = existingSession.session_id;
+    payload.sessionId = existingSession.sessionId;
   }
 
   // Add to queue for processing

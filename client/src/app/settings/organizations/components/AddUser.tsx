@@ -117,6 +117,7 @@ export function AddUser({ refetch }: { refetch: () => void }) {
               id="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
               type="password"
             />
           </div>
@@ -126,6 +127,7 @@ export function AddUser({ refetch }: { refetch: () => void }) {
               id="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="••••••••"
               type="password"
             />
           </div>

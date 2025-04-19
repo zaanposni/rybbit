@@ -104,12 +104,12 @@ export function FunnelRow({ funnel }: FunnelRowProps) {
   return (
     <Card className="mb-4 overflow-hidden">
       {/* Header row (always visible) */}
-      <div className="flex items-center justify-between p-4">
+      <div className="flex items-center justify-between p-3">
         <div
-          className="flex items-center space-x-4 flex-grow cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
+          className="flex items-center flex-grow cursor-pointer hover:bg-neutral-50 dark:hover:bg-neutral-900 transition-colors"
           onClick={handleExpand}
         >
-          <div className="bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md">
+          <div className="hidden md:block bg-neutral-100 dark:bg-neutral-800 p-2 rounded-md mr-4">
             <FunnelIcon className="h-5 w-5 text-neutral-500" />
           </div>
           <div className="flex-grow">

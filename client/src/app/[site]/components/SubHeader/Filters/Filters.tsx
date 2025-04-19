@@ -28,7 +28,7 @@ export function Filters({
   const { getRegionName } = useGetRegionName();
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 flex-wrap">
       <NewFilterButton />
       {filters.map((filter, i) => {
         const disabled =

@@ -11,7 +11,7 @@ export type GetSessionsResponse = {
   session_id: string;
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   city: string;
   language: string;
   device_type: string;
@@ -64,7 +64,7 @@ export async function getSessions(
           session_id,
           user_id,
           argMax(country, timestamp) AS country,
-          argMax(iso_3166_2, timestamp) AS iso_3166_2,
+          argMax(region, timestamp) AS region,
           argMax(city, timestamp) AS city,
           argMax(language, timestamp) AS language,
           argMax(device_type, timestamp) AS device_type,
@@ -81,7 +81,7 @@ export async function getSessions(
           argMaxIf(pathname, timestamp, type = 'pageview') AS exit_page,
           countIf(type = 'pageview') AS pageviews,
           countIf(type = 'custom_event') AS events
-      FROM pageviews
+      FROM events
       WHERE
           site_id = ${site}
           ${userId ? ` AND user_id = '${userId}'` : ""}

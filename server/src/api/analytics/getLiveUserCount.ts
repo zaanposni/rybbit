@@ -5,7 +5,7 @@ import { processResults } from "./utils.js";
 
 export async function fetchLiveUserCount (site: string, minutes: number) {
   const query = await clickhouse.query({
-    query: `SELECT COUNT(DISTINCT(session_id)) AS count FROM pageviews WHERE timestamp > now() - interval '${minutes} minute' AND site_id = {siteId:Int32}`,
+    query: `SELECT COUNT(DISTINCT(session_id)) AS count FROM events WHERE timestamp > now() - interval '${minutes} minute' AND site_id = {siteId:Int32}`,
     format: "JSONEachRow",
     query_params: {
       siteId: Number(site),

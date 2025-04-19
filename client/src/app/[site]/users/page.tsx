@@ -276,7 +276,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="p-4 max-w-[1400px] mx-auto space-y-3">
+    <div className="p-2 md:p-4 max-w-[1400px] mx-auto space-y-3">
       <SubHeader availableFilters={USER_PAGE_FILTERS} />
       <div className="rounded-md border border-neutral-800 bg-neutral-900">
         <div className="relative overflow-x-auto">

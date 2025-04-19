@@ -19,11 +19,13 @@ export type GetOverviewBucketedResponse = {
 export function useGetOverviewBucketed({
   periodTime,
   site,
+  bucket = "hour",
 }: {
   periodTime?: PeriodTime;
   site?: number | string;
+  bucket?: TimeBucket;
 }): UseQueryResult<APIResponse<GetOverviewBucketedResponse>> {
-  const { time, previousTime, bucket, filters } = useStore();
+  const { time, previousTime, filters } = useStore();
 
   const timeToUse = periodTime === "previous" ? previousTime : time;
 

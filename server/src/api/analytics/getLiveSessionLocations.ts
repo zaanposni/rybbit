@@ -27,7 +27,7 @@ WITH stuff AS (
         any(lon) AS lon,
         any(city) AS city
     FROM
-        pageviews
+        events
     WHERE
         site_id = {site:Int32}
         AND timestamp > now() - interval '${req.query.time} minute'

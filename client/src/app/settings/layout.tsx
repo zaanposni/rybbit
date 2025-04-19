@@ -5,6 +5,7 @@ import { Button } from "../../components/ui/button";
 import { CreditCard, User, Users } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { StandardPage } from "../../components/StandardPage";
+import { IS_CLOUD } from "../../lib/const";
 
 export default function SettingsLayout({
   children,
@@ -50,17 +51,19 @@ export default function SettingsLayout({
             <Users size={16} />
             Organizations
           </Button>
-          <Button
-            variant={selectedTab === "subscription" ? "default" : "ghost"}
-            onClick={() => {
-              setSelectedTab("subscription");
-              router.push("/settings/subscription");
-            }}
-            className="justify-start"
-          >
-            <CreditCard size={16} />
-            Subscription
-          </Button>
+          {IS_CLOUD && (
+            <Button
+              variant={selectedTab === "subscription" ? "default" : "ghost"}
+              onClick={() => {
+                setSelectedTab("subscription");
+                router.push("/settings/subscription");
+              }}
+              className="justify-start"
+            >
+              <CreditCard size={16} />
+              Subscription
+            </Button>
+          )}
         </div>
         {children}
       </div>

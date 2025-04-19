@@ -24,6 +24,7 @@ import {
   videoMediums,
   videoSources,
 } from "./const.js";
+import { getUTMParams } from "./trackingUtils.js";
 
 // Categorize mobile app by its bundle ID/package name
 function getMobileAppCategory(
@@ -53,28 +54,6 @@ function getMobileAppCategory(
   }
 
   return null;
-}
-
-// UTM and URL parameter parsing utilities
-function getUTMParams(querystring: string): Record<string, string> {
-  const params: Record<string, string> = {};
-
-  if (!querystring) return params;
-
-  try {
-    const searchParams = new URLSearchParams(querystring);
-
-    // Extract UTM parameters
-    for (const [key, value] of searchParams.entries()) {
-      if (key.startsWith("utm_") || key === "gclid" || key === "gad_source") {
-        params[key.toLowerCase()] = value.toLowerCase();
-      }
-    }
-  } catch (e) {
-    console.error("Error parsing query string:", e);
-  }
-
-  return params;
 }
 
 function getDomainFromReferrer(referrer: string): string {

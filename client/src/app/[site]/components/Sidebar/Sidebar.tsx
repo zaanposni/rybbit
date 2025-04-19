@@ -3,21 +3,21 @@ import { Funnel } from "@phosphor-icons/react/dist/ssr";
 import {
   BrainCircuit,
   ChartBarDecreasing,
-  Globe,
+  Earth,
   LayoutDashboard,
   LayoutGrid,
-  Radio,
   Rewind,
   Settings,
   User,
+  Map,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useGetSite } from "../../../../api/admin/sites";
 import { SiteSettings } from "../../../../components/SiteSettings/SiteSettings";
+import { authClient } from "../../../../lib/auth";
 import LiveUserCount from "./LiveUserCount";
 import { SiteSelector } from "./SiteSelector";
-import { authClient } from "../../../../lib/auth";
 
 export function Sidebar() {
   const session = authClient.useSession();
@@ -38,7 +38,7 @@ export function Sidebar() {
   };
 
   return (
-    <div className="w-56 bg-neutral-900 border-r border-neutral-850 h-full flex flex-col">
+    <div className="w-56 bg-neutral-900 border-r border-neutral-800 h-full flex-col">
       {site && (
         <div className="p-3 border-b  border-neutral-800 flex flex-col gap-2">
           <SiteSelector />
@@ -68,8 +68,14 @@ export function Sidebar() {
           label="Realtime"
           active={isActiveTab("realtime")}
           href={getTabPath("realtime")}
-          icon={<Globe className="w-4 h-4" />}
+          icon={<Earth className="w-4 h-4" />}
         />
+        {/* <SidebarLink
+          label="Map"
+          active={isActiveTab("map")}
+          href={getTabPath("map")}
+          icon={<Map className="w-4 h-4" />}
+        /> */}
         <SidebarLink
           label="Retention"
           active={isActiveTab("retention")}

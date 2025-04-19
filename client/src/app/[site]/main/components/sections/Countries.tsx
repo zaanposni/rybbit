@@ -13,8 +13,9 @@ import { StandardSection } from "../../../components/shared/StandardSection/Stan
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
 import { useSubdivisions } from "../../../../../lib/geo";
 import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
+import { MapComponent } from "./Map";
 
-type Tab = "countries" | "regions" | "languages";
+type Tab = "countries" | "regions" | "languages" | "cities" | "map";
 
 const regionNamesInEnglish = new Intl.DisplayNames(["en"], { type: "region" });
 const languageNamesInEnglish = new Intl.DisplayNames(["en"], {
@@ -66,6 +67,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
             <TabsTrigger value="regions">Regions</TabsTrigger>
             <TabsTrigger value="cities">Cities</TabsTrigger>
             <TabsTrigger value="languages">Languages</TabsTrigger>
+            <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
           <TabsContent value="countries">
             <ComponentToUse
@@ -73,6 +75,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
               title="Countries"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
+              getFilterLabel={(e) => getCountryName(e.value)}
               getLabel={(e) => {
                 return (
                   <div className="flex gap-2 items-center">
@@ -85,10 +88,16 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
           </TabsContent>
           <TabsContent value="regions">
             <ComponentToUse
-              filterParameter="iso_3166_2"
+              filterParameter="region"
               title="Regions"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
+              getFilterLabel={(e) => {
+                const region = subdivisions?.features.find(
+                  (feature) => feature.properties.iso_3166_2 === e.value
+                )?.properties;
+                return region?.name ?? "";
+              }}
               getLabel={(e) => {
                 if (!e.value) {
                   return "Unknown";
@@ -131,6 +140,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
               title="Languages"
               getValue={(e) => e.value}
               getKey={(e) => e.value}
+              getFilterLabel={(e) => getLanguageName(e.value) ?? ""}
               getLabel={(e) => (
                 <div className="flex gap-2 items-center">
                   {getCountryFromLanguage(e.value) ? (
@@ -142,6 +152,9 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
                 </div>
               )}
             />
+          </TabsContent>
+          <TabsContent value="map">
+            <MapComponent />
           </TabsContent>
         </Tabs>
       </CardContent>

@@ -18,8 +18,10 @@ export function NoData({
               Waiting for analytics from {siteMetadata?.domain}...
             </div>
             <div className="p-5">
-              {/* @ts-ignore */}
-              <l-ping size={50} color="hsl(var(--emerald-400))" speed="3" />
+              <span className="relative flex h-6 w-6">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75"></span>
+                <span className="relative inline-flex h-6 w-6 rounded-full bg-green-500"></span>
+              </span>
             </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">

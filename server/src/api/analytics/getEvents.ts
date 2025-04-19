@@ -61,7 +61,7 @@ export async function getEvents(
           country,
           device_type,
           type
-        FROM pageviews
+        FROM events
         WHERE
           site_id = {siteId:Int32}
           AND (type = 'custom_event' OR type = 'pageview')

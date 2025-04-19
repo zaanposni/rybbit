@@ -7,7 +7,7 @@ export interface SessionDetails {
   session_id: string;
   user_id: string;
   country: string;
-  iso_3166_2: string;
+  region: string;
   language: string;
   device_type: string;
   browser: string;
@@ -80,7 +80,7 @@ SELECT
     session_id,
     user_id,
     country,
-    iso_3166_2,
+    region,
     language,
     device_type,
     browser,
@@ -106,7 +106,7 @@ LIMIT 1
     const countQuery = `
 SELECT
     COUNT(*) as total
-FROM pageviews
+FROM events
 WHERE
     site_id = ${site}
     AND session_id = '${sessionId}'
@@ -124,7 +124,7 @@ SELECT
     type,
     event_name,
     properties
-FROM pageviews
+FROM events
 WHERE
     site_id = ${site}
     AND session_id = '${sessionId}'

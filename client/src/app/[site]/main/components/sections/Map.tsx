@@ -1,12 +1,5 @@
 "use client";
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardLoader,
-  CardTitle,
-} from "@/components/ui/card";
 import * as CountryFlags from "country-flag-icons/react/3x2";
 import { scaleLinear } from "d3-scale";
 import React, { useEffect, useMemo, useState } from "react";
@@ -30,13 +23,13 @@ interface TooltipPosition {
   y: number;
 }
 
-export function Map() {
+export function MapComponent() {
   const { data: countryData, isLoading: isCountryLoading } = useSingleCol({
     parameter: "country",
   });
   const { data: subdivisionData, isLoading: isSubdivisionLoading } =
     useSingleCol({
-      parameter: "iso_3166_2",
+      parameter: "region",
     });
 
   const [dataVersion, setDataVersion] = useState<number>(0);
@@ -152,7 +145,7 @@ export function Map() {
         // Set filter based on the current map view
         const filterParameter: FilterParameter = isCountryView
           ? "country"
-          : "iso_3166_2";
+          : "region";
 
         addFilter({
           parameter: filterParameter,
@@ -177,91 +170,85 @@ export function Map() {
   const isLoading = isCountryLoading || isSubdivisionLoading;
 
   return (
-    <Card>
-      {isLoading && <CardLoader />}
-      <CardHeader>
-        <CardTitle>Map</CardTitle>
-      </CardHeader>
-      <CardContent
-        onMouseMove={(e) => {
-          if (tooltipContent) {
-            setTooltipPosition({
-              x: e.clientX,
-              y: e.clientY,
-            });
-          }
-        }}
-      >
-        {(countriesGeoData || subdivisionsGeoData) && (
-          <MapContainer
-            preferCanvas={true}
-            attributionControl={false}
-            zoomControl={false}
-            center={[40, 3]}
-            zoom={1}
-            style={{
-              height: "400px",
-              background: "none",
-              cursor: "default",
-              outline: "none",
-              zIndex: "1",
-            }}
-          >
-            <MapEventHandler />
-            {mapView === "subdivisions" && subdivisionsGeoData && (
-              <GeoJSON
-                key={`subdivisions-${dataVersion}`}
-                data={subdivisionsGeoData as GeoJsonObject}
-                style={handleStyle}
-                onEachFeature={handleEachFeature}
-              />
-            )}
-            {mapView === "countries" && countriesGeoData && (
-              <GeoJSON
-                key={`countries-${dataVersion}`}
-                data={countriesGeoData as GeoJsonObject}
-                style={handleStyle}
-                onEachFeature={handleEachFeature}
-              />
-            )}
-          </MapContainer>
-        )}
-        {tooltipContent && (
-          <div
-            className="fixed z-50 bg-neutral-1000 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
-            style={{
-              left: tooltipPosition.x,
-              top: tooltipPosition.y - 10,
-              transform: "translate(-50%, -100%)",
-            }}
-          >
-            <div className="font-sm flex items-center gap-1">
-              {mapView === "countries" &&
-              tooltipContent.code &&
-              CountryFlags[tooltipContent.code as keyof typeof CountryFlags]
-                ? React.createElement(
-                    CountryFlags[
-                      tooltipContent.code as keyof typeof CountryFlags
-                    ],
-                    {
-                      title: tooltipContent.name,
-                      className: "w-4",
-                    }
-                  )
-                : null}
-              {tooltipContent.name}
-            </div>
-            <div>
-              <span className="font-bold text-accent-400">
-                {tooltipContent.count.toLocaleString()}
-              </span>{" "}
-              <span className="text-neutral-300">
-                ({tooltipContent.percentage.toFixed(1)}%) sessions
-              </span>
-            </div>
+    <div
+      onMouseMove={(e) => {
+        if (tooltipContent) {
+          setTooltipPosition({
+            x: e.clientX,
+            y: e.clientY,
+          });
+        }
+      }}
+    >
+      {(countriesGeoData || subdivisionsGeoData) && (
+        <MapContainer
+          preferCanvas={true}
+          attributionControl={false}
+          zoomControl={false}
+          center={[40, 3]}
+          zoom={1}
+          style={{
+            height: "380px",
+            background: "none",
+            cursor: "default",
+            outline: "none",
+            zIndex: "1",
+          }}
+        >
+          <MapEventHandler />
+          {mapView === "subdivisions" && subdivisionsGeoData && (
+            <GeoJSON
+              key={`subdivisions-${dataVersion}`}
+              data={subdivisionsGeoData as GeoJsonObject}
+              style={handleStyle}
+              onEachFeature={handleEachFeature}
+            />
+          )}
+          {mapView === "countries" && countriesGeoData && (
+            <GeoJSON
+              key={`countries-${dataVersion}`}
+              data={countriesGeoData as GeoJsonObject}
+              style={handleStyle}
+              onEachFeature={handleEachFeature}
+            />
+          )}
+        </MapContainer>
+      )}
+      {tooltipContent && (
+        <div
+          className="fixed z-50 bg-neutral-1000 text-white rounded-md p-2 shadow-lg text-sm pointer-events-none"
+          style={{
+            left: tooltipPosition.x,
+            top: tooltipPosition.y - 10,
+            transform: "translate(-50%, -100%)",
+          }}
+        >
+          <div className="font-sm flex items-center gap-1">
+            {mapView === "countries" &&
+            tooltipContent.code &&
+            CountryFlags[tooltipContent.code as keyof typeof CountryFlags]
+              ? React.createElement(
+                  CountryFlags[
+                    tooltipContent.code as keyof typeof CountryFlags
+                  ],
+                  {
+                    title: tooltipContent.name,
+                    className: "w-4",
+                  }
+                )
+              : null}
+            {tooltipContent.name}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <div>
+            <span className="font-bold text-accent-400">
+              {tooltipContent.count.toLocaleString()}
+            </span>{" "}
+            <span className="text-neutral-300">
+              ({tooltipContent.percentage.toFixed(1)}%) sessions
+            </span>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

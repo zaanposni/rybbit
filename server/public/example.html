@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Frogstats Analytics Example</title>
+    <title>Rybbit Analytics Example</title>
 </head>
 <body>
-    <h1>Frogstats Analytics Example</h1>
+    <h1>Rybbit Analytics Example</h1>
     
-    <button onclick="frogstats.trackEvent('button_click', { buttonId: 'test-button' })">
+    <button onclick="Rybbit.trackEvent('button_click', { buttonId: 'test-button' })">
         Track Button Click
     </button>
 
@@ -19,7 +19,7 @@
     <script>
         // Track a custom event
         document.addEventListener('DOMContentLoaded', () => {
-            frogstats.trackEvent('page_ready', {
+            Rybbit.trackEvent('page_ready', {
                 loadTime: performance.now()
             });
         });

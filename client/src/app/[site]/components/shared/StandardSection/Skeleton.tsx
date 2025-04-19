@@ -30,8 +30,8 @@ export const Skeleton = memo(() => {
   return (
     <>
       <div className="flex flex-row gap-2 justify-between pr-1 text-xs text-neutral-400">
-        <div className="h-3 bg-neutral-800 rounded animate-pulse w-16"></div>
-        <div className="h-3 bg-neutral-800 rounded animate-pulse w-12"></div>
+        <div className="h-4 bg-neutral-800 rounded animate-pulse w-16"></div>
+        <div className="h-4 bg-neutral-800 rounded animate-pulse w-12"></div>
       </div>
       {Array.from({ length: 10 }).map((_, index) => (
         <div key={index} className="relative h-6 flex items-center">
@@ -39,7 +39,7 @@ export const Skeleton = memo(() => {
             className="absolute inset-0 bg-neutral-800 py-2 rounded-md animate-pulse"
             style={{ width: `${widths[index]}%` }}
           ></div>
-          <div className="z-10 mx-2 flex justify-between items-center text-sm w-full">
+          <div className="z-5 mx-2 flex justify-between items-center text-sm w-full">
             <div className="flex items-center gap-1">
               <div
                 className="h-4 bg-neutral-800 rounded animate-pulse"

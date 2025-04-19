@@ -1,6 +1,24 @@
-version: '3.8'
-
 services:
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # Needed for HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile # Mount Caddy config file
+      - caddy_data:/data # Mount persistent data volume for certs etc.
+      - caddy_config:/config # Mount persistent config volume
+    environment:
+      # Pass domain name for use in Caddyfile
+      # Email is configured via Caddyfile global options
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    depends_on:
+      - backend
+      - client
+
   clickhouse:
     container_name: clickhouse
     image: clickhouse/clickhouse-server:latest
@@ -19,6 +37,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    restart: unless-stopped
 
   postgres:
     image: postgres:latest
@@ -27,18 +46,15 @@ services:
       POSTGRES_USER: frog
       POSTGRES_PASSWORD: frog
       POSTGRES_DB: analytics
-    ports:
-      - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    restart: unless-stopped
 
   backend:
     container_name: backend
     build:
       context: ./server
       dockerfile: Dockerfile
-    ports:
-      - "3001:3001"
     environment:
       - NODE_ENV=production
       - CLICKHOUSE_HOST=http://clickhouse:8123
@@ -59,6 +75,7 @@ services:
         condition: service_healthy
       postgres:
         condition: service_started
+    restart: unless-stopped
 
   client:
     container_name: client
@@ -67,15 +84,16 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_BACKEND_URL: ${BASE_URL}
-    ports:
-      - "3002:3002"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_BACKEND_URL=${BASE_URL}
       - CLOUD=${CLOUD}
     depends_on:
       - backend
+    restart: unless-stopped
 
 volumes:
   clickhouse-data:
   postgres-data:
+  caddy_data:     # Persistent volume for Caddy's certificates and state
+  caddy_config:   # Persistent volume for Caddy's configuration cache (optional but good practice)

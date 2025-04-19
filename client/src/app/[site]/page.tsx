@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-
 // This is a simple fallback page that should never be seen
 // All redirects should be handled by the middleware
 export default function SiteRedirect() {

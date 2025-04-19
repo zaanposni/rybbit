@@ -99,7 +99,7 @@ body {
     --neutral-800: 0 0% 20%;
     --neutral-850: 0 0% 16%;
     --neutral-900: 0 0% 12%;
-    --neutral-950: 0 0% 8%;
+    --neutral-950: 0 0% 9%;
     --neutral-1000: 0 0% 5%;
 
     /* Stone */
@@ -354,6 +354,8 @@ body {
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
+    --border: 0 0% 9%;
+
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
   }

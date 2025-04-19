@@ -1,4 +1,4 @@
-import { Clock, Shield, Zap } from "lucide-react";
+import { Clock, Shield } from "lucide-react";
 import { STRIPE_PRICES } from "@/lib/stripe";
 
 // Define interfaces for plan data
@@ -19,11 +19,7 @@ export const getPlanDetails = (
 ): PlanTemplate | null => {
   if (!planName) return null;
 
-  const tier = planName.startsWith("basic")
-    ? "basic"
-    : planName.startsWith("pro")
-    ? "pro"
-    : "free";
+  const tier = planName.startsWith("pro") ? "pro" : "free";
   const stripePlan = STRIPE_PRICES.find((p) => p.name === planName);
 
   const planTemplates: Record<string, PlanTemplate> = {
@@ -33,47 +29,21 @@ export const getPlanDetails = (
       price: "$0",
       interval: "month",
       description: "Get started with basic analytics",
-      features: [
-        "20,000 events per month",
-        "Basic analytics",
-        "7-day data retention",
-        "Community support",
-      ],
+      features: ["10,000 events per month", "6 month data retention"],
       color:
         "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900",
       icon: <Clock className="h-5 w-5" />,
     },
-    basic: {
-      id: "basic",
-      name: "Basic",
-      price: "$19+",
-      interval: "month",
-      description: "Essential analytics for small projects",
-      features: [
-        "Core analytics features",
-        "14-day data retention",
-        "Basic support",
-      ],
-      color:
-        "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-800 dark:to-emerald-800",
-      icon: <Shield className="h-5 w-5" />,
-    },
     pro: {
       id: "pro",
       name: "Pro",
-      price: "$39+",
+      price: "$19+",
       interval: "month",
-      description: "Advanced analytics for growing businesses",
-      features: [
-        "Advanced dashboard features",
-        "30-day data retention",
-        "Priority support",
-        "Custom event definitions",
-        "Team collaboration",
-      ],
+      description: "Advanced analytics for growing projects",
+      features: ["5 year data retention", "Priority support"],
       color:
-        "bg-gradient-to-br from-emerald-50 to-teal-100 dark:from-emerald-800 dark:to-teal-800",
-      icon: <Zap className="h-5 w-5" />,
+        "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-800 dark:to-emerald-800",
+      icon: <Shield className="h-5 w-5" />,
     },
   };
 

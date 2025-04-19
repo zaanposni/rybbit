@@ -30,10 +30,10 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
   if (isLoading || isOverviewLoading) {
     return (
       <div
-        className="flex flex-col rounded-lg bg-neutral-900/70 p-5 border border-neutral-800 shadow-lg transition-all duration-300"
+        className="flex flex-col rounded-lg bg-neutral-900/70 p-4 border border-neutral-800 shadow-lg transition-all duration-300"
         key={siteId}
       >
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex justify-between items-center">
           <div className="flex gap-3 items-center">
             <Skeleton className="w-6 h-6 rounded" />
             <Skeleton className="h-6 w-40" />
@@ -45,13 +45,13 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
           <Skeleton className="h-[110px] w-full rounded-md" />
         </div>
 
-        <div className="grid grid-cols-3 gap-2 mt-4">
-          <div className="flex flex-col gap-1 items-center bg-neutral-800/30 rounded-md p-3">
+        <div className="grid grid-cols-3 gap-2 mt-2">
+          <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-2">
             <Skeleton className="h-3 w-16 rounded" />
             <Skeleton className="h-6 w-10 rounded mt-1" />
           </div>
 
-          <div className="flex flex-col gap-1 items-center bg-neutral-800/30 rounded-md p-3">
+          <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-2">
             <Skeleton className="h-3 w-16 rounded" />
             <Skeleton className="h-6 w-10 rounded mt-1" />
           </div>
@@ -65,11 +65,11 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
   }
 
   return (
-    <div className="flex flex-col rounded-lg bg-neutral-900/70 p-5 border border-neutral-800 shadow-lg hover:shadow-xl hover:border-neutral-700 transition-all duration-300 hover:translate-y-[-2px]">
-      <div className="flex justify-between items-center mb-4">
+    <div className="flex flex-col rounded-lg bg-neutral-900/70 p-4 border border-neutral-800 shadow-lg hover:shadow-xl hover:border-neutral-700 transition-all duration-300 hover:translate-y-[-2px]">
+      <div className="flex justify-between items-center">
         <Link
           href={`/${siteId}`}
-          className="group flex gap-3 items-center hover:text-blue-400 transition-colors duration-200"
+          className="group flex gap-3 items-center duration-200"
         >
           <img
             className="w-6 h-6"
@@ -98,17 +98,17 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
         )}
       </div>
 
-      <div className="grid grid-cols-3 gap-2 mt-4">
-        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-3 hover:bg-neutral-800 transition-colors">
+      <div className="grid grid-cols-3 gap-2 mt-2">
+        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-2 hover:bg-neutral-800 transition-colors">
           <div className="text-xs text-neutral-400">Sessions</div>
-          <div className="font-semibold text-lg">
+          <div className="font-semibold">
             {overviewData?.data?.sessions?.toLocaleString() || "0"}
           </div>
         </div>
 
-        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-3 hover:bg-neutral-800 transition-colors">
+        <div className="flex flex-col gap-1 items-center bg-neutral-800/50 rounded-md p-2 hover:bg-neutral-800 transition-colors">
           <div className="text-xs text-neutral-400">Users</div>
-          <div className="font-semibold text-lg">
+          <div className="font-semibold">
             {overviewData?.data?.users?.toLocaleString() || "0"}
           </div>
         </div>
@@ -119,7 +119,7 @@ export function SiteCard({ siteId, domain }: SiteCardProps) {
             size="sm"
             className="w-full h-full border-neutral-700 bg-neutral-800/50 hover:bg-neutral-800 hover:text-blue-400 transition-all"
           >
-            <span className="mr-1">Details</span>
+            <span className="mr-1">View</span>
             <ArrowRight
               size={14}
               className="transition-transform group-hover:translate-x-0.5"

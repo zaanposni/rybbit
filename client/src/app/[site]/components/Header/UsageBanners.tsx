@@ -39,7 +39,7 @@ export function UsageBanners() {
     site.monthlyEventCount > site.eventLimit
   ) {
     return (
-      <Alert variant="destructive" className="mb-3 p-4">
+      <Alert variant="destructive" className="p-4">
         <div className="flex items-start space-x-3">
           <AlertTriangle className="h-5 w-5 mt-0.5" />
           <div className="flex-1">
@@ -57,11 +57,7 @@ export function UsageBanners() {
                 <AlertDescription className="text-sm">
                   Upgrade your plan to continue collecting analytics.
                 </AlertDescription>
-                <Button
-                  variant="outline"
-                  className="text-neutral-100 border-white/20 hover:border-white/30 py-1 h-auto text-sm"
-                  asChild
-                >
+                <Button variant="default" asChild>
                   <Link href="/settings/subscription">
                     Upgrade Plan <ArrowRight className="ml-1 h-3 w-3" />
                   </Link>
@@ -82,7 +78,7 @@ export function UsageBanners() {
   // If approaching limit (>90%), show warning banner
   if (isNearLimit) {
     return (
-      <Alert className="mb-3 p-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
+      <Alert className="p-4 bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-800">
         <div className="flex items-start space-x-3">
           <AlertTriangle className="h-5 w-5 mt-0.5 text-amber-500" />
           <div className="flex-1">
@@ -101,12 +97,11 @@ export function UsageBanners() {
                   Consider upgrading your plan to avoid interruptions.
                 </AlertDescription>
                 <Button
-                  variant="outline"
                   className="bg-white hover:bg-white/90 text-neutral-100 border-white/20 hover:border-white/30 py-1 h-auto text-sm"
                   asChild
                 >
                   <Link href="/settings/subscription">
-                    View Plans <ArrowRight className="ml-1 h-3 w-3" />
+                    Upgrade Plan <ArrowRight className="ml-1 h-3 w-3" />
                   </Link>
                 </Button>
               </div>

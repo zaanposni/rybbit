@@ -19,6 +19,7 @@ import {
 import { useAtom } from "jotai";
 import { minutesAtom, MinutesType } from "./realtimeStore";
 import NumberFlow from "@number-flow/react";
+import { MobileSidebar } from "../../../components/MobileSidebar";
 
 export default function RealtimePage() {
   const [ref, { width }] = useMeasure();
@@ -28,11 +29,16 @@ export default function RealtimePage() {
   const { data } = useGetLiveUsercount(Number(minutes));
 
   return (
-    <div className="relative overflow-hidden" ref={ref}>
+    <div
+      className="relative overflow-hidden"
+      style={{ height: "calc(100vh - 36px)" }}
+      ref={ref}
+    >
       <World width={width ?? 0} />
 
-      <div className="absolute top-4 left-4 w-full h-full">
-        <div className="flex flex-col p-3 bg-neutral-900 rounded-lg shadow-lg border border-neutral-750 w-[400px]">
+      <div className="absolute top-2 left-2 md:top-4 md:left-4 flex flex-row gap-2">
+        <MobileSidebar />
+        <div className="flex flex-col p-2 md:p-3 bg-neutral-900 rounded-lg shadow-lg border border-neutral-750 w-[300px] md:w-[400px]">
           <div className="p-2">
             <div className="text-sm text-gray-400 flex gap-2 text-nowrap items-center">
               <div className="flex justify-center">
@@ -62,7 +68,7 @@ export default function RealtimePage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="text-5xl font-bold flex items-center gap-2">
+            <div className="text-3xl md:text-5xl font-bold flex items-center gap-2">
               {
                 <NumberFlow
                   respectMotionPreference={false}
@@ -71,11 +77,13 @@ export default function RealtimePage() {
               }
             </div>
           </div>
-          <RealtimeChart />
+          <div className="h-[50px] md:h-[70px]">
+            <RealtimeChart />
+          </div>
         </div>
       </div>
 
-      <div className="absolute top-4 right-4 w-[320px]">
+      <div className="hidden md:block absolute top-4 right-4 w-[320px]">
         <RealtimeEvents />
       </div>
 

@@ -1,6 +1,5 @@
-// Frogstats Analytics Script
+// Rybbit Analytics Script
 (function () {
-  // Get the script tag that loaded this script
   const scriptTag = document.currentScript;
   const ANALYTICS_HOST = scriptTag.getAttribute("src").split("/script.js")[0];
 
@@ -19,15 +18,58 @@
     return;
   }
 
-  // Get debounce duration from data attribute or default to 500ms
   const debounceDuration = scriptTag.getAttribute("data-debounce")
     ? Math.max(0, parseInt(scriptTag.getAttribute("data-debounce")))
     : 500;
 
-  // Check if automatic URL tracking should be disabled
-  const autoTrackURLs = scriptTag.getAttribute("data-auto-track") !== "false";
+  const autoTrackSpa = scriptTag.getAttribute("data-track-spa") !== "false";
+  const trackQuerystring =
+    scriptTag.getAttribute("data-track-query") !== "false";
 
-  // Debounce function
+  let skipPatterns = [];
+  try {
+    const skipAttr = scriptTag.getAttribute("data-skip-patterns");
+    if (skipAttr) {
+      skipPatterns = JSON.parse(skipAttr);
+      if (!Array.isArray(skipPatterns)) skipPatterns = [];
+    }
+  } catch (e) {
+    console.error("Error parsing data-skip-patterns:", e);
+  }
+
+  let maskPatterns = [];
+  try {
+    const maskAttr = scriptTag.getAttribute("data-mask-patterns");
+    if (maskAttr) {
+      maskPatterns = JSON.parse(maskAttr);
+      if (!Array.isArray(maskPatterns)) maskPatterns = [];
+    }
+  } catch (e) {
+    console.error("Error parsing data-mask-patterns:", e);
+  }
+
+  // Helper function to convert wildcard pattern to regex
+  function patternToRegex(pattern) {
+    // Escape regex special characters, then replace * with [^/]+
+    const escaped = pattern.replace(/[\.\+\?\^\$\(\)\[\]\{\}]/g, "\\$&");
+    const regexString = escaped.replace(/\*/g, "[^/]+");
+    return new RegExp(`^${regexString}$`);
+  }
+
+  function findMatchingPattern(path, patterns) {
+    for (const pattern of patterns) {
+      try {
+        const regex = patternToRegex(pattern);
+        if (regex.test(path)) {
+          return pattern; // Return the pattern string itself
+        }
+      } catch (e) {
+        console.error(`Invalid pattern: ${pattern}`, e);
+      }
+    }
+    return null;
+  }
+
   function debounce(func, wait) {
     let timeout;
     return (...args) => {
@@ -36,9 +78,7 @@
     };
   }
 
-  // Unified tracking function for all event types
   const track = (eventType = "pageview", eventName = "", properties = {}) => {
-    // Validate event data
     if (
       eventType === "custom_event" &&
       (!eventName || typeof eventName !== "string")
@@ -50,11 +90,22 @@
     }
 
     const url = new URL(window.location.href);
+    let pathname = url.pathname;
+
+    if (findMatchingPattern(pathname, skipPatterns)) {
+      return;
+    }
+
+    const maskMatch = findMatchingPattern(pathname, maskPatterns);
+    if (maskMatch) {
+      pathname = maskMatch;
+    }
+
     const payload = {
       site_id: SITE_ID,
       hostname: url.hostname,
-      pathname: url.pathname,
-      querystring: url.search,
+      pathname: pathname,
+      querystring: trackQuerystring ? url.search : "",
       screenWidth: window.innerWidth,
       screenHeight: window.innerHeight,
       language: navigator.language,
@@ -66,9 +117,6 @@
         eventType === "custom_event" ? JSON.stringify(properties) : undefined,
     };
 
-    console.log(`${eventType} event:`, payload);
-
-    // Use the new unified endpoint
     fetch(`${ANALYTICS_HOST}/track`, {
       method: "POST",
       headers: {
@@ -80,18 +128,14 @@
     }).catch(console.error);
   };
 
-  // Helper function for pageviews
   const trackPageview = () => track("pageview");
 
-  // Create debounced version with configured duration
   const debouncedTrackPageview =
     debounceDuration > 0
       ? debounce(trackPageview, debounceDuration)
       : trackPageview;
 
-  // Only set up automatic URL change tracking if not disabled
-  if (autoTrackURLs) {
-    // History API override
+  if (autoTrackSpa) {
     const originalPushState = history.pushState;
     const originalReplaceState = history.replaceState;
 
@@ -105,19 +149,14 @@
       debouncedTrackPageview();
     };
 
-    // Handle navigation events
     window.addEventListener("popstate", debouncedTrackPageview);
   }
 
-  // Expose API
-  window.frogstats = {
-    // Core tracking function
+  window.rybbit = {
     track,
-    // Helper functions for backward compatibility and convenience
     pageview: trackPageview,
     event: (name, properties = {}) => track("custom_event", name, properties),
   };
 
-  // Initial pageview
   trackPageview();
 })();

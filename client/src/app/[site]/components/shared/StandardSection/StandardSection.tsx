@@ -7,12 +7,14 @@ import {
 } from "../../../../../api/analytics/useSingleCol";
 import { FilterParameter } from "../../../../../lib/store";
 import { BaseStandardSection } from "./BaseStandardSection";
+import { CardLoader } from "../../../../../components/ui/card";
 
 export function StandardSection({
   title,
   getKey,
   getLabel,
   getValue,
+  getFilterLabel,
   getLink,
   countLabel,
   filterParameter,
@@ -22,6 +24,7 @@ export function StandardSection({
   getKey: (item: SingleColResponse) => string;
   getLabel: (item: SingleColResponse) => ReactNode;
   getValue: (item: SingleColResponse) => string;
+  getFilterLabel?: (item: SingleColResponse) => string;
   getLink?: (item: SingleColResponse) => string;
   countLabel?: string;
   filterParameter: FilterParameter;
@@ -47,18 +50,26 @@ export function StandardSection({
   }, [previousData, getKey]);
 
   return (
-    <BaseStandardSection
-      title={title}
-      data={data}
-      isFetching={isLoading}
-      error={error}
-      refetch={refetch}
-      getKey={getKey}
-      getLabel={getLabel}
-      getValue={getValue}
-      getLink={getLink}
-      countLabel={countLabel}
-      filterParameter={filterParameter}
-    />
+    <>
+      {isLoading && (
+        <div className="absolute top-[-8px] left-0 w-full h-full">
+          <CardLoader />
+        </div>
+      )}
+      <BaseStandardSection
+        title={title}
+        data={data}
+        isFetching={isLoading}
+        error={error}
+        refetch={refetch}
+        getKey={getKey}
+        getLabel={getLabel}
+        getValue={getValue}
+        getFilterLabel={getFilterLabel}
+        getLink={getLink}
+        countLabel={countLabel}
+        filterParameter={filterParameter}
+      />
+    </>
   );
 }

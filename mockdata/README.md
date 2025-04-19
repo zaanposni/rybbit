@@ -1,6 +1,6 @@
-# E-commerce Mock Data Generator for Frogstats
+# E-commerce Mock Data Generator for Rybbit
 
-This script generates realistic mock analytics data for Frogstats, simulating user behavior on an e-commerce website called ShopEase.
+This script generates realistic mock analytics data for Rybbit, simulating user behavior on an e-commerce website called ShopEase.
 
 ## Features
 
