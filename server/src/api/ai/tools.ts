@@ -16,6 +16,11 @@ import { fetchOverview } from "../analytics/getOverview.js";
 import { fetchOverviewBucketed } from "../analytics/getOverviewBucketed.js";
 import { fetchSingleCol } from "../analytics/getSingleCol.js";
 
+export const getLiveUserCountToolName = "get_live_user_count";
+export const getOverviewToolName = "get_overview";
+export const getOverviewBucketedToolName = "get_overview_bucketed";
+export const getParameterStatsToolName = "get_parameter_stats";
+
 export function generateAnalyticsTools(timezone: string, site: string) {
   const getLiveUserCountTool = tool(
     async () => {
@@ -28,7 +33,7 @@ export function generateAnalyticsTools(timezone: string, site: string) {
       }
     },
     {
-      name: "get_live_user_count",
+      name: getLiveUserCountToolName,
       description: getLiveUserCountToolDescription,
       schema: getLiveUserCountToolSchema,
     }
@@ -44,7 +49,7 @@ export function generateAnalyticsTools(timezone: string, site: string) {
       }
     },
     {
-      name: "get_overview",
+      name: getOverviewToolName,
       description: getOverviewToolDescription,
       schema: getOverviewToolSchema,
     }
@@ -60,7 +65,7 @@ export function generateAnalyticsTools(timezone: string, site: string) {
       }
     },
     {
-      name: "get_overview_bucketed",
+      name: getOverviewBucketedToolName,
       description: getOverviewBucketedToolDescription,
       schema: getOverviewBucketedToolSchema,
     }
@@ -77,7 +82,7 @@ export function generateAnalyticsTools(timezone: string, site: string) {
       }
     },
     {
-      name: "get_parameter_stats",
+      name: getParameterStatsToolName,
       description: getParameterStatsToolDescription,
       schema: getParameterStatsToolSchema,
     }
