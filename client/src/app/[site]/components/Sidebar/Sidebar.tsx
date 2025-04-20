@@ -9,6 +9,7 @@ import {
   Settings,
   User,
   Map,
+  Split,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -88,11 +89,17 @@ export function Sidebar() {
           icon={<Funnel weight="bold" />}
         />
         <SidebarLink
+          label="Journeys"
+          active={isActiveTab("journeys")}
+          href={getTabPath("journeys")}
+          icon={<Split className="w-4 h-4" />}
+        />
+        {/* <SidebarLink
           label="Reports"
           active={isActiveTab("reports")}
           href={getTabPath("reports")}
           icon={<ChartBarDecreasing className="w-4 h-4" />}
-        />
+        /> */}
         {session.data && (
           <SiteSettings
             siteId={site?.siteId ?? 0}

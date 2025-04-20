@@ -46,6 +46,7 @@
     "cmdk": "^1.0.0",
     "countries-list": "^3.1.1",
     "country-flag-icons": "^1.5.14",
+    "d3": "^7.9.0",
     "d3-geo": "^3.1.1",
     "date-fns": "^4.1.0",
     "deps": "^1.0.0",

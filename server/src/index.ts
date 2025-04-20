@@ -10,6 +10,7 @@ import { deleteReport } from "./api/analytics/deleteReport.js";
 import { getEvents } from "./api/analytics/getEvents.js";
 import { getFunnel } from "./api/analytics/getFunnel.js";
 import { getFunnels } from "./api/analytics/getFunnels.js";
+import { getJourneys } from "./api/analytics/getJourneys.js";
 import { getLiveSessionLocations } from "./api/analytics/getLiveSessionLocations.js";
 import { getLiveUsercount } from "./api/analytics/getLiveUsercount.js";
 import { getOverview } from "./api/analytics/getOverview.js";
@@ -132,6 +133,7 @@ const ANALYTICS_ROUTES = [
   "/live-session-locations/",
   "/funnels/",
   "/funnel/",
+  "/journeys/",
 
   "/get-site",
 ];
@@ -190,13 +192,14 @@ server.get("/site-has-data/:site", getSiteHasData);
 server.get("/site-is-public/:site", getSiteIsPublic);
 server.get("/sessions/:site", getSessions);
 server.get("/session/:sessionId/:site", getSession);
+server.get("/recent-events/:site", getEvents);
 server.get("/users/:site", getUsers);
 server.get("/user/:userId/sessions/:site", getUserSessions);
 server.get("/user/session-count/:site", getUserSessionCount);
 server.get("/user/info/:userId/:site", getUserInfo);
 server.get("/live-session-locations/:site", getLiveSessionLocations);
 server.get("/funnels/:site", getFunnels);
-server.get("/recent-events/:site", getEvents);
+server.get("/journeys/:site", getJourneys);
 server.post("/funnel/:site", getFunnel);
 server.post("/funnel/create/:site", createFunnel);
 server.delete("/report/:reportId", deleteReport);
