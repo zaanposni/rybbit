@@ -19,6 +19,8 @@ import { DateRangeMode, Time } from "../../../components/DateSelector/types";
 import { DateTime } from "luxon";
 import { DateSelector } from "../../../components/DateSelector/DateSelector";
 
+const MAX_LINK_HEIGHT = 100;
+
 export default function JourneysPage() {
   const params = useParams<{ site: string }>();
   const [steps, setSteps] = useState<number>(3);
@@ -39,22 +41,15 @@ export default function JourneysPage() {
 
   const svgRef = useRef<SVGSVGElement>(null);
 
-  const journeyData = useMemo(() => {
-    if (!data?.journeys) return [];
-
-    // Sort journeys by count (most popular first)
-    return [...data.journeys].sort((a, b) => b.count - a.count);
-  }, [data]);
-
   useEffect(() => {
-    if (!journeyData.length || !svgRef.current) return;
+    if (!data?.journeys || !svgRef.current) return;
 
     const svg = d3.select(svgRef.current);
     svg.selectAll("*").remove();
 
     const width = 1400;
     const height = 1000;
-    const margin = { top: 20, right: 20, bottom: 30, left: 40 };
+    const margin = { top: 30, right: 10, bottom: 30, left: 10 };
     const innerWidth = width - margin.left - margin.right;
     const innerHeight = height - margin.top - margin.bottom;
 
@@ -70,7 +65,7 @@ export default function JourneysPage() {
     const nodes: any[] = [];
     const links: any[] = [];
 
-    journeyData.slice(0, 25).forEach((journey) => {
+    data?.journeys?.slice(0, 25).forEach((journey) => {
       for (let i = 0; i < journey.path.length; i++) {
         const stepName = journey.path[i];
         const stepKey = `${i}_${stepName}`;
@@ -137,7 +132,7 @@ export default function JourneysPage() {
     const linkWidthScale = d3
       .scaleLinear()
       .domain([0, maxLinkValue])
-      .range([1, 100]);
+      .range([1, MAX_LINK_HEIGHT]);
 
     // Calculate node heights based on connected links
     nodes.forEach((node) => {
@@ -156,10 +151,19 @@ export default function JourneysPage() {
       node.height = linkWidthScale(maxValue);
 
       // Minimum height for visibility
-      node.height = Math.max(node.height, 10);
+      node.height = Math.max(node.height, 3);
 
       // Store count for this node (use incoming for all except first step)
       node.count = node.step === 0 ? outgoingValue : incomingValue;
+
+      // Store percentage - find the corresponding journey data
+      const matchingJourney = data?.journeys?.find((journey) => {
+        // Compare path at this step with node name
+        return journey.path[node.step] === node.name;
+      });
+
+      // Use the percentage from journey data if available
+      node.percentage = matchingJourney ? matchingJourney.percentage : 0;
     });
 
     // Calculate link positions along each node
@@ -336,32 +340,47 @@ export default function JourneysPage() {
     const textBackgrounds = nodeGroups
       .append("rect")
       .attr("class", "node-card")
-      .attr("x", 15)
-      .attr("y", (d) => d.height / 2 - 10) // Position above the vertical center
+      .attr("x", 18)
+      .attr("y", (d) => d.height / 2 - 15) // Position above the vertical center, taller card
       .attr("width", (d) => {
-        // Estimate text width based on character count (approximate)
-        const displayText = `${d.name} (${d.count})`;
-        const textWidth = displayText.length * 6.5;
-        return textWidth + 16; // Add padding
+        // Find the width needed for both lines
+        const pathText = d.name;
+        const statsText = `${d.count} (${d.percentage.toFixed(1)}%)`;
+        // Use whichever is longer
+        const maxLength = Math.max(pathText.length, statsText.length);
+        const textWidth = maxLength * 6.5;
+        return textWidth + 10; // Add padding
       })
-      .attr("height", 20)
-      .attr("fill", "hsl(var(--neutral-700))")
-      .attr("stroke", "hsl(var(--neutral-600))")
+      .attr("height", 34) // Taller for two lines of text
+      .attr("fill", "hsl(var(--neutral-800))")
+      .attr("stroke", "hsl(var(--neutral-700))")
       .attr("stroke-width", 1)
       .attr("rx", 2) // Rounded corners
       .attr("ry", 2)
       .attr("opacity", 0.8);
 
+    // Path text (first line)
     nodeGroups
       .append("text")
       .attr("class", "node-text")
       .attr("x", 23) // Add left padding inside card
-      .attr("y", (d) => d.height / 2 + 4) // Center text vertically relative to the bar
-      .text((d) => `${d.name} (${d.count})`)
+      .attr("y", (d) => d.height / 2 - 2) // Position for first line
+      .text((d) => d.name)
       .attr("font-size", "12px")
       .attr("fill", "white")
       .attr("text-anchor", "start");
-  }, [journeyData, steps]);
+
+    // Count and percentage text (second line)
+    nodeGroups
+      .append("text")
+      .attr("class", "node-text")
+      .attr("x", 23) // Same left padding
+      .attr("y", (d) => d.height / 2 + 12) // Position for second line
+      .text((d) => `${d.count} (${d.percentage.toFixed(1)}%)`)
+      .attr("font-size", "11px") // Slightly smaller font
+      .attr("fill", "hsl(var(--muted-foreground))")
+      .attr("text-anchor", "start");
+  }, [data, steps]);
 
   return (
     <div className="container mx-auto p-4">
@@ -378,7 +397,7 @@ export default function JourneysPage() {
                 <SelectValue placeholder="Number of steps" />
               </SelectTrigger>
               <SelectContent>
-                {[2, 3, 4, 5, 6].map((step) => (
+                {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => (
                   <SelectItem key={step} value={step.toString()}>
                     {step} steps
                   </SelectItem>
@@ -404,7 +423,7 @@ export default function JourneysPage() {
             </Alert>
           )}
 
-          {journeyData.length === 0 && !isLoading && !error && (
+          {data?.journeys?.length === 0 && !isLoading && !error && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>No Data</AlertTitle>
@@ -414,7 +433,7 @@ export default function JourneysPage() {
             </Alert>
           )}
 
-          {journeyData.length > 0 && (
+          {data?.journeys?.length && data?.journeys?.length > 0 && (
             <div className="overflow-x-auto">
               <svg ref={svgRef} className="w-full h-[1000px]" />
             </div>
