@@ -245,6 +245,72 @@ export default function JourneysPage() {
       .attr("stroke", "hsl(var(--accent-500))")
       .attr("stroke-width", (d) => linkWidthScale(d.value))
       .attr("opacity", 0.6)
+      .attr("data-id", (d, i) => `link-${i}`) // Add unique identifier for each link
+      // Add hover effects
+      .on("mouseover", function (event, d) {
+        const hoveredLink = d3.select(this);
+        const hoveredLinkId = hoveredLink.attr("data-id");
+
+        // Find source and target nodes for this link
+        const source = nodes.find((n) => n.id === d.source);
+        const target = nodes.find((n) => n.id === d.target);
+
+        // Make all other links more transparent
+        d3.selectAll(".link")
+          .transition()
+          .duration(200)
+          .attr("opacity", function () {
+            return d3.select(this).attr("data-id") === hoveredLinkId
+              ? 0.9
+              : 0.1;
+          });
+
+        // Make all node bars more transparent except the connected ones
+        d3.selectAll(".node-bar")
+          .transition()
+          .duration(200)
+          .attr("opacity", function (nodeData: any) {
+            return nodeData.id === source?.id || nodeData.id === target?.id
+              ? 1
+              : 0.2;
+          });
+
+        // Make all node cards more transparent except the connected ones
+        d3.selectAll(".node-card")
+          .transition()
+          .duration(200)
+          .attr("opacity", function (nodeData: any) {
+            return nodeData.id === source?.id || nodeData.id === target?.id
+              ? 0.9
+              : 0.2;
+          });
+
+        // Highlight connected node text
+        d3.selectAll(".node-text")
+          .transition()
+          .duration(200)
+          .attr("opacity", function (nodeData: any) {
+            return nodeData.id === source?.id || nodeData.id === target?.id
+              ? 1
+              : 0.3;
+          });
+      })
+      .on("mouseout", function () {
+        // Reset all opacities
+        d3.selectAll(".link").transition().duration(200).attr("opacity", 0.6);
+
+        d3.selectAll(".node-bar").transition().duration(200).attr("opacity", 1);
+
+        d3.selectAll(".node-card")
+          .transition()
+          .duration(200)
+          .attr("opacity", 0.8);
+
+        d3.selectAll(".node-text")
+          .transition()
+          .duration(200)
+          .attr("opacity", 1);
+      })
       // Add tooltips showing the exact count
       .append("title")
       .text((d) => `Count: ${d.value}`);
@@ -259,6 +325,7 @@ export default function JourneysPage() {
 
     nodeGroups
       .append("rect")
+      .attr("class", "node-bar")
       .attr("width", 10)
       .attr("height", (d) => d.height)
       .attr("fill", "hsl(var(--neutral-500))")
@@ -268,6 +335,7 @@ export default function JourneysPage() {
     // Add a card background for text
     const textBackgrounds = nodeGroups
       .append("rect")
+      .attr("class", "node-card")
       .attr("x", 15)
       .attr("y", (d) => d.height / 2 - 10) // Position above the vertical center
       .attr("width", (d) => {
@@ -286,43 +354,13 @@ export default function JourneysPage() {
 
     nodeGroups
       .append("text")
+      .attr("class", "node-text")
       .attr("x", 23) // Add left padding inside card
       .attr("y", (d) => d.height / 2 + 4) // Center text vertically relative to the bar
       .text((d) => `${d.name} (${d.count})`)
       .attr("font-size", "12px")
       .attr("fill", "white")
       .attr("text-anchor", "start");
-
-    // Add step labels at the top with cards too
-    for (let i = 0; i < steps; i++) {
-      const stepGroup = g
-        .append("g")
-        .attr("transform", `translate(${i * stepWidth}, -20)`);
-
-      // Add card background
-      stepGroup
-        .append("rect")
-        .attr("width", (d) => {
-          const text = `Step ${i + 1}`;
-          const textWidth = text.length * 7;
-          return textWidth + 10;
-        })
-        .attr("height", 20)
-        .attr("fill", "hsl(var(--red-500))")
-        .attr("rx", 4)
-        .attr("ry", 4)
-        .attr("opacity", 0.8);
-
-      // Add text
-      stepGroup
-        .append("text")
-        .attr("x", 5)
-        .attr("y", 14)
-        .text(`Step ${i + 1}`)
-        .attr("font-size", "12px")
-        .attr("font-weight", "bold")
-        .attr("fill", "white");
-    }
   }, [journeyData, steps]);
 
   return (
