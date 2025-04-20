@@ -61,7 +61,7 @@ export const getJourneys = async (
             ORDER BY user_id, timestamp
           )
           GROUP BY user_id
-          HAVING length(path_sequence) >= ${maxSteps}
+          HAVING length(path_sequence) >= 2
         ),
         
         journey_segments AS (
@@ -71,13 +71,13 @@ export const getJourneys = async (
           FROM user_paths
           GROUP BY journey
           ORDER BY users_count DESC
-          LIMIT 20
+          LIMIT 100
         )
         
         SELECT
           journey,
           users_count,
-          users_count / (
+          users_count * 100 / (
             SELECT count(DISTINCT user_id) 
             FROM events 
             WHERE site_id = ${site} ${timeStatement || ""}
@@ -89,55 +89,13 @@ export const getJourneys = async (
       //   },
     });
 
-    console.info(`
-        WITH user_paths AS (
-          SELECT
-            user_id,
-            arrayCompact(groupArray(pathname)) AS path_sequence
-          FROM (
-            SELECT
-              user_id,
-              pathname,
-              timestamp
-            FROM events
-            WHERE 
-              site_id = ${site}
-              ${timeStatement || ""}
-              AND type = 'pageview'
-            ORDER BY user_id, timestamp
-          )
-          GROUP BY user_id
-          HAVING length(path_sequence) >= ${maxSteps}
-        ),
-        
-        journey_segments AS (
-          SELECT
-            arraySlice(path_sequence, 1, ${maxSteps}) AS journey,
-            count() AS users_count
-          FROM user_paths
-          GROUP BY journey
-          ORDER BY users_count DESC
-          LIMIT 20
-        )
-        
-        SELECT
-          journey,
-          users_count,
-          users_count / (
-            SELECT count(DISTINCT user_id) 
-            FROM events 
-            WHERE site_id = ${site} ${timeStatement || ""}
-          ) AS percentage
-        FROM journey_segments
-      `);
-
     const data = await result.json();
 
     return reply.send({
       journeys: data.data.map((item: any) => ({
         path: item.journey,
-        count: item.users_count,
-        percentage: item.percentage,
+        count: Number(item.users_count),
+        percentage: Number(item.percentage),
       })),
     });
   } catch (error) {
