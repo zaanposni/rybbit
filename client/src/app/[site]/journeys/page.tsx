@@ -24,18 +24,20 @@ const MAX_LINK_HEIGHT = 100;
 export default function JourneysPage() {
   const params = useParams<{ site: string }>();
   const [steps, setSteps] = useState<number>(3);
+  const [maxJourneys, setMaxJourneys] = useState<number>(25);
 
   const [time, setTime] = useState<Time>({
     mode: "range",
     startDate: DateTime.now().minus({ days: 7 }).toISODate(),
     endDate: DateTime.now().toISODate(),
     wellKnown: "Last 7 days",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   } as DateRangeMode);
 
   const { data, isLoading, error } = useJourneys({
     siteId: params.site,
     steps,
-    timezone: "UTC",
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     time,
   });
 
@@ -65,7 +67,7 @@ export default function JourneysPage() {
     const nodes: any[] = [];
     const links: any[] = [];
 
-    data?.journeys?.slice(0, 25).forEach((journey) => {
+    data?.journeys?.slice(0, maxJourneys).forEach((journey) => {
       for (let i = 0; i < journey.path.length; i++) {
         const stepName = journey.path[i];
         const stepKey = `${i}_${stepName}`;
@@ -319,7 +321,6 @@ export default function JourneysPage() {
       .append("title")
       .text((d) => `Count: ${d.value}`);
 
-    // Create nodes as bars instead of circles
     const nodeGroups = g
       .selectAll(".node")
       .data(nodes)
@@ -341,7 +342,7 @@ export default function JourneysPage() {
       .append("rect")
       .attr("class", "node-card")
       .attr("x", 18)
-      .attr("y", (d) => d.height / 2 - 15) // Position above the vertical center, taller card
+      .attr("y", (d) => d.height / 2 - 17) // Position above the vertical center, taller card
       .attr("width", (d) => {
         // Find the width needed for both lines
         const pathText = d.name;
@@ -351,7 +352,7 @@ export default function JourneysPage() {
         const textWidth = maxLength * 6.5;
         return textWidth + 10; // Add padding
       })
-      .attr("height", 34) // Taller for two lines of text
+      .attr("height", 35) // Taller for two lines of text
       .attr("fill", "hsl(var(--neutral-800))")
       .attr("stroke", "hsl(var(--neutral-700))")
       .attr("stroke-width", 1)
@@ -376,11 +377,12 @@ export default function JourneysPage() {
       .attr("class", "node-text")
       .attr("x", 23) // Same left padding
       .attr("y", (d) => d.height / 2 + 12) // Position for second line
-      .text((d) => `${d.count} (${d.percentage.toFixed(1)}%)`)
+      .text((d) => `${d.count.toLocaleString()}`)
+      //   .text((d) => `${d.count.toLocaleString()} (${d.percentage.toFixed(1)}%)`)
       .attr("font-size", "11px") // Slightly smaller font
-      .attr("fill", "hsl(var(--muted-foreground))")
+      .attr("fill", "hsl(var(--neutral-300))")
       .attr("text-anchor", "start");
-  }, [data, steps]);
+  }, [data, steps, maxJourneys]);
 
   return (
     <div className="container mx-auto p-4">
@@ -393,13 +395,28 @@ export default function JourneysPage() {
               value={steps.toString()}
               onValueChange={(value) => setSteps(Number(value))}
             >
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[120px]">
                 <SelectValue placeholder="Number of steps" />
               </SelectTrigger>
               <SelectContent>
                 {[2, 3, 4, 5, 6, 7, 8, 9, 10].map((step) => (
                   <SelectItem key={step} value={step.toString()}>
                     {step} steps
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={maxJourneys.toString()}
+              onValueChange={(value) => setMaxJourneys(Number(value))}
+            >
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder="Max journeys" />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100].map((count) => (
+                  <SelectItem key={count} value={count.toString()}>
+                    {count} journeys
                   </SelectItem>
                 ))}
               </SelectContent>

@@ -46,11 +46,11 @@ export const getJourneys = async (
       query: `
         WITH user_paths AS (
           SELECT
-            user_id,
+            session_id,
             arrayCompact(groupArray(pathname)) AS path_sequence
           FROM (
             SELECT
-              user_id,
+              session_id,
               pathname,
               timestamp
             FROM events
@@ -58,27 +58,27 @@ export const getJourneys = async (
               site_id = ${site}
               ${timeStatement || ""}
               AND type = 'pageview'
-            ORDER BY user_id, timestamp
+            ORDER BY session_id, timestamp
           )
-          GROUP BY user_id
+          GROUP BY session_id
           HAVING length(path_sequence) >= 2
         ),
         
         journey_segments AS (
           SELECT
             arraySlice(path_sequence, 1, ${maxSteps}) AS journey,
-            count() AS users_count
+            count() AS sessions_count
           FROM user_paths
           GROUP BY journey
-          ORDER BY users_count DESC
+          ORDER BY sessions_count DESC
           LIMIT 100
         )
         
         SELECT
           journey,
-          users_count,
-          users_count * 100 / (
-            SELECT count(DISTINCT user_id) 
+          sessions_count,
+          sessions_count * 100 / (
+            SELECT count(DISTINCT session_id) 
             FROM events 
             WHERE site_id = ${site} ${timeStatement || ""}
           ) AS percentage
@@ -94,7 +94,7 @@ export const getJourneys = async (
     return reply.send({
       journeys: data.data.map((item: any) => ({
         path: item.journey,
-        count: Number(item.users_count),
+        count: Number(item.sessions_count),
         percentage: Number(item.percentage),
       })),
     });
