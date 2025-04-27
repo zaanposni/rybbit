@@ -28,7 +28,7 @@ services:
     volumes:
       - clickhouse-data:/var/lib/clickhouse
       # Reduce clickhouse logging
-      - ./clickhouse_config:/etc/clickhouse-server/config.d
+      # - ./clickhouse_config:/etc/clickhouse-server/config.d
     environment:
       - CLICKHOUSE_DB=analytics
       - CLICKHOUSE_USER=default
