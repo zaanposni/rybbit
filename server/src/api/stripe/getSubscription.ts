@@ -3,7 +3,12 @@ import { stripe } from "../../lib/stripe.js";
 import { db } from "../../db/postgres/postgres.js";
 import { user as userSchema } from "../../db/postgres/schema.js";
 import { eq } from "drizzle-orm";
-import { STRIPE_PRICES, StripePlan } from "../../lib/const.js";
+import {
+  STRIPE_PRICES,
+  StripePlan,
+  TRIAL_DURATION_DAYS,
+  TRIAL_EVENT_LIMIT,
+} from "../../lib/const.js";
 import Stripe from "stripe";
 
 // Function to find plan details by price ID
@@ -21,6 +26,7 @@ export async function getSubscriptionInner(userId: string) {
     .select({
       stripeCustomerId: userSchema.stripeCustomerId,
       monthlyEventCount: userSchema.monthlyEventCount,
+      createdAt: userSchema.createdAt,
     })
     .from(userSchema)
     .where(eq(userSchema.id, userId))
@@ -28,60 +34,89 @@ export async function getSubscriptionInner(userId: string) {
 
   const user = userResult[0];
 
-  if (!user || !user.stripeCustomerId) {
-    // If no customer ID, they definitely don't have a subscription
+  if (!user) {
     return null;
   }
 
-  // 2. List active subscriptions for the customer from Stripe
-  const subscriptions = await (stripe as Stripe).subscriptions.list({
-    customer: user.stripeCustomerId,
-    status: "active", // Only fetch active subscriptions
-    limit: 1, // Users should only have one active subscription in this model
-    expand: ["data.plan.product"], // Expand to get product details if needed
-  });
+  // Check if user has an active Stripe subscription
+  if (user.stripeCustomerId) {
+    // 2. List active subscriptions for the customer from Stripe
+    const subscriptions = await (stripe as Stripe).subscriptions.list({
+      customer: user.stripeCustomerId,
+      status: "active", // Only fetch active subscriptions
+      limit: 1, // Users should only have one active subscription in this model
+      expand: ["data.plan.product"], // Expand to get product details if needed
+    });
 
-  if (subscriptions.data.length === 0) {
-    // No active subscription found
-    return null;
+    if (subscriptions.data.length > 0) {
+      const sub = subscriptions.data[0];
+      const priceId = sub.items.data[0]?.price.id;
+
+      if (!priceId) {
+        throw new Error("Subscription item price ID not found");
+      }
+
+      // 3. Find corresponding plan details from your constants
+      const planDetails = findPlanDetails(priceId);
+
+      if (!planDetails) {
+        console.error("Plan details not found for price ID:", priceId);
+        // Still return the basic subscription info even if local plan details missing
+        return {
+          id: sub.id,
+          planName: "Unknown Plan", // Indicate missing details
+          status: sub.status,
+          currentPeriodEnd: new Date(sub.current_period_end * 1000),
+          eventLimit: 0, // Unknown limit
+          monthlyEventCount: user.monthlyEventCount,
+          interval: sub.items.data[0]?.price.recurring?.interval ?? "unknown",
+        };
+      }
+
+      // 4. Format and return the subscription data
+      const responseData = {
+        id: sub.id,
+        planName: planDetails.name,
+        status: sub.status,
+        currentPeriodEnd: new Date(sub.current_period_end * 1000), // Convert Unix timestamp to Date
+        eventLimit: planDetails.limits.events,
+        monthlyEventCount: user.monthlyEventCount,
+        interval: sub.items.data[0]?.price.recurring?.interval ?? "unknown",
+      };
+
+      return responseData;
+    }
   }
 
-  const sub = subscriptions.data[0];
-  const priceId = sub.items.data[0]?.price.id;
+  // If we get here, the user has no active paid subscription
+  // Check if they're in the trial period
+  const createdAt = new Date(user.createdAt);
+  const now = new Date();
+  const trialEndDate = new Date(createdAt);
+  trialEndDate.setDate(trialEndDate.getDate() + TRIAL_DURATION_DAYS);
 
-  if (!priceId) {
-    throw new Error("Subscription item price ID not found");
-  }
+  const isInTrialPeriod = now < trialEndDate;
 
-  // 3. Find corresponding plan details from your constants
-  const planDetails = findPlanDetails(priceId);
-
-  if (!planDetails) {
-    console.error("Plan details not found for price ID:", priceId);
-    // Still return the basic subscription info even if local plan details missing
+  if (isInTrialPeriod) {
+    // User is in trial period
     return {
-      id: sub.id,
-      planName: "Unknown Plan", // Indicate missing details
-      status: sub.status,
-      currentPeriodEnd: new Date(sub.current_period_end * 1000),
-      eventLimit: 0, // Unknown limit
+      id: null,
+      planName: "trial",
+      status: "trialing",
+      currentPeriodEnd: trialEndDate,
+      eventLimit: TRIAL_EVENT_LIMIT,
       monthlyEventCount: user.monthlyEventCount,
-      interval: sub.items.data[0]?.price.recurring?.interval ?? "unknown",
+      interval: "month",
+      isTrial: true,
+      trialDaysRemaining: Math.ceil(
+        (trialEndDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+      ),
     };
   }
 
-  // 4. Format and return the subscription data
-  const responseData = {
-    id: sub.id,
-    planName: planDetails.name,
-    status: sub.status,
-    currentPeriodEnd: new Date(sub.current_period_end * 1000), // Convert Unix timestamp to Date
-    eventLimit: planDetails.limits.events,
-    monthlyEventCount: user.monthlyEventCount,
-    interval: sub.items.data[0]?.price.recurring?.interval ?? "unknown",
-  };
-
-  return responseData;
+  // User has no subscription and trial has ended - return null
+  // No free plan fallback
+  return null;
 }
 
 export async function getSubscription(
@@ -96,6 +131,14 @@ export async function getSubscription(
 
   try {
     const responseData = await getSubscriptionInner(userId);
+
+    // If trial has expired and no subscription, inform the user
+    if (!responseData) {
+      return reply.send({
+        status: "expired",
+        message: "Your trial has expired. Please subscribe to continue.",
+      });
+    }
 
     return reply.send(responseData);
   } catch (error: any) {

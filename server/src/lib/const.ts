@@ -4,6 +4,10 @@ dotenv.config();
 
 export const IS_CLOUD = process.env.CLOUD === "true";
 
+// Trial constants
+export const TRIAL_DURATION_DAYS = 14;
+export const TRIAL_EVENT_LIMIT = 100000;
+
 // Define a type for the plan objects
 export interface StripePlan {
   priceId: string;

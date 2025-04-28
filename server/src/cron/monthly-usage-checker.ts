@@ -6,9 +6,12 @@ import { db } from "../db/postgres/postgres.js";
 import { processResults } from "../api/analytics/utils.js";
 import { stripe } from "../lib/stripe.js";
 import Stripe from "stripe";
+import { DateTime } from "luxon";
 
 // Default event limit for users without an active subscription
-const DEFAULT_EVENT_LIMIT = 10_000;
+const DEFAULT_EVENT_LIMIT = 0;
+
+const TRIAL_EVENT_LIMIT = 1_000_000;
 
 // Global set to track site IDs that have exceeded their monthly limits
 export const sitesOverLimit = new Set<number>();
@@ -62,8 +65,16 @@ async function getSiteIdsForUser(userId: string): Promise<number[]> {
 async function getUserSubscriptionInfo(userData: {
   id: string;
   stripeCustomerId: string | null;
+  createdAt: string;
 }): Promise<[number, string | null]> {
   if (!userData.stripeCustomerId) {
+    const createdAtDate = DateTime.fromSQL(userData.createdAt);
+
+    // If the user was created in the last 14 days, use the trial limit
+    if (createdAtDate.diffNow().days < 14) {
+      return [TRIAL_EVENT_LIMIT, getStartOfMonth()];
+    }
+
     // No Stripe customer ID, use default limit and start of current month
     return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
   }
@@ -169,6 +180,7 @@ export async function updateUsersMonthlyUsage() {
         id: user.id,
         email: user.email,
         stripeCustomerId: user.stripeCustomerId,
+        createdAt: user.createdAt,
       })
       .from(user);
 

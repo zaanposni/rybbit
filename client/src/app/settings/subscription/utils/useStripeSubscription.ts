@@ -10,6 +10,9 @@ interface SubscriptionData {
   eventLimit: number;
   interval: string;
   cancelAtPeriodEnd?: boolean;
+  isTrial?: boolean;
+  trialDaysRemaining?: number;
+  message?: string; // For expired trial message
 }
 
 export function useStripeSubscription() {
@@ -31,7 +34,17 @@ export function useStripeSubscription() {
       }
     }
 
-    return response.json();
+    const data = await response.json();
+
+    // If status is expired, the trial has ended and no subscription exists
+    if (data.status === "expired") {
+      return {
+        status: "expired",
+        message: data.message,
+      };
+    }
+
+    return data;
   };
 
   const { data, isLoading, error, refetch } = useQuery<SubscriptionData>({

@@ -27,7 +27,7 @@ const EVENT_TIERS = [
 
 // Define types for plans
 interface PlanTemplate {
-  id: "free" | "pro";
+  id: "pro";
   name: string;
   price?: string;
   interval?: string;
@@ -55,18 +55,8 @@ interface StripePrice {
   };
 }
 
-// Plan templates
+// Plan templates - only Pro plan since free tier is removed
 const PLAN_TEMPLATES: PlanTemplate[] = [
-  {
-    id: "free",
-    name: "Free",
-    price: "$0",
-    interval: "month",
-    description: "Get started with basic analytics",
-    baseFeatures: ["6 month data retention"],
-    color:
-      "bg-gradient-to-br from-neutral-100 to-neutral-200 dark:from-neutral-800 dark:to-neutral-900",
-  },
   {
     id: "pro",
     name: "Pro",
@@ -84,20 +74,19 @@ function getFormattedPrice(price: number): string {
 
 // Find the appropriate price for a tier at current event limit
 function findPriceForTier(
-  tier: "free" | "pro",
   eventLimit: number,
   interval: "month" | "year"
 ): StripePrice | null {
   // Determine if we need to look for annual plans
   const isAnnual = interval === "year";
-  const namePattern = isAnnual ? `${tier}-annual` : tier;
+  const namePattern = isAnnual ? "pro-annual" : "pro";
 
   // Filter plans by name pattern (with or without -annual suffix) and interval
   const plans = STRIPE_PRICES.filter(
     (plan) =>
       (isAnnual
-        ? plan.name.startsWith(tier) && plan.name.includes("-annual")
-        : plan.name.startsWith(tier) && !plan.name.includes("-annual")) &&
+        ? plan.name.startsWith("pro") && plan.name.includes("-annual")
+        : plan.name.startsWith("pro") && !plan.name.includes("-annual")) &&
       plan.interval === interval
   );
 
@@ -118,127 +107,103 @@ function calculateSavings(monthlyPrice: number, annualPrice: number): string {
 }
 
 export default function Subscribe() {
-  const [selectedTier, setSelectedTier] = useState<"free" | "pro">("free");
-  const [eventLimitIndex, setEventLimitIndex] = useState<number>(0); // Default to 20k (index 0)
+  const [eventLimitIndex, setEventLimitIndex] = useState<number>(0); // Default to 100k (index 0)
   const [isAnnual, setIsAnnual] = useState<boolean>(true);
   const [isLoading, setIsLoading] = useState(false);
   const { data: sessionData } = authClient.useSession();
 
   const eventLimit = EVENT_TIERS[eventLimitIndex];
 
-  // TODO: Implement proper check if user already has an active subscription
-  const isFreeAvailable = !!sessionData?.user; // Placeholder check based on login
-
   // Handle subscription
-  async function handleSubscribe(planId: "free" | "pro"): Promise<void> {
-    if (planId === "free") {
-      return;
-    }
-
+  async function handleSubscribe(): Promise<void> {
     // Check if user is logged in directly
     if (!sessionData?.user) {
       toast.error("Please log in to subscribe.");
       return;
     }
 
-    if (planId === "pro") {
-      const selectedTierPrice = findPriceForTier(
-        "pro",
-        eventLimit,
-        isAnnual ? "year" : "month"
+    const selectedTierPrice = findPriceForTier(
+      eventLimit,
+      isAnnual ? "year" : "month"
+    );
+
+    if (!selectedTierPrice) {
+      toast.error("Selected pricing plan not found. Please adjust the slider.");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // Use NEXT_PUBLIC_BACKEND_URL if available, otherwise use relative path for same-origin requests
+      const baseUrl = window.location.origin;
+      const successUrl = `${baseUrl}/settings/subscription?session_id={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${baseUrl}/subscribe`;
+
+      const response = await fetch(
+        `${BACKEND_URL}/stripe/create-checkout-session`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include", // Send cookies
+          body: JSON.stringify({
+            priceId: selectedTierPrice.priceId,
+            successUrl: successUrl,
+            cancelUrl: cancelUrl,
+          }),
+        }
       );
 
-      if (!selectedTierPrice) {
-        toast.error(
-          "Selected pricing plan not found. Please adjust the slider."
-        );
-        return;
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to create checkout session.");
       }
 
-      setIsLoading(true);
-      try {
-        // Use NEXT_PUBLIC_BACKEND_URL if available, otherwise use relative path for same-origin requests
-        const baseUrl = window.location.origin;
-        const successUrl = `${baseUrl}/settings/subscription?session_id={CHECKOUT_SESSION_ID}`;
-        const cancelUrl = `${baseUrl}/subscribe`;
-
-        const response = await fetch(
-          `${BACKEND_URL}/stripe/create-checkout-session`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            credentials: "include", // Send cookies
-            body: JSON.stringify({
-              priceId: selectedTierPrice.priceId,
-              successUrl: successUrl,
-              cancelUrl: cancelUrl,
-            }),
-          }
-        );
-
-        const data = await response.json();
-
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to create checkout session.");
-        }
-
-        if (data.checkoutUrl) {
-          window.location.href = data.checkoutUrl; // Redirect to Stripe checkout
-        } else {
-          throw new Error("Checkout URL not received.");
-        }
-      } catch (error: any) {
-        toast.error(`Subscription failed: ${error.message}`);
-        setIsLoading(false); // Stop loading on error
+      if (data.checkoutUrl) {
+        window.location.href = data.checkoutUrl; // Redirect to Stripe checkout
+      } else {
+        throw new Error("Checkout URL not received.");
       }
+    } catch (error: any) {
+      toast.error(`Subscription failed: ${error.message}`);
+      setIsLoading(false); // Stop loading on error
     }
   }
 
   // Handle slider changes
   function handleSliderChange(value: number[]): void {
     setEventLimitIndex(value[0]);
-
-    // If event limit is over 20k, ensure free plan is not selected
-    if (EVENT_TIERS[value[0]] > 10_000 && selectedTier === "free") {
-      setSelectedTier("pro");
-    }
   }
 
   // Find the current prices for each tier based on the event limit
   const interval = isAnnual ? "year" : "month";
-  const basicTierPrice = findPriceForTier("pro", eventLimit, interval);
+  const proPricing = findPriceForTier(eventLimit, interval);
 
   // Also get monthly prices for savings calculation
-  const basicMonthly = findPriceForTier("pro", eventLimit, "month");
-  const basicAnnual = findPriceForTier("pro", eventLimit, "year");
+  const proMonthly = findPriceForTier(eventLimit, "month");
+  const proAnnual = findPriceForTier(eventLimit, "year");
 
   // Generate plan objects with current state
   const plans: Plan[] = PLAN_TEMPLATES.map((template) => {
     const plan = { ...template } as Plan;
 
-    if (plan.id === "pro") {
-      const tierPrice = basicTierPrice;
-      plan.price = tierPrice ? getFormattedPrice(tierPrice.price) : "$19+";
-      plan.interval = isAnnual ? "year" : "month";
+    const tierPrice = proPricing;
+    plan.price = tierPrice ? getFormattedPrice(tierPrice.price) : "$19+";
+    plan.interval = isAnnual ? "year" : "month";
 
-      if (basicMonthly && basicAnnual) {
-        plan.monthlyPrice = basicMonthly.price;
-        plan.annualPrice = basicAnnual.price;
-        plan.savings = calculateSavings(basicMonthly.price, basicAnnual.price);
-      }
-    } else {
-      plan.price = "$0";
-      plan.interval = "month";
+    if (proMonthly && proAnnual) {
+      plan.monthlyPrice = proMonthly.price;
+      plan.annualPrice = proAnnual.price;
+      plan.savings = calculateSavings(proMonthly.price, proAnnual.price);
     }
 
     // Add event limit feature at the beginning
-    const eventFeature =
-      plan.id === "free"
-        ? "10,000 events per month"
-        : `${Math.max(eventLimit, 100_000).toLocaleString()} events per month`;
-
+    const eventFeature = `${Math.max(
+      eventLimit,
+      100_000
+    ).toLocaleString()} events per month`;
     plan.features = [eventFeature, ...plan.baseFeatures];
 
     return plan;
@@ -252,19 +217,20 @@ export default function Subscribe() {
             Choose Your Analytics Plan
           </h1>
           <p className="text-lg text-neutral-600 dark:text-neutral-400 mb-6">
-            Find the perfect plan to track your site's performance
+            Upgrade for more events and advanced features
+          </p>
+          <p className="text-neutral-500 dark:text-neutral-400">
+            Your 14-day trial gives you access to all Pro features with up to
+            100,000 events. Subscribe to continue using the service after your
+            trial ends.
           </p>
         </div>
 
-        <div className="grid gap-8 md:grid-cols-[300px_auto] max-w-4xl mx-auto">
+        <div className="max-w-xl mx-auto">
           {plans.map((plan) => (
             <div key={plan.id} className="transition-all duration-300 h-full">
               <Card
-                className={`flex flex-col h-full transition-transform duration-300 transform hover:scale-[1.01] hover:shadow-md cursor-pointer overflow-hidden ${
-                  plan.id === "free" && !isFreeAvailable
-                    ? "opacity-50 cursor-not-allowed"
-                    : ""
-                }`}
+                className={`flex flex-col h-full transition-transform duration-300 transform hover:scale-[1.01] hover:shadow-md cursor-pointer overflow-hidden`}
               >
                 <div className={`${plan.color} h-3 w-full`}></div>
 
@@ -275,97 +241,93 @@ export default function Subscribe() {
                   </CardDescription>
                 </CardHeader>
 
-                {plan.id === "pro" && (
-                  <>
-                    <CardContent className="pb-0">
-                      {/* Billing toggle buttons */}
-                      <div className="flex justify-center mb-6">
-                        <div className="bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg inline-flex relative">
-                          <button
-                            onClick={() => setIsAnnual(false)}
-                            className={cn(
-                              "px-6 py-2 rounded-lg text-sm font-medium transition-all",
-                              !isAnnual
-                                ? "bg-white dark:bg-neutral-700 shadow-sm text-black dark:text-white"
-                                : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
-                            )}
-                          >
-                            Monthly
-                          </button>
-                          <div className="relative">
-                            <button
-                              onClick={() => setIsAnnual(true)}
-                              className={cn(
-                                "px-6 py-2 rounded-lg text-sm font-medium transition-all",
-                                isAnnual
-                                  ? "bg-white dark:bg-neutral-700 shadow-sm text-black dark:text-white"
-                                  : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
-                              )}
-                            >
-                              Annual
-                            </button>
-                            <Badge
-                              className="absolute -top-4 -right-2  text-white border-0 pointer-events-none"
-                              variant="green"
-                            >
-                              2 months free
-                            </Badge>
-                          </div>
-                        </div>
+                <CardContent className="pb-0">
+                  {/* Billing toggle buttons */}
+                  <div className="flex justify-center mb-6">
+                    <div className="bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg inline-flex relative">
+                      <button
+                        onClick={() => setIsAnnual(false)}
+                        className={cn(
+                          "px-6 py-2 rounded-lg text-sm font-medium transition-all",
+                          !isAnnual
+                            ? "bg-white dark:bg-neutral-700 shadow-sm text-black dark:text-white"
+                            : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
+                        )}
+                      >
+                        Monthly
+                      </button>
+                      <div className="relative">
+                        <button
+                          onClick={() => setIsAnnual(true)}
+                          className={cn(
+                            "px-6 py-2 rounded-lg text-sm font-medium transition-all",
+                            isAnnual
+                              ? "bg-white dark:bg-neutral-700 shadow-sm text-black dark:text-white"
+                              : "text-neutral-600 dark:text-neutral-400 hover:text-neutral-900 dark:hover:text-neutral-200"
+                          )}
+                        >
+                          Annual
+                        </button>
+                        <Badge
+                          className="absolute -top-4 -right-2  text-white border-0 pointer-events-none"
+                          variant="green"
+                        >
+                          2 months free
+                        </Badge>
                       </div>
+                    </div>
+                  </div>
 
-                      {/* Event slider */}
-                      <div className="mb-6">
-                        <div className="mb-4">
-                          <div className="flex justify-between mb-2 items-center">
-                            <div className="text-neutral-600 dark:text-neutral-400 text-sm">
-                              Events per month
-                              <div className="font-bold text-lg text-white">
-                                {eventLimit.toLocaleString()}
-                              </div>
-                            </div>
-                            <div className="flex items-baseline">
-                              <span className="text-3xl font-bold text-neutral-900 dark:text-white">
-                                {plan.price}
-                              </span>
-                              {plan.interval && (
-                                <span className="ml-1 text-neutral-500">
-                                  /{plan.interval}
-                                </span>
-                              )}
-                            </div>
+                  {/* Event slider */}
+                  <div className="mb-6">
+                    <div className="mb-4">
+                      <div className="flex justify-between mb-2 items-center">
+                        <div className="text-neutral-600 dark:text-neutral-400 text-sm">
+                          Events per month
+                          <div className="font-bold text-lg text-white">
+                            {eventLimit.toLocaleString()}
                           </div>
                         </div>
-
-                        <Slider
-                          defaultValue={[0]} // Default to index 0 (20k)
-                          max={EVENT_TIERS.length - 1}
-                          min={0}
-                          step={1}
-                          onValueChange={handleSliderChange}
-                          className="mb-3"
-                        />
-
-                        <div className="flex justify-between text-xs text-neutral-500">
-                          {EVENT_TIERS.map((tier, index) => (
-                            <span
-                              key={index}
-                              className={
-                                eventLimitIndex === index
-                                  ? "font-bold text-white"
-                                  : ""
-                              }
-                            >
-                              {tier >= 1_000_000
-                                ? `${tier / 1_000_000}M`
-                                : `${tier / 1_000}K`}
+                        <div className="flex items-baseline">
+                          <span className="text-3xl font-bold text-neutral-900 dark:text-white">
+                            {plan.price}
+                          </span>
+                          {plan.interval && (
+                            <span className="ml-1 text-neutral-500">
+                              /{plan.interval}
                             </span>
-                          ))}
+                          )}
                         </div>
                       </div>
-                    </CardContent>
-                  </>
-                )}
+                    </div>
+
+                    <Slider
+                      defaultValue={[0]} // Default to index 0 (100k)
+                      max={EVENT_TIERS.length - 1}
+                      min={0}
+                      step={1}
+                      onValueChange={handleSliderChange}
+                      className="mb-3"
+                    />
+
+                    <div className="flex justify-between text-xs text-neutral-500">
+                      {EVENT_TIERS.map((tier, index) => (
+                        <span
+                          key={index}
+                          className={
+                            eventLimitIndex === index
+                              ? "font-bold text-white"
+                              : ""
+                          }
+                        >
+                          {tier >= 1_000_000
+                            ? `${tier / 1_000_000}M`
+                            : `${tier / 1_000}K`}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </CardContent>
 
                 <CardContent className={"pt-0 flex-grow"}>
                   <div className="w-full h-px bg-neutral-200 dark:bg-neutral-800 mb-4"></div>
@@ -384,26 +346,14 @@ export default function Subscribe() {
                 </CardContent>
 
                 <CardFooter>
-                  {plan.id === "pro" ? (
-                    <Button
-                      onClick={() => handleSubscribe(plan.id)}
-                      className="w-full"
-                      disabled={isLoading}
-                      variant="success"
-                    >
-                      {isLoading
-                        ? "Processing..."
-                        : `Subscribe to ${plan.name}`}
-                    </Button>
-                  ) : (
-                    <Button
-                      className="w-full border-neutral-300 text-gray-700 dark:border-neutral-700 dark:text-neutral-300"
-                      variant="outline"
-                      disabled={!isFreeAvailable}
-                    >
-                      {isFreeAvailable ? "Current Plan" : "Not Available"}
-                    </Button>
-                  )}
+                  <Button
+                    onClick={handleSubscribe}
+                    className="w-full"
+                    disabled={isLoading}
+                    variant="success"
+                  >
+                    {isLoading ? "Processing..." : `Subscribe to ${plan.name}`}
+                  </Button>
                 </CardFooter>
               </Card>
             </div>

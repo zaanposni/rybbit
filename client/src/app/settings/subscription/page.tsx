@@ -2,11 +2,12 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { FreePlan } from "./components/FreePlan";
 import { ProPlan } from "./components/ProPlan";
 import { useStripeSubscription } from "./utils/useStripeSubscription";
 import { useUserOrganizations } from "../../../api/admin/organizations";
 import { NoOrganization } from "../../../components/NoOrganization";
+import { TrialPlan } from "./components/TrialPlan";
+import { ExpiredTrialPlan } from "./components/ExpiredTrialPlan";
 
 export default function SubscriptionPage() {
   const { data: activeSubscription, isLoading: isLoadingSubscription } =
@@ -19,8 +20,32 @@ export default function SubscriptionPage() {
 
   const isLoading = isLoadingSubscription || isLoadingOrganizations;
 
+  // Determine which plan to display
+  const renderPlanComponent = () => {
+    if (!hasOrganization) {
+      return (
+        <NoOrganization message="You need to be part of an organization to manage your subscription." />
+      );
+    }
+
+    if (!activeSubscription) {
+      return <ExpiredTrialPlan />;
+    }
+
+    // Check if trial expired
+    if (activeSubscription.status === "expired") {
+      return <ExpiredTrialPlan message={activeSubscription.message} />;
+    }
+
+    if (activeSubscription.isTrial) {
+      return <TrialPlan />;
+    }
+
+    return <ProPlan />;
+  };
+
   return (
-    <div className=" py-2">
+    <div className="py-2">
       <div className="flex justify-between items-center mb-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subscription</h1>
@@ -40,14 +65,8 @@ export default function SubscriptionPage() {
             </div>
           </CardContent>
         </Card>
-      ) : !activeSubscription ? (
-        hasOrganization ? (
-          <FreePlan />
-        ) : (
-          <NoOrganization message="You need to be part of an organization to manage your subscription." />
-        )
       ) : (
-        <ProPlan />
+        renderPlanComponent()
       )}
     </div>
   );

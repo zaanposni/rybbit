@@ -3,7 +3,6 @@ import { toast } from "sonner";
 import { Button } from "../../../../components/ui/button";
 import { Card, CardContent } from "../../../../components/ui/card";
 import { Progress } from "../../../../components/ui/progress";
-import { DEFAULT_EVENT_LIMIT } from "../utils/constants";
 import { formatDate, getPlanDetails, PlanTemplate } from "../utils/planUtils";
 import { useStripeSubscription } from "../utils/useStripeSubscription";
 import { PlanFeaturesCard } from "./PlanFeaturesCard";
@@ -21,7 +20,7 @@ export function ProPlan() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  const eventLimit = activeSubscription?.eventLimit || DEFAULT_EVENT_LIMIT;
+  const eventLimit = activeSubscription?.eventLimit || 0;
   const currentUsage = activeSubscription?.monthlyEventCount || 0;
   const usagePercentage =
     eventLimit > 0 ? Math.min((currentUsage / eventLimit) * 100, 100) : 0;
