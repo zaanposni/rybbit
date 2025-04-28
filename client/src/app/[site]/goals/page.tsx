@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useStore } from "../../../lib/store";
-import { DateSelector } from "../../../components/DateSelector/DateSelector";
 import { useGetGoals } from "../../../api/analytics/useGetGoals";
 import { getStartAndEndDate } from "../../../api/utils";
-import { Card } from "../../../components/ui/card";
-import GoalsList from "./components/GoalsList";
+import { SESSION_PAGE_FILTERS, useStore } from "../../../lib/store";
+import { SubHeader } from "../components/SubHeader/SubHeader";
 import CreateGoalButton from "./components/CreateGoalButton";
+import GoalsList from "./components/GoalsList";
 
 export default function GoalsPage() {
   const { time, filters, site, setTime } = useStore();
@@ -39,37 +38,33 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="p-6 h-full space-y-6">
+    <div className="p-2 md:p-4 max-w-[1400px] mx-auto space-y-3">
+      <SubHeader availableFilters={SESSION_PAGE_FILTERS} />
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Conversion Goals</h1>
-        <div className="flex items-center gap-4">
-          <DateSelector time={time} setTime={setTime} />
-          <CreateGoalButton siteId={Number(site)} />
-        </div>
+        <div />
+        <CreateGoalButton siteId={Number(site)} />
       </div>
 
-      <Card className="p-6">
-        {isLoading ? (
-          <div className="flex justify-center py-8">
-            <div className="animate-pulse">Loading goals data...</div>
-          </div>
-        ) : !goalsData || goalsData.data.length === 0 ? (
-          <div className="py-10 text-center">
-            <h3 className="text-lg font-medium">No goals configured yet</h3>
-            <p className="text-sm text-gray-500 mt-2">
-              Create your first conversion goal to start tracking important user
-              actions.
-            </p>
-          </div>
-        ) : (
-          <GoalsList
-            goals={goalsData.data}
-            siteId={Number(site)}
-            paginationMeta={goalsData.meta}
-            onPageChange={handlePageChange}
-          />
-        )}
-      </Card>
+      {isLoading ? (
+        <div className="flex justify-center py-8">
+          <div className="animate-pulse">Loading goals data...</div>
+        </div>
+      ) : !goalsData || goalsData.data.length === 0 ? (
+        <div className="py-10 text-center">
+          <h3 className="text-lg font-medium">No goals configured yet</h3>
+          <p className="text-sm text-gray-500 mt-2">
+            Create your first conversion goal to start tracking important user
+            actions.
+          </p>
+        </div>
+      ) : (
+        <GoalsList
+          goals={goalsData.data}
+          siteId={Number(site)}
+          paginationMeta={goalsData.meta}
+          onPageChange={handlePageChange}
+        />
+      )}
     </div>
   );
 }

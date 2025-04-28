@@ -10,7 +10,13 @@ import {
 } from "../../../../components/ui/card";
 import { Goal } from "../../../../api/analytics/useGetGoals";
 import { Button } from "../../../../components/ui/button";
-import { MoreHorizontal, Pencil, Trash } from "lucide-react";
+import {
+  FileText,
+  MoreHorizontal,
+  MousePointerClick,
+  Pencil,
+  Trash,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -85,17 +91,13 @@ export default function GoalCard({ goal, siteId }: GoalCardProps) {
             <div className="flex items-center">
               <span className="text-sm text-gray-500 mr-2">Type:</span>
               {goal.goalType === "path" ? (
-                <div className="flex items-center">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500/10 text-blue-500 mr-2">
-                    <span className="text-xs">/</span>
-                  </span>
+                <div className="flex items-center gap-1">
+                  <FileText className="w-4 h-4 text-blue-500" />
                   <span className="text-sm">Path Goal</span>
                 </div>
               ) : (
-                <div className="flex items-center">
-                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500/10 text-green-500 mr-2">
-                    <span className="text-xs">E</span>
-                  </span>
+                <div className="flex items-center gap-1">
+                  <MousePointerClick className="w-4 h-4 text-amber-500" />
                   <span className="text-sm">Event Goal</span>
                 </div>
               )}
