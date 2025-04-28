@@ -21,14 +21,12 @@ services:
 
   clickhouse:
     container_name: clickhouse
-    image: clickhouse/clickhouse-server:latest
+    image: altinity/clickhouse-server:25.2.2.27772.altinityantalya
     ports:
       - "8123:8123"
       - "9000:9000"
     volumes:
       - clickhouse-data:/var/lib/clickhouse
-      # Reduce clickhouse logging
-      # - ./clickhouse_config:/etc/clickhouse-server/config.d
     environment:
       - CLICKHOUSE_DB=analytics
       - CLICKHOUSE_USER=default
