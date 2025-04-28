@@ -21,7 +21,7 @@ services:
 
   clickhouse:
     container_name: clickhouse
-    image: altinity/clickhouse-server:25.2.2.27772.altinityantalya
+    image: clickhouse/clickhouse-server:latest
     ports:
       - "8123:8123"
       - "9000:9000"
