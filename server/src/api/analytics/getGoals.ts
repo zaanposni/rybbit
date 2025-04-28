@@ -3,7 +3,7 @@ import { db } from "../../db/postgres/postgres.js";
 import { goals } from "../../db/postgres/schema.js";
 import clickhouse from "../../db/clickhouse/clickhouse.js";
 import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
-import { eq } from "drizzle-orm";
+import { eq, desc, asc, sql } from "drizzle-orm";
 import {
   getFilterStatement,
   getTimeStatement,
@@ -43,6 +43,12 @@ interface GoalWithConversions {
 
 interface GetGoalsResponse {
   data: GoalWithConversions[];
+  meta: {
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
 }
 
 export async function getGoals(
@@ -55,12 +61,39 @@ export async function getGoals(
       endDate: string;
       timezone: string;
       filters?: string;
+      page?: string;
+      pageSize?: string;
+      sort?: string;
+      order?: "asc" | "desc";
     };
   }>,
   reply: FastifyReply
 ) {
   const { site } = request.params;
-  const { startDate, endDate, timezone, filters } = request.query;
+  const {
+    startDate,
+    endDate,
+    timezone,
+    filters,
+    page = "1",
+    pageSize = "10",
+    sort = "createdAt",
+    order = "desc",
+  } = request.query;
+
+  const pageNumber = parseInt(page, 10);
+  const pageSizeNumber = parseInt(pageSize, 10);
+
+  // Validate page and pageSize
+  if (isNaN(pageNumber) || pageNumber < 1) {
+    return reply.status(400).send({ error: "Invalid page number" });
+  }
+
+  if (isNaN(pageSizeNumber) || pageSizeNumber < 1 || pageSizeNumber > 100) {
+    return reply
+      .status(400)
+      .send({ error: "Invalid page size, must be between 1 and 100" });
+  }
 
   // Check user access to site
   const userHasAccessToSite = await getUserHasAccessToSitePublic(request, site);
@@ -69,15 +102,66 @@ export async function getGoals(
   }
 
   try {
-    // Fetch all goals for this site from PostgreSQL
-    const siteGoals = await db
-      .select()
+    // Count total goals for pagination metadata
+    const totalGoalsResult = await db
+      .select({ count: sql<number>`count(*)` })
       .from(goals)
       .where(eq(goals.siteId, Number(site)));
 
+    const totalGoals = totalGoalsResult[0]?.count || 0;
+    const totalPages = Math.ceil(totalGoals / pageSizeNumber);
+
+    // If no goals exist, return early with empty data
+    if (totalGoals === 0) {
+      return reply.send({
+        data: [],
+        meta: {
+          total: 0,
+          page: pageNumber,
+          pageSize: pageSizeNumber,
+          totalPages: 0,
+        },
+      });
+    }
+
+    // Apply sorting
+    let orderBy;
+    // Only allow sorting by valid columns
+    const validSortColumns = ["goalId", "name", "goalType", "createdAt"];
+    const sortColumn = validSortColumns.includes(sort) ? sort : "createdAt";
+
+    if (order === "asc") {
+      if (sortColumn === "goalId") orderBy = asc(goals.goalId);
+      else if (sortColumn === "name") orderBy = asc(goals.name);
+      else if (sortColumn === "goalType") orderBy = asc(goals.goalType);
+      else orderBy = asc(goals.createdAt);
+    } else {
+      if (sortColumn === "goalId") orderBy = desc(goals.goalId);
+      else if (sortColumn === "name") orderBy = desc(goals.name);
+      else if (sortColumn === "goalType") orderBy = desc(goals.goalType);
+      else orderBy = desc(goals.createdAt);
+    }
+
+    // Fetch paginated goals for this site from PostgreSQL
+    const siteGoals = await db
+      .select()
+      .from(goals)
+      .where(eq(goals.siteId, Number(site)))
+      .orderBy(orderBy)
+      .limit(pageSizeNumber)
+      .offset((pageNumber - 1) * pageSizeNumber);
+
     if (siteGoals.length === 0) {
-      // If no goals exist, return early with empty data
-      return reply.send({ data: [] });
+      // If no goals for this page, return empty data
+      return reply.send({
+        data: [],
+        meta: {
+          total: totalGoals,
+          page: pageNumber,
+          pageSize: pageSizeNumber,
+          totalPages,
+        },
+      });
     }
 
     // Build filter and time clauses for ClickHouse queries
@@ -170,7 +254,15 @@ export async function getGoals(
         conversion_rate: 0,
       }));
 
-      return reply.send({ data: goalsWithZeroConversions });
+      return reply.send({
+        data: goalsWithZeroConversions,
+        meta: {
+          total: totalGoals,
+          page: pageNumber,
+          pageSize: pageSizeNumber,
+          totalPages,
+        },
+      });
     }
 
     // Execute the comprehensive query
@@ -212,7 +304,15 @@ export async function getGoals(
       }
     );
 
-    return reply.send({ data: goalsWithConversions });
+    return reply.send({
+      data: goalsWithConversions,
+      meta: {
+        total: totalGoals,
+        page: pageNumber,
+        pageSize: pageSizeNumber,
+        totalPages,
+      },
+    });
   } catch (error) {
     console.error("Error fetching goals:", error);
     return reply.status(500).send({ error: "Failed to fetch goals data" });

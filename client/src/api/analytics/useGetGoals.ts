@@ -19,32 +19,63 @@ export interface Goal {
   conversion_rate: number;
 }
 
+export interface PaginationMeta {
+  total: number;
+  page: number;
+  pageSize: number;
+  totalPages: number;
+}
+
 interface GoalsResponse {
   data: Goal[];
+  meta: PaginationMeta;
 }
 
 export function useGetGoals({
   startDate,
   endDate,
   filters,
+  page = 1,
+  pageSize = 10,
+  sort = "createdAt",
+  order = "desc",
   enabled = true,
 }: {
   startDate: string;
   endDate: string;
   filters?: Filter[];
+  page?: number;
+  pageSize?: number;
+  sort?: "goalId" | "name" | "goalType" | "createdAt";
+  order?: "asc" | "desc";
   enabled?: boolean;
 }) {
   const { site } = useStore();
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   return useQuery({
-    queryKey: ["goals", site, startDate, endDate, timezone, filters],
+    queryKey: [
+      "goals",
+      site,
+      startDate,
+      endDate,
+      timezone,
+      filters,
+      page,
+      pageSize,
+      sort,
+      order,
+    ],
     queryFn: async () => {
       return authedFetch(`${BACKEND_URL}/goals/${site}`, {
         startDate,
         endDate,
         timezone,
         filters,
+        page,
+        pageSize,
+        sort,
+        order,
       }).then((res) => res.json());
     },
     enabled: !!site && enabled,
