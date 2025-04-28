@@ -17,14 +17,10 @@ const TRIAL_EVENT_LIMIT = 1_000_000;
 export const sitesOverLimit = new Set<number>();
 
 /**
- * Gets the first day of the current month in YYYY-MM-DD format
+ * Gets the first day of the current month in YYYY-MM-DD format using Luxon
  */
 function getStartOfMonth(): string {
-  const date = new Date();
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(
-    2,
-    "0"
-  )}-01`;
+  return DateTime.now().startOf("month").toISODate() as string;
 }
 
 /**
@@ -66,13 +62,16 @@ async function getUserSubscriptionInfo(userData: {
   id: string;
   stripeCustomerId: string | null;
   createdAt: string;
+  email: string;
 }): Promise<[number, string | null]> {
   if (!userData.stripeCustomerId) {
     const createdAtDate = DateTime.fromSQL(userData.createdAt);
+    const daysSinceCreation = Math.abs(createdAtDate.diffNow("days").days);
 
     // If the user was created in the last 14 days, use the trial limit
-    if (createdAtDate.diffNow().days < 14) {
-      return [TRIAL_EVENT_LIMIT, getStartOfMonth()];
+    if (daysSinceCreation < 14) {
+      // For trial users, use their account creation date as the starting point for counting events
+      return [TRIAL_EVENT_LIMIT, createdAtDate.toISODate() as string];
     }
 
     // No Stripe customer ID, use default limit and start of current month
@@ -109,17 +108,46 @@ async function getUserSubscriptionInfo(userData: {
         (plan.annualDiscountPriceId && plan.annualDiscountPriceId === priceId)
     );
 
+    // Get the event limit from the plan
     const eventLimit = planDetails
-      ? planDetails.limits.events
+      ? planDetails.limits.events // This is already the monthly event limit, regardless of billing interval
       : DEFAULT_EVENT_LIMIT;
-    const periodStart = sub.current_period_start
-      ? new Date(sub.current_period_start * 1000).toISOString().split("T")[0]
-      : getStartOfMonth();
+
+    // For the period start, we need to handle several cases:
+    const currentMonthStart = getStartOfMonth();
+    let periodStart = currentMonthStart;
+
+    if (sub.current_period_start) {
+      // Convert subscription start timestamp to DateTime
+      const subscriptionStartDate = DateTime.fromSeconds(
+        sub.current_period_start
+      );
+      const currentMonth = DateTime.now().startOf("month");
+
+      // If the subscription started within the current month, use that as the start date
+      // This ensures we don't count events from before they subscribed (e.g., during their free trial)
+      if (subscriptionStartDate >= currentMonth) {
+        periodStart = subscriptionStartDate.toISODate() as string;
+        console.log(
+          `[Monthly Usage Checker] User ${userData.email} subscribed during current month on ${periodStart}. Using subscription start date for counting.`
+        );
+      } else {
+        console.log(
+          `[Monthly Usage Checker] User ${userData.email} subscription started before current month. Using month start for counting.`
+        );
+      }
+    }
+
+    // Include subscription info for logging purposes
+    const interval = sub.items.data[0]?.price.recurring?.interval || "unknown";
+    console.log(
+      `[Monthly Usage Checker] User ${userData.email} has a ${interval} subscription.`
+    );
 
     return [eventLimit, periodStart];
   } catch (error: any) {
     console.error(
-      `Error fetching Stripe subscription info for user ${userData.id}:`,
+      `Error fetching Stripe subscription info for user ${userData.email}:`,
       error
     );
     // Fallback to default limit and current month start on Stripe API error
@@ -224,12 +252,15 @@ export async function updateUsersMonthlyUsage() {
           );
         }
 
+        // Format additional date info for logging if available
+        const periodInfo = periodStart
+          ? `period started ${periodStart}`
+          : "this month";
+
         console.log(
           `[Monthly Usage Checker] Updated user ${
             userData.email
-          }: ${pageviewCount.toLocaleString()} events, limit ${eventLimit.toLocaleString()}, period started ${
-            periodStart || "this month"
-          }`
+          }: ${pageviewCount.toLocaleString()} events, limit ${eventLimit.toLocaleString()}, ${periodInfo}`
         );
       } catch (error) {
         console.error(
