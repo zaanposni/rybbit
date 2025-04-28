@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  FileText,
-  MousePointerClick,
-  Pencil,
-  Trash
-} from "lucide-react";
+import { FileText, MousePointerClick, Pencil, Trash } from "lucide-react";
 import { useState } from "react";
 import { useDeleteGoal } from "../../../../api/analytics/useDeleteGoal";
 import { Goal } from "../../../../api/analytics/useGetGoals";

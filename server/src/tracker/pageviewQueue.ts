@@ -18,6 +18,14 @@ type TotalPayload = TrackingPayload & {
   properties?: string;
 };
 
+const getParsedProperties = (properties: string | undefined) => {
+  try {
+    return properties ? JSON.parse(properties) : undefined;
+  } catch (error) {
+    return undefined;
+  }
+};
+
 class PageviewQueue {
   private queue: TotalPayload[] = [];
   private batchSize = 5000;
@@ -105,6 +113,7 @@ class PageviewQueue {
         type: pv.type || "pageview",
         event_name: pv.event_name || "",
         properties: pv.properties,
+        props: getParsedProperties(pv.properties),
         utm_source: utmParams["utm_source"] || "",
         utm_medium: utmParams["utm_medium"] || "",
         utm_campaign: utmParams["utm_campaign"] || "",

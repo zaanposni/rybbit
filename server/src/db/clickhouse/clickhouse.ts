@@ -41,7 +41,8 @@ export const initializeClickhouse = async () => {
         device_type LowCardinality(String),
         type LowCardinality(String) DEFAULT 'pageview',
         event_name String,
-        properties String
+        properties String,
+        props JSON
       )
       ENGINE = MergeTree()
       PARTITION BY toYYYYMM(timestamp)
@@ -82,6 +83,7 @@ export const initializeClickhouse = async () => {
     ORDER BY (site_id, session_id);
     `,
   });
+
   await clickhouse.exec({
     query: `
     CREATE MATERIALIZED VIEW IF NOT EXISTS sessions_mv
