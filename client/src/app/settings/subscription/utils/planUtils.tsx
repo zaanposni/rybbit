@@ -1,6 +1,6 @@
+import { Clock, Shield, Zap } from "lucide-react";
 import { STRIPE_PRICES } from "@/lib/stripe";
-import { Shield, Zap } from "lucide-react";
-import { TRIAL_EVENT_LIMIT } from "./constants";
+import { DEFAULT_EVENT_LIMIT, TRIAL_EVENT_LIMIT } from "./constants";
 
 // Define interfaces for plan data
 export interface PlanTemplate {
@@ -39,19 +39,38 @@ export const getPlanDetails = (
     };
   }
 
+  const tier = planName.startsWith("pro") ? "pro" : "free";
   const stripePlan = STRIPE_PRICES.find((p) => p.name === planName);
 
-  const plan = {
-    id: "pro",
-    name: "Pro",
-    price: "$19+",
-    interval: "month",
-    description: "Advanced analytics for growing projects",
-    features: ["5 year data retention", "Priority support"],
-    color:
-      "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-800 dark:to-emerald-800",
-    icon: <Shield className="h-5 w-5" />,
+  const planTemplates: Record<string, PlanTemplate> = {
+    free: {
+      id: "free",
+      name: "Free",
+      price: "$0",
+      interval: "month",
+      description: "Get started with basic analytics",
+      features: [
+        `${DEFAULT_EVENT_LIMIT.toLocaleString()} events per month`,
+        "6 month data retention",
+      ],
+      color:
+        "bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-900",
+      icon: <Clock className="h-5 w-5" />,
+    },
+    pro: {
+      id: "pro",
+      name: "Pro",
+      price: "$19+",
+      interval: "month",
+      description: "Advanced analytics for growing projects",
+      features: ["5 year data retention", "Priority support"],
+      color:
+        "bg-gradient-to-br from-green-50 to-emerald-100 dark:from-green-800 dark:to-emerald-800",
+      icon: <Shield className="h-5 w-5" />,
+    },
   };
+
+  const plan = { ...planTemplates[tier] };
 
   if (stripePlan) {
     plan.price = `$${stripePlan.price}`;

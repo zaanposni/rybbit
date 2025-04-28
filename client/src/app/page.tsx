@@ -11,6 +11,7 @@ import { Button } from "../components/ui/button";
 import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { AddSite } from "./components/AddSite";
 import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
+import { FreeTrialBanner } from "../components/FreeTrialBanner";
 
 export default function Home() {
   const {
@@ -43,6 +44,7 @@ export default function Home() {
 
   return (
     <StandardPage>
+      <FreeTrialBanner />
       <div className="flex justify-between items-center mb-4">
         <div className="text-2xl font-bold">Websites</div>
         <AddSite disabled={hasNoOrganizations || disabled} />
