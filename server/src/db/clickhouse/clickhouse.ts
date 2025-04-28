@@ -41,7 +41,6 @@ export const initializeClickhouse = async () => {
         device_type LowCardinality(String),
         type LowCardinality(String) DEFAULT 'pageview',
         event_name String,
-        properties String,
         props JSON
       )
       ENGINE = MergeTree()

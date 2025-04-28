@@ -112,7 +112,6 @@ class PageviewQueue {
         lon: longitude || 0,
         type: pv.type || "pageview",
         event_name: pv.event_name || "",
-        properties: pv.properties,
         props: getParsedProperties(pv.properties),
         utm_source: utmParams["utm_source"] || "",
         utm_medium: utmParams["utm_medium"] || "",
