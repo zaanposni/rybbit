@@ -6,10 +6,13 @@ import { dirname, join } from "path";
 import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
 import { createFunnel } from "./api/analytics/createFunnel.js";
+import { createGoal } from "./api/analytics/createGoal.js";
+import { deleteGoal } from "./api/analytics/deleteGoal.js";
 import { deleteReport } from "./api/analytics/deleteReport.js";
 import { getEvents } from "./api/analytics/getEvents.js";
 import { getFunnel } from "./api/analytics/getFunnel.js";
 import { getFunnels } from "./api/analytics/getFunnels.js";
+import { getGoals } from "./api/analytics/getGoals.js";
 import { getJourneys } from "./api/analytics/getJourneys.js";
 import { getLiveSessionLocations } from "./api/analytics/getLiveSessionLocations.js";
 import { getLiveUsercount } from "./api/analytics/getLiveUsercount.js";
@@ -23,6 +26,7 @@ import { getUserInfo } from "./api/analytics/getUserInfo.js";
 import { getUserSessionCount } from "./api/analytics/getUserSessionCount.js";
 import { getUserSessions } from "./api/analytics/getUserSessions.js";
 import { getUsers } from "./api/analytics/getUsers.js";
+import { updateGoal } from "./api/analytics/updateGoal.js";
 import { addSite } from "./api/sites/addSite.js";
 import { changeSiteDomain } from "./api/sites/changeSiteDomain.js";
 import { changeSitePublic } from "./api/sites/changeSitePublic.js";
@@ -136,6 +140,8 @@ const ANALYTICS_ROUTES = [
   "/funnels/",
   "/funnel/",
   "/journeys/",
+  "/goals/",
+  "/goal/",
 
   "/get-site",
 ];
@@ -205,6 +211,10 @@ server.get("/journeys/:site", getJourneys);
 server.post("/funnel/:site", getFunnel);
 server.post("/funnel/create/:site", createFunnel);
 server.delete("/report/:reportId", deleteReport);
+server.get("/goals/:site", getGoals);
+server.post("/goal/create", createGoal);
+server.delete("/goal/:goalId", deleteGoal);
+server.put("/goal/update", updateGoal);
 
 // Administrative
 server.post("/add-site", addSite);

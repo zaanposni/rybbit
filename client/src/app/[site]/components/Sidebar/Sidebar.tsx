@@ -1,5 +1,5 @@
 "use client";
-import { Funnel } from "@phosphor-icons/react/dist/ssr";
+import { Funnel, Target } from "@phosphor-icons/react/dist/ssr";
 import {
   ChartBarDecreasing,
   Earth,
@@ -87,6 +87,12 @@ export function Sidebar() {
           active={isActiveTab("funnels")}
           href={getTabPath("funnels")}
           icon={<Funnel weight="bold" />}
+        />
+        <SidebarLink
+          label="Goals"
+          active={isActiveTab("goals")}
+          href={getTabPath("goals")}
+          icon={<Target weight="bold" />}
         />
         <SidebarLink
           label="Journeys"

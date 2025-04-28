@@ -233,3 +233,31 @@ export const session = pgTable(
     unique("session_token_unique").on(table.token),
   ]
 );
+
+// Goals table for tracking conversion goals
+export const goals = pgTable(
+  "goals",
+  {
+    goalId: serial("goal_id").primaryKey().notNull(),
+    siteId: integer("site_id").notNull(),
+    name: text("name"), // Optional, user-defined name for the goal
+    goalType: text("goal_type").notNull(), // 'path' or 'event'
+    // Configuration specific to the goal type
+    config: jsonb("config").notNull().$type<{
+      // For 'path' type
+      pathPattern?: string; // e.g., "/pricing", "/product/*/view", "/docs/**"
+      // For 'event' type
+      eventName?: string; // e.g., "signup_completed", "file_downloaded"
+      eventPropertyKey?: string; // Optional property key to match
+      eventPropertyValue?: string | number | boolean; // Optional property value to match (exact match)
+    }>(),
+    createdAt: timestamp("created_at", { mode: "string" }).defaultNow(),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.siteId],
+      foreignColumns: [sites.siteId],
+      name: "goals_site_id_sites_site_id_fk",
+    }),
+  ]
+);
