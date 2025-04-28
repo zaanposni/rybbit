@@ -1,28 +1,14 @@
 "use client";
 
-import { useState } from "react";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "../../../../components/ui/card";
-import { Goal } from "../../../../api/analytics/useGetGoals";
-import { Button } from "../../../../components/ui/button";
 import {
   FileText,
-  MoreHorizontal,
   MousePointerClick,
   Pencil,
-  Trash,
+  Trash
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "../../../../components/ui/dropdown-menu";
+import { useState } from "react";
+import { useDeleteGoal } from "../../../../api/analytics/useDeleteGoal";
+import { Goal } from "../../../../api/analytics/useGetGoals";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,7 +19,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "../../../../components/ui/alert-dialog";
-import { useDeleteGoal } from "../../../../api/analytics/useDeleteGoal";
+import { Button } from "../../../../components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "../../../../components/ui/card";
 import GoalFormModal from "./GoalFormModal";
 
 interface GoalCardProps {
@@ -63,27 +56,26 @@ export default function GoalCard({ goal, siteId }: GoalCardProps) {
             <CardTitle className="text-lg">
               {goal.name || `Goal #${goal.goalId}`}
             </CardTitle>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
-                  <span className="sr-only">Open menu</span>
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setIsEditModalOpen(true)}>
-                  <Pencil className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  className="text-red-500 focus:text-red-500"
-                >
-                  <Trash className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+
+            <div className="flex gap-1">
+              <GoalFormModal
+                siteId={siteId}
+                goal={goal}
+                trigger={
+                  <Button variant="ghost" size="smIcon">
+                    <Pencil />
+                  </Button>
+                }
+              />
+              <Button
+                onClick={() => setIsDeleteDialogOpen(true)}
+                className=""
+                variant="ghost"
+                size="smIcon"
+              >
+                <Trash />
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent className="pb-2 flex-grow">
@@ -140,16 +132,6 @@ export default function GoalCard({ goal, siteId }: GoalCardProps) {
           </div>
         </CardFooter>
       </Card>
-
-      {/* Edit Goal Modal */}
-      {isEditModalOpen && (
-        <GoalFormModal
-          isOpen={isEditModalOpen}
-          onClose={() => setIsEditModalOpen(false)}
-          siteId={siteId}
-          goal={goal}
-        />
-      )}
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog

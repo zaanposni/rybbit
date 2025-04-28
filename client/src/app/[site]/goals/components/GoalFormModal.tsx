@@ -7,6 +7,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "../../../../components/ui/dialog";
 import {
   Form,
@@ -64,21 +65,24 @@ const formSchema = z
 type FormValues = z.infer<typeof formSchema>;
 
 interface GoalFormModalProps {
-  isOpen: boolean;
-  onClose: () => void;
   siteId: number;
   goal?: Goal; // Optional goal for editing mode
+  trigger: React.ReactNode;
 }
 
 export default function GoalFormModal({
-  isOpen,
-  onClose,
   siteId,
   goal,
+  trigger,
 }: GoalFormModalProps) {
+  const [isOpen, setIsOpen] = useState(false);
   const [useProperties, setUseProperties] = useState(
     !!goal?.config.eventPropertyKey && !!goal?.config.eventPropertyValue
   );
+
+  const onClose = () => {
+    setIsOpen(false);
+  };
 
   const isEditMode = !!goal;
   const createGoal = useCreateGoal();
@@ -150,14 +154,23 @@ export default function GoalFormModal({
         });
       }
 
-      onClose();
+      setIsOpen(false);
     } catch (error) {
       console.error("Error saving goal:", error);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog
+      open={isOpen}
+      onOpenChange={(open) => {
+        setIsOpen(open);
+        if (!open) {
+          form.reset();
+        }
+      }}
+    >
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{isEditMode ? "Edit Goal" : "Create Goal"}</DialogTitle>
