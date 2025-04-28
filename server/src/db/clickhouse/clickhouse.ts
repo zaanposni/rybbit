@@ -7,6 +7,10 @@ export const clickhouse = createClient({
 });
 
 export const initializeClickhouse = async () => {
+  await clickhouse.exec({
+    query: "SET enable_json_type = 1",
+  });
+
   // Create events table
   await clickhouse.exec({
     query: `
