@@ -129,19 +129,28 @@ export async function getGoal(
 
       // Add property matching if needed
       if (eventPropertyKey && eventPropertyValue !== undefined) {
-        // Different handling based on property value type
+        // Access the sub-column directly for native JSON type
+        const propValueAccessor = `props.${SqlString.escapeId(
+          eventPropertyKey
+        )}`;
+
+        // Comparison needs to handle the Dynamic type returned
+        // Let ClickHouse handle the comparison based on the provided value type
         if (typeof eventPropertyValue === "string") {
-          eventClause += ` AND JSONExtractString(properties, ${SqlString.escape(
-            eventPropertyKey
-          )}) = ${SqlString.escape(eventPropertyValue)}`;
+          eventClause += ` AND toString(${propValueAccessor}) = ${SqlString.escape(
+            eventPropertyValue
+          )}`;
         } else if (typeof eventPropertyValue === "number") {
-          eventClause += ` AND JSONExtractFloat(properties, ${SqlString.escape(
-            eventPropertyKey
-          )}) = ${SqlString.escape(eventPropertyValue)}`;
+          // Use toFloat64 or toInt* depending on expected number type
+          eventClause += ` AND toFloat64OrNull(${propValueAccessor}) = ${SqlString.escape(
+            eventPropertyValue
+          )}`;
         } else if (typeof eventPropertyValue === "boolean") {
-          eventClause += ` AND JSONExtractBool(properties, ${SqlString.escape(
-            eventPropertyKey
-          )}) = ${eventPropertyValue ? 1 : 0}`;
+          // Booleans might be stored as 0/1 or true/false in JSON
+          // Comparing toUInt8 seems robust
+          eventClause += ` AND toUInt8OrNull(${propValueAccessor}) = ${
+            eventPropertyValue ? 1 : 0
+          }`;
         }
       }
 

@@ -123,7 +123,7 @@ SELECT
     referrer,
     type,
     event_name,
-    properties
+    props
 FROM events
 WHERE
     site_id = {siteId:Int32}
