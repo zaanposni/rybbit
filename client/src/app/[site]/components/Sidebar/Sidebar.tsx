@@ -1,5 +1,5 @@
 "use client";
-import { Funnel, Target } from "@phosphor-icons/react/dist/ssr";
+import { CursorClick, Funnel, Target } from "@phosphor-icons/react/dist/ssr";
 import {
   ChartBarDecreasing,
   Earth,
@@ -10,6 +10,7 @@ import {
   User,
   Map,
   Split,
+  MousePointerClick,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -99,6 +100,12 @@ export function Sidebar() {
           active={isActiveTab("retention")}
           href={getTabPath("retention")}
           icon={<LayoutGrid className="w-4 h-4" />}
+        />
+        <SidebarLink
+          label="Events"
+          active={isActiveTab("events")}
+          href={getTabPath("events")}
+          icon={<MousePointerClick className="w-4 h-4" />}
         />
         {/* <SidebarLink
           label="Reports"

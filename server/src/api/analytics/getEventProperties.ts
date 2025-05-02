@@ -1,0 +1,80 @@
+import { FastifyReply, FastifyRequest } from "fastify";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
+import { getTimeStatement, processResults } from "./utils.js";
+import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
+
+export type GetEventPropertiesResponse = {
+  propertyKey: string;
+  propertyValue: string;
+  count: number;
+}[];
+
+export interface GetEventPropertiesRequest {
+  Params: {
+    site: string;
+  };
+  Querystring: {
+    startDate: string;
+    endDate: string;
+    timezone: string;
+    eventName: string;
+  };
+}
+
+export async function getEventProperties(
+  req: FastifyRequest<GetEventPropertiesRequest>,
+  res: FastifyReply
+) {
+  const { startDate, endDate, timezone, eventName } = req.query;
+  const site = req.params.site;
+  const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
+  if (!userHasAccessToSite) {
+    return res.status(403).send({ error: "Forbidden" });
+  }
+
+  if (!eventName) {
+    return res.status(400).send({ error: "Event name is required" });
+  }
+
+  const timeStatement = getTimeStatement({
+    date: { startDate, endDate, timezone },
+  });
+
+  const query = `
+    SELECT
+      kv.1 AS propertyKey, -- Access tuple elements
+      replaceRegexpAll(kv.2, '^"|"$', '') AS propertyValue, -- Remove surrounding quotes if they exist
+      count() AS count
+    FROM events
+    ARRAY JOIN JSONExtractKeysAndValuesRaw(CAST(props AS String)) AS kv -- Alias the tuple elements directly
+    WHERE
+      site_id = {siteId:Int32}
+      AND type = 'custom_event'
+      AND event_name = {eventName:String}
+      AND props != '{}' -- Check if the JSON object is not empty
+      ${timeStatement}
+    GROUP BY propertyKey, propertyValue
+    ORDER BY propertyKey ASC, count DESC
+    LIMIT 500
+  `;
+
+  try {
+    const result = await clickhouse.query({
+      query,
+      format: "JSONEachRow",
+      query_params: {
+        siteId: Number(site),
+        eventName,
+      },
+    });
+
+    const data = await processResults<GetEventPropertiesResponse[number]>(
+      result
+    );
+    return res.send({ data });
+  } catch (error) {
+    console.error("Generated Query:", query);
+    console.error("Error fetching event properties:", error);
+    return res.status(500).send({ error: "Failed to fetch event properties" });
+  }
+}
