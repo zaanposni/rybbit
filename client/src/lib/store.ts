@@ -67,6 +67,15 @@ export const SESSION_PAGE_FILTERS: FilterParameter[] = [
   "utm_content",
 ];
 
+export const EVENT_FILTERS: FilterParameter[] = [
+  "event_name",
+  "browser",
+  "operating_system",
+  "country",
+  "device_type",
+  "referrer",
+];
+
 export const GOALS_PAGE_FILTERS: FilterParameter[] = [
   "browser",
   "operating_system",

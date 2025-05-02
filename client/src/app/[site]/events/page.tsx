@@ -1,21 +1,10 @@
 "use client";
 
-import { useState } from "react";
-import { FilterParameter } from "@/lib/store";
+import { EVENT_FILTERS } from "@/lib/store";
 import { useGetEventNames } from "../../../api/analytics/useGetEventNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventList } from "./components/EventList";
 import { SubHeader } from "../components/SubHeader/SubHeader";
-
-// Define event filters
-const EVENT_FILTERS: FilterParameter[] = [
-  "event_name",
-  "browser",
-  "operating_system",
-  "country",
-  "device_type",
-  "referrer",
-];
 
 export default function EventsPage() {
   const { data: eventNamesData, isLoading: isLoadingEventNames } =

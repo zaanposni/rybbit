@@ -1,6 +1,10 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import clickhouse from "../../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "./utils.js";
+import {
+  getTimeStatement,
+  processResults,
+  getFilterStatement,
+} from "./utils.js";
 import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 
 export type GetEventNamesResponse = {
@@ -16,6 +20,7 @@ export interface GetEventNamesRequest {
     startDate: string;
     endDate: string;
     timezone: string;
+    filters?: string;
   };
 }
 
@@ -23,7 +28,7 @@ export async function getEventNames(
   req: FastifyRequest<GetEventNamesRequest>,
   res: FastifyReply
 ) {
-  const { startDate, endDate, timezone } = req.query;
+  const { startDate, endDate, timezone, filters } = req.query;
   const site = req.params.site;
   const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
@@ -34,6 +39,8 @@ export async function getEventNames(
     date: { startDate, endDate, timezone },
   });
 
+  const filterStatement = filters ? getFilterStatement(filters) : "";
+
   const query = `
     SELECT
       event_name AS eventName,
@@ -42,9 +49,10 @@ export async function getEventNames(
     WHERE
       site_id = {siteId:Int32}
       AND type = 'custom_event'
-      AND event_name IS NOT NULL 
+      AND event_name IS NOT NULL
       AND event_name != ''
       ${timeStatement}
+      ${filterStatement}
     GROUP BY event_name
     ORDER BY count DESC
     LIMIT 1000

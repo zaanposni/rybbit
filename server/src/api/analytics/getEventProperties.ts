@@ -1,6 +1,10 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import clickhouse from "../../db/clickhouse/clickhouse.js";
-import { getTimeStatement, processResults } from "./utils.js";
+import {
+  getTimeStatement,
+  processResults,
+  getFilterStatement,
+} from "./utils.js";
 import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 
 export type GetEventPropertiesResponse = {
@@ -18,6 +22,7 @@ export interface GetEventPropertiesRequest {
     endDate: string;
     timezone: string;
     eventName: string;
+    filters?: string;
   };
 }
 
@@ -25,7 +30,7 @@ export async function getEventProperties(
   req: FastifyRequest<GetEventPropertiesRequest>,
   res: FastifyReply
 ) {
-  const { startDate, endDate, timezone, eventName } = req.query;
+  const { startDate, endDate, timezone, eventName, filters } = req.query;
   const site = req.params.site;
   const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
@@ -40,6 +45,8 @@ export async function getEventProperties(
     date: { startDate, endDate, timezone },
   });
 
+  const filterStatement = filters ? getFilterStatement(filters) : "";
+
   const query = `
     SELECT
       kv.1 AS propertyKey, -- Access tuple elements
@@ -53,6 +60,7 @@ export async function getEventProperties(
       AND event_name = {eventName:String}
       AND props != '{}' -- Check if the JSON object is not empty
       ${timeStatement}
+      ${filterStatement}
     GROUP BY propertyKey, propertyValue
     ORDER BY propertyKey ASC, count DESC
     LIMIT 500
