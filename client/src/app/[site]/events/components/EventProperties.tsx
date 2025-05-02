@@ -1,27 +1,25 @@
 "use client";
 
 import { EventProperty } from "../../../../api/analytics/useGetEventProperties";
-import { CardLoader } from "@/components/ui/card";
 import NumberFlow from "@number-flow/react";
 import { Info } from "lucide-react";
+import { memo } from "react";
 
 interface EventPropertiesProps {
   properties: EventProperty[];
   isLoading: boolean;
   selectedEvent: string | null;
+  size?: "small" | "large";
 }
 
 export function EventProperties({
   properties,
   isLoading,
   selectedEvent,
+  size = "small",
 }: EventPropertiesProps) {
   if (isLoading) {
-    return (
-      <div className="relative h-40">
-        <CardLoader />
-      </div>
-    );
+    return <EventPropertiesSkeleton size={size} />;
   }
 
   if (!selectedEvent) {
@@ -68,37 +66,48 @@ export function EventProperties({
   const maxCount = Math.max(...properties.map((prop) => prop.count));
 
   return (
-    <div className="flex flex-col gap-4 max-h-[60vh] overflow-y-auto pr-2">
+    <div
+      className={`flex flex-col gap-4 ${
+        size === "small" ? "max-h-[30vh]" : "max-h-[60vh]"
+      } overflow-y-auto pr-2`}
+    >
       {sortedKeys.map((key) => {
         // Sort property values by count (descending)
         const values = groupedProperties[key].sort((a, b) => b.count - a.count);
 
         return (
-          <div key={key} className="flex flex-col gap-1">
+          <div
+            key={key}
+            className={`flex flex-col gap-1 ${
+              size === "small" ? "text-xs" : "text-sm"
+            }`}
+          >
             {/* Property Key Header */}
-            <div className="font-semibold text-sm text-primary py-1 border-b border-neutral-800">
+            <div className="font-semibold  text-primary py-1 border-b border-neutral-800">
               {key}
             </div>
 
             {/* Property Values */}
-            <div className="pl-4 flex flex-col gap-1">
+            <div className="pl-4 flex flex-col gap-2">
               {values.map((property) => {
                 const percentage = (property.count / maxCount) * 100;
 
                 return (
                   <div
                     key={`${property.propertyKey}-${property.propertyValue}`}
-                    className="relative h-8 flex items-center hover:bg-neutral-850 group px-2 rounded-md"
+                    className={`relative ${
+                      size === "small" ? "h-6" : "h-8"
+                    } flex items-center hover:bg-neutral-850 group px-2 rounded-md`}
                   >
                     <div
                       className="absolute inset-0 bg-dataviz py-2 opacity-25 rounded-md"
                       style={{ width: `${percentage}%` }}
                     ></div>
-                    <div className="z-10 flex justify-between items-center text-sm w-full">
+                    <div className="z-10 flex justify-between items-center w-full">
                       <div className="truncate max-w-[70%]">
                         {property.propertyValue}
                       </div>
-                      <div className="text-sm flex gap-2">
+                      <div className="flex gap-2">
                         <div className="hidden group-hover:block text-neutral-400">
                           {Math.round(percentage * 10) / 10}%
                         </div>
@@ -119,3 +128,89 @@ export function EventProperties({
     </div>
   );
 }
+
+// Skeleton component for EventProperties
+const EventPropertiesSkeleton = memo(
+  ({ size = "small" }: { size?: "small" | "large" }) => {
+    // Generate random number of property groups (2-4)
+    const groupCount = 2 + Math.floor(Math.random() * 3);
+
+    // Generate random number of properties per group (2-5)
+    const propertyCounts = Array.from(
+      { length: groupCount },
+      () => 2 + Math.floor(Math.random() * 4)
+    );
+
+    // Generate random widths for property values
+    const generateWidths = (count: number) =>
+      Array.from({ length: count }, () => 20 + Math.random() * 80);
+
+    // Generate random widths for property bars
+    const generateBarWidths = (count: number) =>
+      Array.from({ length: count }, () => 20 + Math.random() * 80);
+
+    return (
+      <div
+        className={`flex flex-col gap-4 ${
+          size === "small" ? "max-h-[30vh]" : "max-h-[60vh]"
+        } overflow-y-auto pr-2`}
+      >
+        {Array.from({ length: groupCount }).map((_, groupIndex) => (
+          <div
+            key={groupIndex}
+            className={`flex flex-col gap-1 ${
+              size === "small" ? "text-xs" : "text-sm"
+            }`}
+          >
+            {/* Property Key Header Skeleton */}
+            <div className="font-semibold py-1 border-b border-neutral-800">
+              <div className="h-4 bg-neutral-800 rounded animate-pulse w-24"></div>
+            </div>
+
+            {/* Property Values Skeleton */}
+            <div className="pl-4 flex flex-col gap-2">
+              {Array.from({ length: propertyCounts[groupIndex] }).map(
+                (_, propIndex) => {
+                  const valueWidths = generateWidths(
+                    propertyCounts[groupIndex]
+                  );
+                  const barWidths = generateBarWidths(
+                    propertyCounts[groupIndex]
+                  );
+
+                  return (
+                    <div
+                      key={propIndex}
+                      className={`relative ${
+                        size === "small" ? "h-6" : "h-8"
+                      } flex items-center px-2 rounded-md`}
+                    >
+                      <div
+                        className="absolute inset-0 bg-neutral-800 py-2 opacity-25 rounded-md animate-pulse"
+                        style={{ width: `${barWidths[propIndex]}%` }}
+                      ></div>
+                      <div className="z-10 flex justify-between items-center w-full">
+                        <div className="truncate max-w-[70%]">
+                          <div
+                            className="h-4 bg-neutral-800 rounded animate-pulse"
+                            style={{ width: `${valueWidths[propIndex]}px` }}
+                          ></div>
+                        </div>
+                        <div className="flex gap-2">
+                          <div
+                            className="h-4 bg-neutral-800 rounded animate-pulse"
+                            style={{ width: "40px" }}
+                          ></div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+);

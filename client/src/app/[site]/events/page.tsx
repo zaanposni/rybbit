@@ -22,6 +22,7 @@ export default function EventsPage() {
           <EventList
             events={eventNamesData || []}
             isLoading={isLoadingEventNames}
+            size="large"
           />
         </CardContent>
       </Card>

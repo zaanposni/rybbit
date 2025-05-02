@@ -5,13 +5,20 @@ import {
   TabsList,
   TabsTrigger,
 } from "../../../../../components/ui/basic-tabs";
-import { Card, CardContent } from "../../../../../components/ui/card";
-import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
+import {
+  Card,
+  CardContent,
+  CardLoader,
+} from "../../../../../components/ui/card";
+import { useGetEventNames } from "../../../../../api/analytics/useGetEventNames";
+import { EventList } from "../../../events/components/EventList";
 
 type Tab = "events";
 
 export function Events() {
   const [tab, setTab] = useState<Tab>("events");
+  const { data: eventNamesData, isLoading: isLoadingEventNames } =
+    useGetEventNames();
 
   return (
     <Card>
@@ -25,14 +32,17 @@ export function Events() {
             <TabsTrigger value="events">Custom Events</TabsTrigger>
           </TabsList>
           <TabsContent value="events">
-            <StandardSection
-              filterParameter="event_name"
-              title="Events"
-              countLabel="Count"
-              getValue={(e) => e.value}
-              getKey={(e) => e.value}
-              getLabel={(e) => e.value}
-            />
+            {isLoadingEventNames && (
+              <div className="absolute top-[-8px] left-0 w-full h-full">
+                <CardLoader />
+              </div>
+            )}
+            <div className="relative">
+              <EventList
+                events={eventNamesData || []}
+                isLoading={isLoadingEventNames}
+              />
+            </div>
           </TabsContent>
         </Tabs>
       </CardContent>

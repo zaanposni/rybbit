@@ -68,12 +68,34 @@ export const SESSION_PAGE_FILTERS: FilterParameter[] = [
 ];
 
 export const EVENT_FILTERS: FilterParameter[] = [
-  "event_name",
+  // "event_name",
+  // "browser",
+  // "operating_system",
+  // "country",
+  // "device_type",
+  // "referrer",
+
   "browser",
   "operating_system",
+  "language",
   "country",
+  "region",
+  "city",
   "device_type",
   "referrer",
+  "pathname",
+  "page_title",
+  "querystring",
+  "event_name",
+  "channel",
+  "utm_source",
+  "utm_medium",
+  "utm_campaign",
+  "utm_term",
+  "utm_content",
+  "entry_page",
+  "exit_page",
+  "dimensions",
 ];
 
 export const GOALS_PAGE_FILTERS: FilterParameter[] = [
