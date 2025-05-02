@@ -38,6 +38,10 @@ export function Events() {
               </div>
             )}
             <div className="relative">
+              <div className="flex flex-row gap-2 justify-between pr-1 text-xs text-neutral-400 mb-2">
+                <div>Custom Events</div>
+                <div>Count</div>
+              </div>
               <EventList
                 events={eventNamesData || []}
                 isLoading={isLoadingEventNames}

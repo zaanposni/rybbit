@@ -4,6 +4,7 @@ import { EVENT_FILTERS } from "@/lib/store";
 import { useGetEventNames } from "../../../api/analytics/useGetEventNames";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventList } from "./components/EventList";
+import { EventLog } from "./components/EventLog";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 
 export default function EventsPage() {
@@ -24,6 +25,15 @@ export default function EventsPage() {
             isLoading={isLoadingEventNames}
             size="large"
           />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Event Log</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <EventLog />
         </CardContent>
       </Card>
     </div>

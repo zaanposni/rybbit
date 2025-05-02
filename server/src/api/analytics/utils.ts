@@ -14,7 +14,7 @@ export function getTimeStatement({
   date?: {
     startDate?: string;
     endDate?: string;
-    timezone: string;
+    timezone?: string;
     table?: "events" | "sessions";
   };
   pastMinutes?: number;

@@ -1,12 +1,16 @@
 import { FastifyReply, FastifyRequest } from "fastify";
 import clickhouse from "../../db/clickhouse/clickhouse.js";
-import { processResults } from "./utils.js";
+import {
+  processResults,
+  getTimeStatement,
+  getFilterStatement,
+} from "./utils.js";
 import { getUserHasAccessToSitePublic } from "../../lib/auth-utils.js";
 
 export type GetEventsResponse = {
   timestamp: string;
   event_name: string;
-  properties: string;
+  properties: string; // This will be populated from the props column
   user_id: string;
   pathname: string;
   querystring: string;
@@ -25,7 +29,13 @@ interface GetEventsRequest {
     site: string;
   };
   Querystring: {
-    count?: string;
+    startDate?: string;
+    endDate?: string;
+    timezone?: string;
+    filters?: string;
+    page?: string;
+    pageSize?: string;
+    count?: string; // Keeping for backward compatibility
   };
 }
 
@@ -34,51 +44,107 @@ export async function getEvents(
   res: FastifyReply
 ) {
   const { site } = req.params;
-  const { count = "10" } = req.query;
+  const {
+    startDate,
+    endDate,
+    timezone,
+    filters,
+    page = "1",
+    pageSize = "20",
+    count,
+  } = req.query;
 
   const userHasAccessToSite = await getUserHasAccessToSitePublic(req, site);
   if (!userHasAccessToSite) {
     return res.status(403).send({ error: "Forbidden" });
   }
 
-  const limitCount = parseInt(count, 10);
+  // Use count if provided (for backward compatibility), otherwise use pageSize
+  const limit = count ? parseInt(count, 10) : parseInt(pageSize, 10);
+  const offset = (parseInt(page, 10) - 1) * limit;
+
+  // Get time and filter statements if parameters are provided
+  const timeStatement =
+    startDate || endDate
+      ? getTimeStatement({ date: { startDate, endDate, timezone } })
+      : "AND timestamp > now() - INTERVAL 30 MINUTE"; // Default to last 30 minutes if no time range specified
+
+  const filterStatement = filters ? getFilterStatement(filters) : "";
 
   try {
-    const query = await clickhouse.query({
-      query: `
-        SELECT
-          timestamp,
-          event_name,
-          properties,
-          user_id,
-          pathname,
-          querystring,
-          hostname,
-          page_title,
-          referrer,
-          browser,
-          operating_system,
-          country,
-          device_type,
-          type
-        FROM events
-        WHERE
-          site_id = {siteId:Int32}
-          AND (type = 'custom_event' OR type = 'pageview')
-          AND timestamp > now() - INTERVAL 30 MINUTE
-        ORDER BY timestamp DESC
-        LIMIT {limit:Int32}
-      `,
+    // First, get the total count for pagination metadata
+    const countQuery = `
+      SELECT
+        COUNT(*) as total
+      FROM events
+      WHERE
+        site_id = {siteId:Int32}
+        AND (type = 'custom_event' OR type = 'pageview')
+        ${timeStatement}
+        ${filterStatement}
+    `;
+
+    const countResult = await clickhouse.query({
+      query: countQuery,
       format: "JSONEachRow",
       query_params: {
         siteId: Number(site),
-        limit: Number(limitCount),
       },
     });
 
-    const events = await processResults<GetEventsResponse[number]>(query);
+    const countData = await processResults<{ total: number }>(countResult);
+    const totalCount = countData[0]?.total || 0;
 
-    return res.send({ data: events });
+    // Then, get the actual events with pagination
+    const eventsQuery = `
+      SELECT
+        timestamp,
+        event_name,
+        toString(props) as properties, -- Convert props Map to string
+        user_id,
+        pathname,
+        querystring,
+        hostname,
+        page_title,
+        referrer,
+        browser,
+        operating_system,
+        country,
+        device_type,
+        type
+      FROM events
+      WHERE
+        site_id = {siteId:Int32}
+        AND (type = 'custom_event' OR type = 'pageview')
+        ${timeStatement}
+        ${filterStatement}
+      ORDER BY timestamp DESC
+      LIMIT {limit:Int32} OFFSET {offset:Int32}
+    `;
+
+    const eventsResult = await clickhouse.query({
+      query: eventsQuery,
+      format: "JSONEachRow",
+      query_params: {
+        siteId: Number(site),
+        limit: Number(limit),
+        offset: Number(offset),
+      },
+    });
+
+    const events = await processResults<GetEventsResponse[number]>(
+      eventsResult
+    );
+
+    return res.send({
+      data: events,
+      pagination: {
+        total: totalCount,
+        page: parseInt(page, 10),
+        pageSize: limit,
+        totalPages: Math.ceil(totalCount / limit),
+      },
+    });
   } catch (error) {
     console.error("Error fetching events:", error);
     return res.status(500).send({ error: "Failed to fetch events" });

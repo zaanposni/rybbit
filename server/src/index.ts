@@ -147,6 +147,7 @@ const ANALYTICS_ROUTES = [
   "/goal/",
   "/api/analytics/events/names/",
   "/api/analytics/events/properties/",
+  "/events/",
 
   "/get-site",
 ];
@@ -205,7 +206,8 @@ server.get("/site-has-data/:site", getSiteHasData);
 server.get("/site-is-public/:site", getSiteIsPublic);
 server.get("/sessions/:site", getSessions);
 server.get("/session/:sessionId/:site", getSession);
-server.get("/recent-events/:site", getEvents);
+server.get("/recent-events/:site", getEvents); // Legacy endpoint for backward compatibility
+server.get("/events/:site", getEvents); // New endpoint with filtering and pagination
 server.get("/users/:site", getUsers);
 server.get("/user/:userId/sessions/:site", getUserSessions);
 server.get("/user/session-count/:site", getUserSessionCount);
