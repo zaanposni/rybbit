@@ -9,16 +9,13 @@ import {
 } from "../../../../../components/ui/basic-tabs";
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
-import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 import { useGetSite } from "../../../../../api/admin/sites";
 import { truncateString } from "../../../../../lib/utils";
 type Tab = "pages" | "entry_pages" | "exit_pages";
 
-export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
+export function Pages() {
   const { data: siteMetadata } = useGetSite();
   const [tab, setTab] = useState<Tab>("pages");
-
-  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
     <Card className="h-[445px]">
@@ -34,7 +31,7 @@ export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
             <TabsTrigger value="exit_pages">Exit Pages</TabsTrigger>
           </TabsList>
           <TabsContent value="pages">
-            <ComponentToUse
+            <StandardSection
               filterParameter="pathname"
               title="Pages"
               getValue={(e) => e.value}
@@ -44,7 +41,7 @@ export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="entry_pages">
-            <ComponentToUse
+            <StandardSection
               filterParameter="entry_page"
               title="Entry Pages"
               getValue={(e) => e.value}
@@ -54,7 +51,7 @@ export function Pages({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="exit_pages">
-            <ComponentToUse
+            <StandardSection
               filterParameter="exit_page"
               title="Exit Pages"
               getValue={(e) => e.value}

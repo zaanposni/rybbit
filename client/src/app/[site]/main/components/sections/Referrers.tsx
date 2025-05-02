@@ -8,7 +8,6 @@ import {
 } from "../../../../../components/ui/basic-tabs";
 import { Card, CardContent } from "../../../../../components/ui/card";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
-import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 
 type Tab =
   | "referrers"
@@ -19,10 +18,8 @@ type Tab =
   | "utm_term"
   | "utm_content";
 
-export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
+export function Referrers() {
   const [tab, setTab] = useState<Tab>("referrers");
-
-  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
     <Card className="h-[445px]">
@@ -42,7 +39,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             <TabsTrigger value="utm_content">Content</TabsTrigger>
           </TabsList>
           <TabsContent value="referrers">
-            <ComponentToUse
+            <StandardSection
               filterParameter="referrer"
               title="Referrers"
               getValue={(e) => e.value}
@@ -60,7 +57,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="channels">
-            <ComponentToUse
+            <StandardSection
               filterParameter="channel"
               title="Channels"
               getValue={(e) => e.value}
@@ -72,7 +69,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="utm_source">
-            <ComponentToUse
+            <StandardSection
               filterParameter="utm_source"
               title="UTM Source"
               getKey={(e) => e.value}
@@ -81,7 +78,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="utm_medium">
-            <ComponentToUse
+            <StandardSection
               filterParameter="utm_medium"
               title="UTM Medium"
               getKey={(e) => e.value}
@@ -90,7 +87,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="utm_campaign">
-            <ComponentToUse
+            <StandardSection
               filterParameter="utm_campaign"
               title="UTM Campaign"
               getKey={(e) => e.value}
@@ -99,7 +96,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="utm_content">
-            <ComponentToUse
+            <StandardSection
               filterParameter="utm_content"
               title="UTM Content"
               getKey={(e) => e.value}
@@ -108,7 +105,7 @@ export function Referrers({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="utm_term">
-            <ComponentToUse
+            <StandardSection
               filterParameter="utm_term"
               title="UTM Term"
               getKey={(e) => e.value}

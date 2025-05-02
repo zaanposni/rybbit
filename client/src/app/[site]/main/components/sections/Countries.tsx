@@ -12,7 +12,6 @@ import { getCountryName, getLanguageName } from "../../../../../lib/utils";
 import { StandardSection } from "../../../components/shared/StandardSection/StandardSection";
 import { CountryFlag } from "../../../components/shared/icons/CountryFlag";
 import { useSubdivisions } from "../../../../../lib/geo";
-import { StandardSectionRealtime } from "../../../components/shared/StandardSection/StandardSectionRealtime";
 import { MapComponent } from "../../../components/shared/Map";
 
 type Tab = "countries" | "regions" | "languages" | "cities" | "map";
@@ -26,12 +25,10 @@ const getCountryFromLanguage = (languageCode: string): string | null => {
   return null;
 };
 
-export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
+export function Countries() {
   const [tab, setTab] = useState<Tab>("countries");
 
   const { data: subdivisions } = useSubdivisions();
-
-  const ComponentToUse = isRealtime ? StandardSectionRealtime : StandardSection;
 
   return (
     <Card className="">
@@ -49,7 +46,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
             <TabsTrigger value="map">Map</TabsTrigger>
           </TabsList>
           <TabsContent value="countries">
-            <ComponentToUse
+            <StandardSection
               filterParameter="country"
               title="Countries"
               getValue={(e) => e.value}
@@ -66,7 +63,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="regions">
-            <ComponentToUse
+            <StandardSection
               filterParameter="region"
               title="Regions"
               getValue={(e) => e.value}
@@ -100,7 +97,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="cities">
-            <ComponentToUse
+            <StandardSection
               filterParameter="city"
               title="Cities"
               getValue={(e) => e.value}
@@ -114,7 +111,7 @@ export function Countries({ isRealtime = false }: { isRealtime?: boolean }) {
             />
           </TabsContent>
           <TabsContent value="languages">
-            <ComponentToUse
+            <StandardSection
               filterParameter="language"
               title="Languages"
               getValue={(e) => e.value}
