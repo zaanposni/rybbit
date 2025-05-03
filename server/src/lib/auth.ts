@@ -23,7 +23,7 @@ const pluginList = [
 ];
 
 export let auth: AuthType | null = betterAuth({
-  // basePath: "/auth",
+  basePath: "/auth",
   database: new pg.Pool({
     host: process.env.POSTGRES_HOST || "postgres",
     port: parseInt(process.env.POSTGRES_PORT || "5432", 10),
@@ -66,7 +66,7 @@ export let auth: AuthType | null = betterAuth({
 
 export function initAuth(allowedOrigins: string[]) {
   auth = betterAuth({
-    // basePath: "/auth",
+    basePath: "/auth",
     database: drizzleAdapter(db, {
       provider: "pg",
       schema: {

@@ -12,9 +12,9 @@
 
     # Proxy direct Auth callbacks (/auth/callback/* from providers) to the backend service
     # route does NOT strip the prefix, so backend sees the full /auth/callback/... path
-    # route /auth/* {
-    #     reverse_proxy backend:3001
-    # }
+    route /auth/* {
+        reverse_proxy backend:3001
+    }
 
     # Proxy all other requests to the client service
     handle {
