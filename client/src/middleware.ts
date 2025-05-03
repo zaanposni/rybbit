@@ -10,6 +10,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Handle GitHub OAuth callback redirect
+  if (path === "/auth/callback/github") {
+    const redirectUrl = new URL(
+      `/api${path}${request.nextUrl.search}`,
+      request.url
+    );
+    const response = NextResponse.redirect(redirectUrl);
+    response.headers.set("Cache-Control", "no-store, max-age=0");
+    return response;
+  }
+
   // Check if we're on a site route without a specific page
   // This matches exactly /{siteId} with nothing after it
   const siteRoutePattern = /^\/([^/]+)$/;
