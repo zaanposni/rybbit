@@ -43,44 +43,44 @@ export default function RootLayout({
   const [isCheckingPublic, setIsCheckingPublic] = useState(false);
   const [isPublicSite, setIsPublicSite] = useState(false);
 
-  useEffect(() => {
-    // Check if the current path could be a site path
-    // Extract potential siteId from path like /{siteId} or /{siteId}/something
-    const pathSegments = pathname.split("/").filter(Boolean);
-    if (pathSegments.length > 0) {
-      const potentialSiteId = pathSegments[0];
+  // useEffect(() => {
+  //   // Check if the current path could be a site path
+  //   // Extract potential siteId from path like /{siteId} or /{siteId}/something
+  //   const pathSegments = pathname.split("/").filter(Boolean);
+  //   if (pathSegments.length > 0) {
+  //     const potentialSiteId = pathSegments[0];
 
-      // Don't check for public site status on obvious non-site paths
-      if (
-        !publicRoutes.includes(`/${potentialSiteId}`) &&
-        !["_next", "api", "settings", "subscribe"].includes(potentialSiteId)
-      ) {
-        setIsCheckingPublic(true);
+  //     // Don't check for public site status on obvious non-site paths
+  //     if (
+  //       !publicRoutes.includes(`/${potentialSiteId}`) &&
+  //       !["_next", "api", "settings", "subscribe"].includes(potentialSiteId)
+  //     ) {
+  //       setIsCheckingPublic(true);
 
-        checkIfSiteIsPublic(potentialSiteId).then((isPublic) => {
-          setIsPublicSite(isPublic);
-          setIsCheckingPublic(false);
-        });
-      }
-    }
-  }, [pathname]);
+  //       checkIfSiteIsPublic(potentialSiteId).then((isPublic) => {
+  //         setIsPublicSite(isPublic);
+  //         setIsCheckingPublic(false);
+  //       });
+  //     }
+  //   }
+  // }, [pathname]);
 
-  useEffect(() => {
-    // Only redirect if:
-    // 1. We're not checking public status anymore
-    // 2. User is not logged in
-    // 3. Not on a public route
-    // 4. Not on a public site
-    if (
-      !isPending &&
-      !isCheckingPublic &&
-      !user &&
-      !publicRoutes.includes(pathname) &&
-      !isPublicSite
-    ) {
-      redirect("/login");
-    }
-  }, [isPending, user, pathname, isCheckingPublic, isPublicSite]);
+  // useEffect(() => {
+  //   // Only redirect if:
+  //   // 1. We're not checking public status anymore
+  //   // 2. User is not logged in
+  //   // 3. Not on a public route
+  //   // 4. Not on a public site
+  //   if (
+  //     !isPending &&
+  //     !isCheckingPublic &&
+  //     !user &&
+  //     !publicRoutes.includes(pathname) &&
+  //     !isPublicSite
+  //   ) {
+  //     redirect("/login");
+  //   }
+  // }, [isPending, user, pathname, isCheckingPublic, isPublicSite]);
 
   return (
     <html lang="en" className="dark">
