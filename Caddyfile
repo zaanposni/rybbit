@@ -9,6 +9,11 @@
         reverse_proxy backend:3001
     }
 
+    # Proxy Auth requests to the backend service
+    handle_path /auth/* {
+        reverse_proxy backend:3001
+    }
+
     # Proxy all other requests to the client service
     handle {
         reverse_proxy client:3002
