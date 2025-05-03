@@ -121,6 +121,8 @@ const PUBLIC_ROUTES: string[] = [
   "/script",
   "/auth",
   "/api/auth",
+  "/api/auth/callback/google",
+  "/api/auth/callback/github",
   "/api/stripe/webhook", // Add webhook to public routes
 ];
 
