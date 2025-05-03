@@ -54,7 +54,6 @@ export default function Page() {
     try {
       await authClient.signIn.social({
         provider,
-        callbackURL: "/",
       });
     } catch (error) {
       setError(String(error));

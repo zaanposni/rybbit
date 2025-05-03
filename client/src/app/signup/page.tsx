@@ -255,7 +255,6 @@ export default function SignupPage() {
                       onClick={() => {
                         authClient.signIn.social({
                           provider: "google",
-                          callbackURL: "/",
                         });
                       }}
                       className="transition-all duration-300 hover:bg-muted bg-neutral-800/50 border-neutral-700"
@@ -269,7 +268,6 @@ export default function SignupPage() {
                       onClick={() => {
                         authClient.signIn.social({
                           provider: "github",
-                          callbackURL: "/",
                         });
                       }}
                       className="transition-all duration-300 hover:bg-muted bg-neutral-800/50 border-neutral-700"
