@@ -11,7 +11,7 @@ export async function middleware(request: NextRequest) {
   }
 
   // Handle GitHub OAuth callback redirect
-  if (path === "/auth/callback/github") {
+  if (path === "/auth/callback/github" || path === "/auth/callback/google") {
     const redirectUrl = new URL(
       `/api${path}${request.nextUrl.search}`,
       request.url
