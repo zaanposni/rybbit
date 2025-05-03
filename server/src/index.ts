@@ -165,7 +165,7 @@ server.addHook("onRequest", async (request, reply) => {
   if (!url) return;
 
   // Bypass auth for health check and tracking
-  if (PUBLIC_ROUTES.some((route) => url.includes(route))) {
+  if (PUBLIC_ROUTES.some((route) => url.startsWith(route))) {
     return;
   }
 
