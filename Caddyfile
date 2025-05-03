@@ -4,13 +4,15 @@
     # Enable compression
     encode zstd gzip
 
-    # Proxy API requests to the backend service
+    # Proxy API requests (including /api/auth/* from frontend) to the backend service
+    # handle_path strips the /api prefix, so backend sees /auth/... etc.
     handle_path /api/* {
         reverse_proxy backend:3001
     }
 
-    # Proxy Auth requests to the backend service
-    # handle_path /auth/* {
+    # Proxy direct Auth callbacks (/auth/callback/* from providers) to the backend service
+    # route does NOT strip the prefix, so backend sees the full /auth/callback/... path
+    # route /auth/* {
     #     reverse_proxy backend:3001
     # }
 
