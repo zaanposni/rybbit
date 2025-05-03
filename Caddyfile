@@ -4,28 +4,14 @@
     # Enable compression
     encode zstd gzip
 
-    # Proxy API requests (including /api/auth/* from frontend) to the backend service
-    # handle_path strips the /api prefix, so backend sees /auth/... etc.
-    route /api/* {
+    handle_path /api/* {
         reverse_proxy backend:3001
     }
 
-    # Proxy direct Auth callbacks (/auth/callback/* from providers) to the backend service
-    # route does NOT strip the prefix, so backend sees the full /auth/callback/... path
-    # route /auth/* {
-    #     reverse_proxy backend:3001
-    # }
 
     # Proxy all other requests to the client service
     handle {
         reverse_proxy client:3002
     }
 
-    # Optional: Add security headers (example)
-    # header {
-    #     Strict-Transport-Security max-age=31536000;
-    #     X-Content-Type-Options nosniff
-    #     X-Frame-Options DENY
-    #     Referrer-Policy strict-origin-when-cross-origin
-    # }
 } 
