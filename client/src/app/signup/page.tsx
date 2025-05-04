@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { addSite } from "../../api/admin/sites";
 import { CodeSnippet } from "../../components/CodeSnippet";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
@@ -34,20 +34,25 @@ const contentVariants = {
   visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
 };
 
-export default function SignupPage() {
+// Client component to handle step from URL params
+function StepHandler({ onSetStep }: { onSetStep: (step: number) => void }) {
   const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const step = searchParams.get("step");
+    if (step && !isNaN(Number(step))) {
+      onSetStep(Number(step));
+    }
+  }, [searchParams, onSetStep]);
+
+  return null;
+}
+
+export default function SignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
-
-  // Check for step parameter in URL when component mounts
-  useEffect(() => {
-    const step = searchParams.get("step");
-    if (step && !isNaN(Number(step))) {
-      setCurrentStep(Number(step));
-    }
-  }, [searchParams]);
 
   // Step 1: Account creation
   const [email, setEmail] = useState("");
@@ -486,6 +491,11 @@ export default function SignupPage() {
 
   return (
     <div className="flex justify-center items-center min-h-screen bg-background p-4 relative overflow-hidden">
+      {/* Suspense boundary for the URL parameter handler */}
+      <Suspense fallback={null}>
+        <StepHandler onSetStep={setCurrentStep} />
+      </Suspense>
+
       {/* Background gradients similar to docs page */}
       <div className="absolute top-0 left-0 w-[550px] h-[550px] bg-emerald-500/40 rounded-full blur-[80px] opacity-40"></div>
       <div className="absolute top-20 left-20 w-[400px] h-[400px] bg-emerald-600/30 rounded-full blur-[70px] opacity-30"></div>
