@@ -67,6 +67,7 @@ async function getUserSubscriptionInfo(userData: {
   if (!userData.stripeCustomerId) {
     const createdAtDate = DateTime.fromSQL(userData.createdAt);
     const daysSinceCreation = Math.abs(createdAtDate.diffNow("days").days);
+    console.info({ daysSinceCreation, createdAtDate });
 
     // If the user was created in the last 14 days, use the trial limit
     if (daysSinceCreation < 14) {
@@ -211,6 +212,8 @@ export async function updateUsersMonthlyUsage() {
         createdAt: user.createdAt,
       })
       .from(user);
+
+    console.info({ users });
 
     for (const userData of users) {
       try {
