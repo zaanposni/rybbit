@@ -82,6 +82,10 @@ export async function createCheckoutSession(
       allow_promotion_codes: true,
       // Enable automatic tax calculation if configured in Stripe Tax settings
       automatic_tax: { enabled: true },
+      // Configure customer address collection for tax calculation
+      customer_update: {
+        address: "auto",
+      },
     });
 
     // 5. Return the Checkout Session URL
