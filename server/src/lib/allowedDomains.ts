@@ -28,15 +28,14 @@ export const loadAllowedDomains = async () => {
     }
 
     allowList = [
-      "localhost:3002",
+      "localhost",
       normalizeOrigin(process.env.BASE_URL || ""),
       ...domains.map(({ domain }) => domain),
     ];
-    initAuth(allowList);
   } catch (error) {
     console.error("Error loading allowed domains:", error);
     // Set default values in case of error
-    allowList = ["localhost:3002", normalizeOrigin(process.env.BASE_URL || "")];
+    allowList = ["localhost", normalizeOrigin(process.env.BASE_URL || "")];
     initAuth(allowList);
   }
 };
