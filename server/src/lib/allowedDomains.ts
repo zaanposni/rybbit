@@ -1,5 +1,6 @@
 import { db, sql } from "../db/postgres/postgres.js";
 import { sites } from "../db/postgres/schema.js";
+import { normalizeOrigin } from "../utils.js";
 import { initAuth } from "./auth.js";
 import dotenv from "dotenv";
 
@@ -27,15 +28,15 @@ export const loadAllowedDomains = async () => {
     }
 
     allowList = [
-      "http://localhost:3002",
-      process.env.BASE_URL || "",
+      "localhost:3002",
+      normalizeOrigin(process.env.BASE_URL || ""),
       ...domains.map(({ domain }) => domain),
     ];
     initAuth(allowList);
   } catch (error) {
     console.error("Error loading allowed domains:", error);
     // Set default values in case of error
-    allowList = ["http://localhost:3002", process.env.BASE_URL || ""];
+    allowList = ["localhost:3002", normalizeOrigin(process.env.BASE_URL || "")];
     initAuth(allowList);
   }
 };
