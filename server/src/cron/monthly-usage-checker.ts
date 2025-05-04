@@ -64,14 +64,11 @@ async function getUserSubscriptionInfo(userData: {
   createdAt: string;
   email: string;
 }): Promise<[number, string | null]> {
-  if (!userData.stripeCustomerId) {
-    const createdAtDate = DateTime.fromSQL(userData.createdAt);
-    const daysSinceCreation = Math.abs(createdAtDate.diffNow("days").days);
-    console.info({ daysSinceCreation, createdAtDate });
+  const createdAtDate = DateTime.fromSQL(userData.createdAt);
+  const daysSinceCreation = Math.abs(createdAtDate.diffNow("days").days);
 
-    // If the user was created in the last 14 days, use the trial limit
+  if (!userData.stripeCustomerId) {
     if (daysSinceCreation < 14) {
-      // For trial users, use their account creation date as the starting point for counting events
       return [TRIAL_EVENT_LIMIT, createdAtDate.toISODate() as string];
     }
 
@@ -88,6 +85,10 @@ async function getUserSubscriptionInfo(userData: {
     });
 
     if (subscriptions.data.length === 0) {
+      // If the user was created in the last 14 days, use the trial limit
+      if (daysSinceCreation < 14) {
+        return [TRIAL_EVENT_LIMIT, createdAtDate.toISODate() as string];
+      }
       // No active subscription, use default limit and start of current month
       return [DEFAULT_EVENT_LIMIT, getStartOfMonth()];
     }
@@ -212,8 +213,6 @@ export async function updateUsersMonthlyUsage() {
         createdAt: user.createdAt,
       })
       .from(user);
-
-    console.info({ users });
 
     for (const userData of users) {
       try {
