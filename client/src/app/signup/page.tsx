@@ -18,8 +18,8 @@ import {
   User,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect } from "react";
 import { addSite } from "../../api/admin/sites";
 import { CodeSnippet } from "../../components/CodeSnippet";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
@@ -35,10 +35,19 @@ const contentVariants = {
 };
 
 export default function SignupPage() {
+  const searchParams = useSearchParams();
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");
   const router = useRouter();
+
+  // Check for step parameter in URL when component mounts
+  useEffect(() => {
+    const step = searchParams.get("step");
+    if (step && !isNaN(Number(step))) {
+      setCurrentStep(Number(step));
+    }
+  }, [searchParams]);
 
   // Step 1: Account creation
   const [email, setEmail] = useState("");
@@ -255,6 +264,7 @@ export default function SignupPage() {
                       onClick={() => {
                         authClient.signIn.social({
                           provider: "google",
+                          callbackURL: "/signup?step=2",
                         });
                       }}
                       className="transition-all duration-300 hover:bg-muted bg-neutral-800/50 border-neutral-700"
@@ -268,6 +278,7 @@ export default function SignupPage() {
                       onClick={() => {
                         authClient.signIn.social({
                           provider: "github",
+                          callbackURL: "/signup?step=2",
                         });
                       }}
                       className="transition-all duration-300 hover:bg-muted bg-neutral-800/50 border-neutral-700"
