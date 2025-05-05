@@ -24,6 +24,7 @@ export default {
   },
   "framer": "",
   "google-tag-manager": "",
+  "shopify": "",
   "webflow": "",
   "wordpress": "",
   _7: {
