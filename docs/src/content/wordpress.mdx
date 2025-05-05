@@ -1,0 +1,46 @@
+# WordPress
+
+You can integrate Rybbit into your WordPress site to track user behavior and gather analytics. There are several ways to do this depending on whether you're using a hosted WordPress.com site or a self-hosted WordPress.org installation.
+
+## Option 1: Use a Plugin (No code)
+
+If you don’t want to modify your theme files directly, you can use a plugin to inject the Rybbit snippet.
+
+### Steps
+
+1. Install a plugin such as **Insert Headers and Footers**.
+2. Go to your WordPress Admin Dashboard → **Settings** → **Insert Headers and Footers**.
+3. In the “Scripts in Header” field, paste your Rybbit snippet.
+4. Save the changes.
+
+## Option 2: Add to `functions.php`
+
+If you're using a self-hosted WordPress theme, you can add the script via `functions.php`.
+
+### Steps
+
+1. In the WordPress dashboard, go to **Appearance > Theme File Editor**.
+2. Open the `functions.php` file.
+3. Add this function:
+
+```php
+function add_Rybbit_script() {
+  ?>
+  <script src="YOUR_INSTANCE_ADDRESS" async data-site-id="YOUR_SITE_ID"></script>
+  <?php
+}
+add_action('wp_head', 'add_Rybbit_script');
+```
+4. Save the file.
+
+## Option 3: Modify `header.php`
+
+You can also manually add the script into your theme’s HTML header.
+
+### Steps
+
+1. Go to **Appearance > Theme File Editor**.
+2. Open the `header.php` file.
+3. Paste the Rybbit snippet right before the closing `</head>` tag.
+4. Replace the placeholder values with your API key and instance URL.
+5. Save the file.

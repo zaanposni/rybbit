@@ -23,6 +23,7 @@ export default {
     title: "Integrations",
   },
   "google-tag-manager": "",
+  "wordpress": "",
   _7: {
     type: "separator",
     title: "Settings",
