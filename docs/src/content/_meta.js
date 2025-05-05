@@ -15,6 +15,11 @@ export default {
   "self-hosting-upgrading": "",
   _5: {
     type: "separator",
+    title: "SDKs",
+  },
+  "web": "",
+  _6: {
+    type: "separator",
     title: "Settings",
   },
   "adding-users": "",
@@ -22,7 +27,7 @@ export default {
   "enhanced-privacy": "",
   "changing-domains": "",
   "deleting-sites": "",
-  _6: {
+  _7: {
     type: "separator",
     title: "Other",
   },
