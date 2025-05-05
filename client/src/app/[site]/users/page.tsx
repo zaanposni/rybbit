@@ -50,7 +50,7 @@ const SortHeader = ({ column, children }: any) => {
   return (
     <Button
       variant="ghost"
-      onClick={() => column.toggleSorting(isSorted === "asc")}
+      onClick={() => column.toggleSorting(isSorted ? isSorted === "asc" : true)}
       className="p-0 hover:bg-transparent"
     >
       {children}
