@@ -24,6 +24,7 @@ export default {
   },
   "framer": "",
   "google-tag-manager": "",
+  "webflow": "",
   "wordpress": "",
   _7: {
     type: "separator",
