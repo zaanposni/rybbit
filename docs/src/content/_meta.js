@@ -22,6 +22,7 @@ export default {
     type: "separator",
     title: "Integrations",
   },
+  "framer": "",
   "google-tag-manager": "",
   "wordpress": "",
   _7: {
