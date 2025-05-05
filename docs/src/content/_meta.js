@@ -20,6 +20,11 @@ export default {
   "web": "",
   _6: {
     type: "separator",
+    title: "Integrations",
+  },
+  "google-tag-manager": "",
+  _7: {
+    type: "separator",
     title: "Settings",
   },
   "adding-users": "",
@@ -27,7 +32,7 @@ export default {
   "enhanced-privacy": "",
   "changing-domains": "",
   "deleting-sites": "",
-  _7: {
+  _8: {
     type: "separator",
     title: "Other",
   },
