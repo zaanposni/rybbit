@@ -56,6 +56,8 @@ services:
     build:
       context: ./server
       dockerfile: Dockerfile
+    ports:
+      - "${NO_WEBSERVER_PORT_BACKEND:-127.0.0.1:3001}:3001"
     environment:
       - NODE_ENV=production
       - CLICKHOUSE_HOST=http://clickhouse:8123
@@ -83,6 +85,8 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_BACKEND_URL: ${BASE_URL}
+    ports:
+      - "${NO_WEBSERVER_PORT_CLIENT:-127.0.0.1:3002}:3002"
     environment:
       - NODE_ENV=production
       - NEXT_PUBLIC_BACKEND_URL=${BASE_URL}
