@@ -5,28 +5,86 @@ set -e
 
 # Default values
 USE_WEBSERVER="true"
-NO_WEBSERVER_PORT_BACKEND="127.0.0.1:3001"
-NO_WEBSERVER_PORT_CLIENT="127.0.0.1:3002"
+BACKEND_PORT="3001"
+CLIENT_PORT="3002"
+HOST_BACKEND_PORT="127.0.0.1:3001"
+HOST_CLIENT_PORT="127.0.0.1:3002"
+
+# Help function
+show_help() {
+  echo "Usage: $0 <domain_name> [options]"
+  echo "Example: $0 myapp.example.com"
+  echo "Example with no webserver: $0 myapp.example.com --no-webserver"
+  echo ""
+  echo "Options:"
+  echo "  --no-webserver          Disable the built-in Caddy webserver"
+  echo "  --backend-port <port>   Set custom host port for backend (default: 3001)"
+  echo "  --client-port <port>    Set custom host port for client (default: 3002)"
+  echo "  --help                  Show this help message"
+}
 
 # Parse arguments
 while [[ "$#" -gt 0 ]]; do
   case $1 in
     --no-webserver) 
       USE_WEBSERVER="false"
-      # When not using the built-in webserver, expose ports to host
-      NO_WEBSERVER_PORT_BACKEND="3001:3001"
-      NO_WEBSERVER_PORT_CLIENT="3002:3002"
+      shift
       ;;
-    *) DOMAIN_NAME="$1" ;;
+    --backend-port)
+      if [[ -z "$2" || "$2" =~ ^- ]]; then
+        echo "Error: --backend-port requires a port number"
+        show_help
+        exit 1
+      fi
+      BACKEND_PORT="$2"
+      shift 2
+      ;;
+    --client-port)
+      if [[ -z "$2" || "$2" =~ ^- ]]; then
+        echo "Error: --client-port requires a port number"
+        show_help
+        exit 1
+      fi
+      CLIENT_PORT="$2"
+      shift 2
+      ;;
+    --help)
+      show_help
+      exit 0
+      ;;
+    -*)
+      echo "Unknown option: $1"
+      show_help
+      exit 1
+      ;;
+    *)
+      if [ -z "$DOMAIN_NAME" ]; then
+        DOMAIN_NAME="$1"
+      else
+        echo "Error: Only one domain name can be specified"
+        show_help
+        exit 1
+      fi
+      shift
+      ;;
   esac
-  shift
 done
+
+# Update port mappings after all args are parsed
+if [ "$USE_WEBSERVER" = "false" ]; then
+  # When not using the built-in webserver, expose ports to host
+  HOST_BACKEND_PORT="${BACKEND_PORT}:3001"
+  HOST_CLIENT_PORT="${CLIENT_PORT}:3002"
+else
+  # Keep ports only accessible via localhost when using Caddy
+  HOST_BACKEND_PORT="127.0.0.1:3001"
+  HOST_CLIENT_PORT="127.0.0.1:3002"
+fi
 
 # Check if domain name argument is provided
 if [ -z "$DOMAIN_NAME" ]; then
-  echo "Usage: $0 <domain_name> [--no-webserver]"
-  echo "Example: $0 myapp.example.com"
-  echo "Example with no webserver: $0 myapp.example.com --no-webserver"
+  echo "Error: Domain name is required"
+  show_help
   exit 1
 fi
 
@@ -52,14 +110,19 @@ BASE_URL=${BASE_URL}
 BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET}
 DISABLE_SIGNUP=false
 USE_WEBSERVER=${USE_WEBSERVER}
-NO_WEBSERVER_PORT_BACKEND=${NO_WEBSERVER_PORT_BACKEND}
-NO_WEBSERVER_PORT_CLIENT=${NO_WEBSERVER_PORT_CLIENT}
+HOST_BACKEND_PORT=${HOST_BACKEND_PORT}
+HOST_CLIENT_PORT=${HOST_CLIENT_PORT}
 EOL
 
 echo ".env file created successfully with domain ${DOMAIN_NAME}."
 if [ "$USE_WEBSERVER" = "false" ]; then
   echo "Caddy webserver is disabled. You'll need to set up your own webserver."
-  echo "The backend service will be available on port 3001 and the client on port 3002."
+  if [ "$BACKEND_PORT" = "3001" ] && [ "$CLIENT_PORT" = "3002" ]; then
+    echo "The backend service will be available on port 3001 and the client on port 3002."
+  else 
+    echo "The backend service will be available on port ${BACKEND_PORT} (mapped to container port 3001)"
+    echo "The client service will be available on port ${CLIENT_PORT} (mapped to container port 3002)"
+  fi
 fi
 
 # Build and start the Docker Compose stack

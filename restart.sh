@@ -8,6 +8,13 @@ echo "Restarting services..."
 # Stop all services
 docker compose stop
 
+# Check if .env file exists
+if [ ! -f .env ]; then
+  echo "Error: .env file not found. Please run setup.sh first."
+  echo "Usage: ./setup.sh <domain_name>"
+  exit 1
+fi
+
 # Load environment variables
 source .env
 

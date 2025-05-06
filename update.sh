@@ -13,6 +13,13 @@ git pull
 echo "Stopping current services..."
 docker compose down
 
+# Check if .env file exists
+if [ ! -f .env ]; then
+  echo "Error: .env file not found. Please run setup.sh first."
+  echo "Usage: ./setup.sh <domain_name>"
+  exit 1
+fi
+
 # Rebuild and start containers
 echo "Rebuilding and starting updated services..."
 
