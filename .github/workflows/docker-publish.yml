@@ -44,8 +44,8 @@ jobs:
           tags: ${{ steps.meta_backend.outputs.tags }}
           labels: ${{ steps.meta_backend.outputs.labels }}
           # Optional: Enable build cache for potentially faster builds
-          cache-from: type=gha,scope=${{ github.workflow }}-backend
-          cache-to: type=gha,scope=${{ github.workflow }}-backend,mode=max
+          # cache-from: type=gha,scope=${{ github.workflow }}-backend
+          # cache-to: type=gha,scope=${{ github.workflow }}-backend,mode=max
 
       - name: Extract metadata (tags, labels) for Docker - Client
         id: meta_client
@@ -68,5 +68,5 @@ jobs:
           tags: ${{ steps.meta_client.outputs.tags }}
           labels: ${{ steps.meta_client.outputs.labels }}
           # Optional: Enable build cache for potentially faster builds
-          cache-from: type=gha,scope=${{ github.workflow }}-client
-          cache-to: type=gha,scope=${{ github.workflow }}-client,mode=max
+          # cache-from: type=gha,scope=${{ github.workflow }}-client
+          # cache-to: type=gha,scope=${{ github.workflow }}-client,mode=max
