@@ -33,7 +33,6 @@ export default function RealtimePage() {
   return (
     <div
       className="relative overflow-hidden"
-      style={{ height: "calc(100vh - 36px)" }}
       ref={ref}
     >
       <World width={width ?? 0} />
