@@ -4,8 +4,8 @@ import { useQuery } from "@tanstack/react-query";
 import { useWindowSize } from "@uidotdev/usehooks";
 import { scaleSequentialSqrt } from "d3-scale";
 import { interpolateYlOrRd } from "d3-scale-chromatic";
-import { memoize } from "lodash";
-import { useEffect, useMemo, useRef } from "react";
+import { memoize, debounce } from "lodash";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Globe from "react-globe.gl";
 import { MeshPhongMaterial } from "three";
 import { useGetLiveSessionLocations } from "../../../../api/analytics/useGetLiveSessionLocations";
@@ -52,6 +52,44 @@ export const World = ({ width }: { width: number }) => {
       globeEl.current.controls().autoRotateSpeed = 0.2;
     }
   }, [globeEl.current]);
+
+  const [hexAltitude, setHexAltitude] = useState(0.001);
+
+  // Debounced updateAltitude handler: fires once, 200ms after the last 'end' event
+  const updateAltitude = useCallback(
+    debounce(() => {
+      if (!globeEl.current) return;
+  
+      const controls = globeEl.current.controls();
+      const distance = Math.round(controls.getDistance());
+  
+      const low = 0.001, mid = 0.005, high = 0.02;
+      const near = 300, far = 600;
+      const nextAlt =
+        distance <= near ? low :
+        distance >= far ? high :
+        mid;
+  
+      // set only if changed
+      if (nextAlt !== hexAltitude) {
+        setHexAltitude(nextAlt);
+      }
+    }, 200),
+    [globeEl, hexAltitude, setHexAltitude]
+  );
+
+  useEffect(() => {
+    if (!globeEl.current) return;
+    const controls = globeEl.current.controls();
+    // Limit distance maximal distance
+    controls.maxDistance = 900;
+    // Subscribe on change event
+    controls.addEventListener('end', updateAltitude);
+    return () => {
+      controls.removeEventListener('end', updateAltitude);
+      updateAltitude.cancel(); // cancel any pending call
+    };
+  }, [globeEl, updateAltitude]);
 
   const oceanBlueMaterial = useMemo(
     () =>
@@ -106,6 +144,7 @@ export const World = ({ width }: { width: number }) => {
         hexPolygonMargin={0.2}
         hexBinResolution={3}
         hexBinPointsData={liveSessionLocationsData}
+        hexPolygonAltitude={hexAltitude}
         hexBinMerge={true}
         hexBinPointWeight={"count"}
         backgroundColor="rgba(0, 0, 0, 0)"
