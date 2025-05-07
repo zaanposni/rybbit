@@ -94,12 +94,13 @@ echo "Creating .env file..."
 # Update port mappings based on webserver choice
 if [ "$USE_WEBSERVER" = "false" ]; then
   # When not using the built-in webserver, expose ports to all interfaces
-  HOST_BACKEND_PORT="${BACKEND_PORT}:3001"
-  HOST_CLIENT_PORT="${CLIENT_PORT}:3002"
+  # Using quotes to ensure the string is passed as-is to Docker Compose
+  HOST_BACKEND_PORT="\"${BACKEND_PORT}:3001\""
+  HOST_CLIENT_PORT="\"${CLIENT_PORT}:3002\""
 else
   # Keep ports only accessible via localhost when using Caddy
-  HOST_BACKEND_PORT="127.0.0.1:${BACKEND_PORT}:3001"
-  HOST_CLIENT_PORT="127.0.0.1:${CLIENT_PORT}:3002"
+  HOST_BACKEND_PORT="\"127.0.0.1:${BACKEND_PORT}:3001\""
+  HOST_CLIENT_PORT="\"127.0.0.1:${CLIENT_PORT}:3002\""
 fi
 
 cat > .env << EOL
