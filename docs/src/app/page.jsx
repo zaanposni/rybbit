@@ -28,8 +28,8 @@ export default function IndexPage() {
   return (
     <div className="flex flex-col items-center justify-center overflow-x-hidden">
 
-      <h1 className={`text-4xl md:text-5xl lg:text-7xl font-semibold pt-16 md:pt-24 px-4 tracking-tight max-w-3xl text-center text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-100 to-gray-400 ${tilt_wrap.className}`}>The Modern Google Analytics Alternative</h1>
-      <h2 className="text-lg md:text-2xl pt-4 md:pt-6 px-4 tracking-tight max-w-3xl text-center text-neutral-300">Next-gen, open source, lightweight, cookieless web & product analytics for everyone.</h2>
+      <h1 className={`text-4xl md:text-5xl lg:text-7xl font-semibold pt-16 md:pt-24 px-4 tracking-tight max-w-4xl text-center text-transparent bg-clip-text bg-gradient-to-b from-white via-gray-100 to-gray-400 ${tilt_wrap.className}`}>The Open Source Google Analytics Alternative</h1>
+      {/* <h2 className="text-lg md:text-2xl pt-4 md:pt-6 px-4 tracking-tight max-w-3xl text-center text-neutral-300">Next-gen, open source, lightweight, cookieless web & product analytics for everyone.</h2>
 
       <div className="flex flex-col sm:flex-row my-8 md:my-10 items-center justify-center gap-4 md:gap-6 text-base md:text-lg px-4">
         <Link href="https://app.rybbit.io/signup" className="w-full sm:w-auto">
@@ -42,9 +42,9 @@ export default function IndexPage() {
             View Live Demo
           </button>
         </Link>
-      </div>
+      </div> */}
 
-      <div className="relative w-full max-w-[1300px] mb-10 px-4">
+      <div className="relative w-full max-w-[1300px] mb-10 px-4 mt-10">
         {/* Background gradients - overlapping circles for organic feel */}
         <div className="absolute top-0 left-0 w-[550px] h-[550px] bg-emerald-500/40 rounded-full blur-[80px] opacity-70"></div>
         <div className="absolute top-20 left-20 w-[400px] h-[400px] bg-emerald-600/30 rounded-full blur-[70px] opacity-50"></div>
