@@ -4,18 +4,20 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { GithubLogo, GoogleLogo } from "@phosphor-icons/react/dist/ssr";
 import { AlertCircle } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { useSetPageTitle } from "../../hooks/useSetPageTitle";
 import { authClient } from "../../lib/auth";
 import { IS_CLOUD } from "../../lib/const";
 import { userStore } from "../../lib/userStore";
-import { GithubLogo, GoogleLogo } from "@phosphor-icons/react/dist/ssr";
-import Image from "next/image";
 
 export default function Page() {
+  useSetPageTitle("Rybbit · Login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);

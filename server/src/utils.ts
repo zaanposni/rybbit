@@ -75,6 +75,7 @@ export const extractSiteId = (path: string) => {
   return null;
 };
 
+// Normalizes a URL origin by removing the "www." prefix.
 export const normalizeOrigin = (url: string) => {
   try {
     const hostname = new URL(url).hostname;

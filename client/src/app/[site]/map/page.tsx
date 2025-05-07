@@ -4,8 +4,11 @@ import { Switch } from "@/components/ui/switch";
 import { useState } from "react";
 import { MapComponent } from "../components/shared/Map";
 import { SubHeader } from "../components/SubHeader/SubHeader";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function MapPage() {
+  useSetPageTitle("Rybbit · Map");
+
   const [mapMode, setMapMode] = useState<"total" | "perCapita">("total");
 
   return (

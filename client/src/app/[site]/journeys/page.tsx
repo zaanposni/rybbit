@@ -1,13 +1,8 @@
 "use client";
 
-import { useParams } from "next/navigation";
 import { useJourneys } from "@/api/analytics/useJourneys";
-import { useMemo, useRef, useEffect, useState } from "react";
-import * as d3 from "d3";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -15,15 +10,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DateRangeMode, Time } from "../../../components/DateSelector/types";
+import { Skeleton } from "@/components/ui/skeleton";
+import * as d3 from "d3";
+import { AlertCircle } from "lucide-react";
 import { DateTime } from "luxon";
-import { DateSelector } from "../../../components/DateSelector/DateSelector";
+import { useEffect, useRef, useState } from "react";
 import { useGetSite } from "../../../api/admin/sites";
+import { DateSelector } from "../../../components/DateSelector/DateSelector";
+import { DateRangeMode, Time } from "../../../components/DateSelector/types";
 import { MobileSidebar } from "../../../components/MobileSidebar";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 const MAX_LINK_HEIGHT = 100;
 
 export default function JourneysPage() {
+  useSetPageTitle("Rybbit · Journeys");
+
   const [steps, setSteps] = useState<number>(3);
   const [maxJourneys, setMaxJourneys] = useState<number>(25);
 

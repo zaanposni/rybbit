@@ -1,8 +1,5 @@
 "use client";
 
-import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import {
   createColumnHelper,
   flexRender,
@@ -12,7 +9,7 @@ import {
   SortingState,
   useReactTable,
 } from "@tanstack/react-table";
-import { DateTime } from "luxon";
+import Avatar from "boring-avatars";
 import {
   ArrowDown,
   ArrowUp,
@@ -21,24 +18,29 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Users,
+  Monitor,
+  Smartphone,
+  Tablet,
 } from "lucide-react";
-import { UsersResponse, useGetUsers } from "../../../api/analytics/users";
+import { DateTime } from "luxon";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import { useState } from "react";
+import { useGetUsers, UsersResponse } from "../../../api/analytics/users";
 import { Button } from "../../../components/ui/button";
-import { CountryFlag } from "../components/shared/icons/CountryFlag";
-import { Browser } from "../components/shared/icons/Browser";
-import { OperatingSystem } from "../components/shared/icons/OperatingSystem";
-import { getCountryName } from "../../../lib/utils";
-import { Smartphone, Tablet, Monitor } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "../../../components/ui/tooltip";
-import { SubHeader } from "../components/SubHeader/SubHeader";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 import { USER_PAGE_FILTERS } from "../../../lib/store";
-import Avatar from "boring-avatars";
+import { getCountryName } from "../../../lib/utils";
+import { Browser } from "../components/shared/icons/Browser";
+import { CountryFlag } from "../components/shared/icons/CountryFlag";
+import { OperatingSystem } from "../components/shared/icons/OperatingSystem";
+import { SubHeader } from "../components/SubHeader/SubHeader";
 
 // Set up column helper
 const columnHelper = createColumnHelper<UsersResponse>();
@@ -50,7 +52,7 @@ const SortHeader = ({ column, children }: any) => {
   return (
     <Button
       variant="ghost"
-      onClick={() => column.toggleSorting(isSorted === "asc")}
+      onClick={() => column.toggleSorting(isSorted ? isSorted === "asc" : true)}
       className="p-0 hover:bg-transparent"
     >
       {children}
@@ -68,7 +70,8 @@ const SortHeader = ({ column, children }: any) => {
 };
 
 export default function UsersPage() {
-  const router = useRouter();
+  useSetPageTitle("Rybbit · Users");
+
   const { site } = useParams();
 
   // State for server-side operations

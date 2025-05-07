@@ -8,6 +8,7 @@ import { MobileSidebar } from "../../../components/MobileSidebar";
 import { NothingFound } from "../../../components/NothingFound";
 import { CreateFunnelDialog } from "./components/CreateFunnel";
 import { FunnelRow } from "./components/FunnelRow";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 // Skeleton for the funnel row component
 const FunnelRowSkeleton = () => (
@@ -59,6 +60,8 @@ const FunnelRowSkeleton = () => (
 );
 
 export default function FunnelsPage() {
+  useSetPageTitle("Rybbit · Funnels");
+
   const { site } = useStore();
   const { data: funnels, isLoading, error } = useGetFunnels(site);
 

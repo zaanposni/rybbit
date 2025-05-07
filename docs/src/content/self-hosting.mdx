@@ -1,7 +1,7 @@
 import { Steps } from 'nextra/components'
 import { Callout } from 'nextra/components'
 
-# Setup
+# Self Hosting Guide
 
 This guide will walk you through setting up your own instance of Rybbit.
 
@@ -9,9 +9,11 @@ This guide will walk you through setting up your own instance of Rybbit.
 
 Before you begin, ensure you have the following:
 
--   **A Linux VPS:** We use [Hetzner Cloud](https://hetzner.cloud/?ref=QEdVqVpTLBDP) for everything (referral link - but Hetzner is legitimately the best value). CX11 for ~$4/month will be fine for small-medium sized projects.
+-   **A Linux VPS:** Try to get one with at least 2GB of RAM.
+
+    We use Hetzner for everything. [Use our referral link](https://hetzner.cloud/?ref=QEdVqVpTLBDP) to get a 20 dollars of credits. It should last you almost half a year. The AMD CX11 is a good choice for ~$4/month.
+    
 -   **A Domain Name:** You'll need a domain or subdomain (e.g., `tracking.yourdomain.com`) pointed to your VPS's IP address. HTTPS is required because browsers block tracking scripts served over insecure HTTP.
--   **Docker Engine:** Docker is used to run the application stack. Installation instructions are in Step 1.
 -   **Git:** Needed to clone the repository.
 
 <Callout type="info">
@@ -53,13 +55,23 @@ cd rybbit
 
 The repository includes a setup script that configures the necessary environment variables (including generating a secure secret) and starts the application using Docker Compose.
 
-Run the script, replacing `your.domain.name` with the domain or subdomain you configured in the prerequisites:
+<Callout type="warning">
+  Important: Make all scripts executable before proceeding!
+  ```bash
+  chmod +x *.sh
+  ```
+</Callout>
+
+Run the setup script, replacing `your.domain.name` with the domain or subdomain you configured in the prerequisites:
 ```bash
-chmod +x setup.sh
 ./setup.sh your.domain.name
 ```
 
 The script will create a `.env` file and then build and start the containers. This might take a few minutes the first time.
+
+<Callout type="info">
+  By default, we assume you are on a blank VPS and automatically setup a Caddy webserver. If you want to use your own webserver, checkout the [Advanced Self-Hosting Guide](/docs/self-hosting-advanced#using-your-own-web-server).
+</Callout>
 
 ### 5. Sign Up
 
@@ -71,7 +83,40 @@ Create your admin account. You can then log in and start adding your websites!
 
 </Steps>
 
-Congratulations! You have successfully self-hosted Rybbit.
+## Managing Your Installation
+
+Rybbit comes with several helper scripts to manage your installation:
+
+<Callout type="info">
+  If you haven't done so already, make sure all scripts are executable:
+  ```bash
+  chmod +x *.sh
+  ```
+</Callout>
+
+- **start.sh**: Start all services after they've been stopped
+  ```bash
+  ./start.sh
+  ```
+
+- **stop.sh**: Stop all running services
+  ```bash
+  ./stop.sh
+  ```
+
+- **restart.sh**: Restart all services
+  ```bash
+  ./restart.sh
+  ```
+
+- **update.sh**: Update to the latest version by pulling new code and rebuilding containers
+  ```bash
+  ./update.sh
+  ```
+
+<Callout>
+If you are using your self-hosted Rybbit without anyone else, you can disable new user signups by setting `DISABLE_SIGNUP=true` in the `.env` file at the root of the repository.
+</Callout>
 {/* 
 ## Security Recommendation: Firewall Configuration
 

@@ -12,12 +12,13 @@ import {
   MousePointerClick,
   Smartphone,
   Tablet,
-  Users,
 } from "lucide-react";
 import { DateTime } from "luxon";
 import { useParams } from "next/navigation";
 import { useUserInfo } from "../../../../api/analytics/userInfo";
-import CopyText from "../../../../components/CopyText";
+import { useGetUserSessionCount } from "../../../../api/analytics/userSessions";
+import { MobileSidebar } from "../../../../components/MobileSidebar";
+import { useSetPageTitle } from "../../../../hooks/useSetPageTitle";
 import { useGetRegionName } from "../../../../lib/geo";
 import {
   formatDuration,
@@ -27,11 +28,11 @@ import {
 import { Browser } from "../../components/shared/icons/Browser";
 import { CountryFlag } from "../../components/shared/icons/CountryFlag";
 import { OperatingSystem } from "../../components/shared/icons/OperatingSystem";
-import { MobileSidebar } from "../../../../components/MobileSidebar";
 import { VisitCalendar } from "./components/Calendar";
-import { useGetUserSessionCount } from "../../../../api/analytics/userSessions";
 
 export default function UserPage() {
+  useSetPageTitle("Rybbit · User");
+
   const { userId } = useParams();
   const { site } = useParams();
 

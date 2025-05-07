@@ -8,8 +8,11 @@ import { GOALS_PAGE_FILTERS, useStore } from "../../../lib/store";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import CreateGoalButton from "./components/CreateGoalButton";
 import GoalsList from "./components/GoalsList";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function GoalsPage() {
+  useSetPageTitle("Rybbit · Goals");
+
   const { time, site } = useStore();
   const { startDate, endDate } = getStartAndEndDate(time);
   const [currentPage, setCurrentPage] = useState(1);

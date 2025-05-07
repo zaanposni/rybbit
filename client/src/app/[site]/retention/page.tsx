@@ -24,6 +24,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "../../../components/ui/tabs";
 import { RetentionChart } from "./RetentionChart";
 import { NothingFound } from "../../../components/NothingFound";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 // Available time range options (in days)
 const RANGE_OPTIONS = [
@@ -76,6 +77,8 @@ const getRetentionColor = (
 };
 
 export default function RetentionPage() {
+  useSetPageTitle("Rybbit · Retention");
+
   // State for the retention mode (day or week)
   const [mode, setMode] = useState<RetentionMode>("week");
   // State for the data time range (days)

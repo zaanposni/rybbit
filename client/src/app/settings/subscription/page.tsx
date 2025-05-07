@@ -8,8 +8,10 @@ import { useUserOrganizations } from "../../../api/admin/organizations";
 import { NoOrganization } from "../../../components/NoOrganization";
 import { TrialPlan } from "./components/TrialPlan";
 import { ExpiredTrialPlan } from "./components/ExpiredTrialPlan";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function SubscriptionPage() {
+  useSetPageTitle("Rybbit · Subscription");
   const { data: activeSubscription, isLoading: isLoadingSubscription } =
     useStripeSubscription();
 

@@ -27,7 +27,7 @@
 
 </p>
 
-Rybbit is the modern open source and privacy friendly alternative to Google Analytics. It takes only a couple minutes to setup and is super intuitive to use.
+<a href="https://rybbit.io/" target="_blank">Rybbit</a> is the modern open source and privacy friendly alternative to Google Analytics. It takes only a couple minutes to setup and is super intuitive to use.
 
 <h3>
 View a <strong><a href="https://demo.rybbit.io/1">live demo</a></strong> of Rybbit running on a real-life production site with over a million visits a month. 

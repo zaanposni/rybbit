@@ -1,10 +1,13 @@
 "use client";
 
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 import { SESSION_PAGE_FILTERS } from "../../../lib/store";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import SessionsList from "@/components/Sessions/SessionsList";
 
 export default function SessionsPage() {
+  useSetPageTitle("Rybbit · Sessions");
+
   return (
     <div className="p-2 md:p-4 max-w-[1300px] mx-auto space-y-3">
       <SubHeader availableFilters={SESSION_PAGE_FILTERS} />

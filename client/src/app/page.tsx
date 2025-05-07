@@ -12,8 +12,11 @@ import { Card, CardDescription, CardTitle } from "../components/ui/card";
 import { AddSite } from "./components/AddSite";
 import { CreateOrganizationDialog } from "../components/CreateOrganizationDialog";
 import { FreeTrialBanner } from "../components/FreeTrialBanner";
+import { useSetPageTitle } from "../hooks/useSetPageTitle";
 
 export default function Home() {
+  useSetPageTitle("Rybbit · Home");
+
   const {
     data: sites,
     refetch: refetchSites,

@@ -6,8 +6,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventList } from "./components/EventList";
 import { EventLog } from "./components/EventLog";
 import { SubHeader } from "../components/SubHeader/SubHeader";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function EventsPage() {
+  useSetPageTitle("Rybbit · Events");
+
   const { data: eventNamesData, isLoading: isLoadingEventNames } =
     useGetEventNames();
 

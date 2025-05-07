@@ -37,8 +37,9 @@ const ChangePercentage = ({
     <div
       className={cn(
         "text-xs flex items-center gap-1",
-        change > 0 ? "text-green-400" : "text-red-400",
-        reverseColor && change > 0 ? "text-red-400" : "text-green-400"
+        (reverseColor ? -change : change) > 0
+          ? "text-green-400"
+          : "text-red-400"
       )}
     >
       {change > 0 ? (

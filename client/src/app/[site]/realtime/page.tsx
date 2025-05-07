@@ -20,8 +20,10 @@ import { useAtom } from "jotai";
 import { minutesAtom, MinutesType } from "./realtimeStore";
 import NumberFlow from "@number-flow/react";
 import { MobileSidebar } from "../../../components/MobileSidebar";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 export default function RealtimePage() {
+  useSetPageTitle("Rybbit · Realtime");
   const [ref, { width }] = useMeasure();
 
   const [minutes, setMinutes] = useAtom(minutesAtom);
@@ -31,7 +33,6 @@ export default function RealtimePage() {
   return (
     <div
       className="relative overflow-hidden"
-      style={{ height: "calc(100vh - 36px)" }}
       ref={ref}
     >
       <World width={width ?? 0} />

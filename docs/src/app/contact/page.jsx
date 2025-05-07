@@ -43,8 +43,8 @@ export default function Contact() {
             </div>
             <div>
               <h2 className="text-xl font-medium mb-1">GitHub</h2>
-              <a href="https://github.com/goldflag/rybbit" target="_blank" rel="noopener noreferrer" className="text-neutral-300 hover:text-white transition-colors">
-                github.com/goldflag/rybbit
+              <a href="https://github.com/rybbit-io/rybbit" target="_blank" rel="noopener noreferrer" className="text-neutral-300 hover:text-white transition-colors">
+                github.com/rybbit-io/rybbit
               </a>
             </div>
           </div>
@@ -86,7 +86,7 @@ export default function Contact() {
           Rybbit is an open-source project. If you'd like to contribute, report issues, or suggest features, 
           please visit our GitHub repository.
         </p>
-        <Link href="https://github.com/goldflag/rybbit" target="_blank" rel="noopener noreferrer">
+        <Link href="https://github.com/rybbit-io/rybbit" target="_blank" rel="noopener noreferrer">
           <button className="bg-neutral-800 hover:bg-neutral-700 text-white font-medium px-5 py-2 rounded-lg border border-neutral-700 transform hover:-translate-y-0.5 transition-all duration-200 hover:border-neutral-600 focus:outline-none focus:ring-2 focus:ring-neutral-600 focus:ring-opacity-50">
             Visit GitHub Repository
           </button>

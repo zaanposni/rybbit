@@ -12,7 +12,8 @@ export default {
     title: "Self-hosting",
   },
   "self-hosting": "",
-  "self-hosting-upgrading": "",
+  "self-hosting-advanced": "",
+  "self-hosting-nginx": "",
   _5: {
     type: "separator",
     title: "SDKs",

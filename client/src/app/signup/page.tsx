@@ -27,6 +27,7 @@ import { authClient } from "../../lib/auth";
 import { BACKEND_URL, IS_CLOUD } from "../../lib/const";
 import { userStore } from "../../lib/userStore";
 import { Logo } from "../../components/Logo";
+import { useSetPageTitle } from "../../hooks/useSetPageTitle";
 
 // Animation variants for step transitions
 const contentVariants = {
@@ -49,6 +50,8 @@ function StepHandler({ onSetStep }: { onSetStep: (step: number) => void }) {
 }
 
 export default function SignupPage() {
+  useSetPageTitle("Rybbit · Signup");
+
   const [currentStep, setCurrentStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string>("");

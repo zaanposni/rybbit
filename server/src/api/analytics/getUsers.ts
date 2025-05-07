@@ -110,7 +110,7 @@ WITH AggregatedUsers AS (
 SELECT *
 FROM AggregatedUsers
 WHERE 1 = 1 ${filterStatement}
-ORDER BY {sortBy:String} ${actualSortOrder}
+ORDER BY ${actualSortBy} ${actualSortOrder}
 LIMIT {limit:Int32} OFFSET {offset:Int32}
   `;
 
@@ -135,8 +135,6 @@ WHERE
           siteId: Number(site),
           limit: pageSizeNum,
           offset,
-          sortBy: actualSortBy,
-          sortOrder: actualSortOrder,
         },
       }),
       clickhouse.query({

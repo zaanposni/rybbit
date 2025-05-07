@@ -2,58 +2,39 @@
 
 The script exposes a global object `window.rybbit` with functions for manual tracking of events.
 
-### `window.rybbit.track(eventType, eventName, properties)`
+## Available Functions
 
-The core function to send tracking data.
+### `window.rybbit.event(eventName, properties)`
 
-*   `eventType` (String): The type of event. Defaults to `"pageview"`. Other values include `"custom_event"` or `"outbound"`.
-*   `eventName` (String): The name of the custom event (max 255 characters). **Required** when `eventType` is `"custom_event"`.
-*   `properties` (Object, Optional): An object containing custom data (max 8192 characters / 8KB when stringified). This will be JSON-stringified before sending.
+Tracks a custom event with optional properties.
+
+*   `eventName` (String): The name of the custom event (max 255 characters).
+*   `properties` (Object, Optional): An object containing custom data (max 2KB characters). Only strings numbers are supported as values.
 
 ```javascript
-// Track a simple pageview (usually handled automatically)
-window.rybbit.track("pageview");
-
-// Track a custom event
-window.rybbit.track("custom_event", "Signup Button Clicked");
+// Track a simple custom event
+window.rybbit.event("Signup Button Clicked");
 
 // Track a custom event with properties
-window.rybbit.track("custom_event", "Item Added To Cart", {
+window.rybbit.event("Item Added To Cart", {
   itemId: "PROD123",
   price: 49.99,
   category: "Clothing"
-});
-
-// Track an outbound link click manually
-window.rybbit.track("outbound", "", {
-  url: "https://example.com",
-  text: "Visit Example Site",
-  target: "_blank"
 });
 ```
 
 ### `window.rybbit.pageview()`
 
-A convenience function for tracking a pageview. Equivalent to `window.rybbit.track('pageview')`. Useful when `data-track-spa` is set to `"false"`.
+Tracks a pageview. Useful when `data-track-spa` is set to `"false"` or when you need to manually trigger a pageview.
 
 ```javascript
+// Track a pageview
 window.rybbit.pageview();
 ```
 
-### `window.rybbit.event(eventName, properties)`
-
-A convenience function for tracking custom events. Equivalent to `window.rybbit.track('custom_event', eventName, properties)`.
-
-*   `eventName` (String): The name of the custom event (max 255 characters).
-*   `properties` (Object, Optional): An object containing custom data.
-
-```javascript
-window.rybbit.event("Video Played", { videoId: "xyz789" });
-```
-{/* 
 ### `window.rybbit.trackOutbound(url, text, target)`
 
-A convenience function for manually tracking outbound link clicks. Useful for programmatic navigation or custom link handling.
+Manually tracks outbound link clicks. Useful for programmatic navigation or custom link handling.
 
 *   `url` (String): The full URL of the outbound link.
 *   `text` (String, Optional): The text content of the link.
@@ -62,11 +43,11 @@ A convenience function for manually tracking outbound link clicks. Useful for pr
 ```javascript
 // Track a programmatic navigation to an external site
 window.rybbit.trackOutbound("https://example.com", "Example Site", "_blank");
-``` */}
+```
 
 ## Typescript Support
 
-Put this as file `rybbit.d.ts` anywhere in your project to avoid having to do `(window as any).rybbit.track()` everywhere.
+Put this as file `rybbit.d.ts` anywhere in your project to avoid having to do `(window as any).rybbit.event()` everywhere.
 
 ```ts
 interface Rybbit {
@@ -98,5 +79,3 @@ declare global {
 }
 
 export {};
-
-```

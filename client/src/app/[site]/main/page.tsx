@@ -1,5 +1,6 @@
 "use client";
 import { useGetSite } from "../../../api/admin/sites";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 import { useStore } from "../../../lib/store";
 import { SubHeader } from "../components/SubHeader/SubHeader";
 import { MainSection } from "./components/MainSection/MainSection";
@@ -22,6 +23,8 @@ export default function MainPage() {
 
 function MainPageContent() {
   const { data: siteMetadata, isLoading: isLoadingSiteMetadata } = useGetSite();
+
+  useSetPageTitle("Rybbit · Main");
 
   if (isLoadingSiteMetadata || !siteMetadata) {
     return null;

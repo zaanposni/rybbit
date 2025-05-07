@@ -30,7 +30,7 @@ export const loadAllowedDomains = async () => {
     allowList = [
       "localhost",
       normalizeOrigin(process.env.BASE_URL || ""),
-      ...domains.map(({ domain }) => domain),
+      ...domains.map(({ domain }) => normalizeOrigin(domain)),
     ];
   } catch (error) {
     console.error("Error loading allowed domains:", error);

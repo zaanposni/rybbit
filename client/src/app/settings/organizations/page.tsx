@@ -17,19 +17,17 @@ import {
 import { authClient } from "../../../lib/auth";
 
 // Import the separated dialog components
-import { DeleteOrganizationDialog } from "./components/DeleteOrganizationDialog";
-import { EditOrganizationDialog } from "./components/EditOrganizationDialog";
-import { RemoveMemberDialog } from "./components/RemoveMemberDialog";
 import { useOrganizationMembers } from "../../../api/admin/auth";
 import {
   UserOrganization,
   useUserOrganizations,
 } from "../../../api/admin/organizations";
-import { AddMemberDialog } from "./components/AddMemberDialog";
-import { useQuery } from "@tanstack/react-query";
-import { Badge } from "../../../components/ui/badge";
-import { Button } from "../../../components/ui/button";
 import { NoOrganization } from "../../../components/NoOrganization";
+import { AddMemberDialog } from "./components/AddMemberDialog";
+import { DeleteOrganizationDialog } from "./components/DeleteOrganizationDialog";
+import { EditOrganizationDialog } from "./components/EditOrganizationDialog";
+import { RemoveMemberDialog } from "./components/RemoveMemberDialog";
+import { useSetPageTitle } from "../../../hooks/useSetPageTitle";
 
 // Types for our component
 export type Organization = {
@@ -247,6 +245,7 @@ function Organization({ org }: { org: UserOrganization }) {
 
 // Main Organizations component
 export default function Organizations() {
+  useSetPageTitle("Rybbit · Organizations");
   const { data, isLoading } = useUserOrganizations();
 
   if (isLoading) {
