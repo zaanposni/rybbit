@@ -54,8 +54,6 @@ rybbit.init({
 
 Pageviews are tracked automatically if `autoTrackPageviews` is enabled (default). This includes the initial page load and subsequent route changes in Single Page Applications (SPAs) if `autoTrackSpaRoutes` is also enabled.
 
-You can manually trigger a pageview track if needed.
-
 ### Syntax
 
 ```typescript
@@ -64,26 +62,37 @@ rybbit.pageview(path?: string);
 
 ### Parameters
 
-  * **`path`** (`string`, Optional): Allows you to override the automatically detected URL path (`window.location.pathname`). *Note: The core tracking logic currently uses `window.location.pathname` even if a path is provided here; this parameter is reserved for future enhancement.*
+- **`path`** (`string`, Optional):
+  - Replaces the detected URL path (`window.location.pathname`) and query string (`window.location.search`) for this specific pageview event.
+  - Should start with a `/` (e.g., `/virtual/my-custom-page`).
+  - If `path` includes its own query string (e.g., `/virtual/step?id=123&source=email`), that query string will be used for the event. If `path` has no query string, the `querystring` property for the event will be empty.
+  - `skipPatterns` and `maskPatterns` will be applied to `path`.
 
 ### When to Use Manually
 
-  * **Automatic tracking disabled:** If you set `autoTrackPageviews: false` during init.
-  * **Virtual Pageviews:** In SPAs where a significant view change occurs without a URL change (though changing the URL is generally better practice).
-  * **Specific Timing:** If you need to ensure a pageview is tracked only after certain conditions are met or specific data is available.
+- **Automatic tracking disabled:** If you set `autoTrackPageviews: false` during initialization.
+- **Virtual Pageviews:** In SPAs where a significant view change occurs without a URL change.
+- **Specific Timing:** If you need to ensure a pageview is tracked only after certain conditions are met or specific data is available.
 
 ### Example
 
 ```javascript
-// Usually not needed if auto-tracking is on.
-// Call this if auto-tracking is off or for virtual views.
+// Standard manual pageview (usually not needed if auto-tracking is on)
 rybbit.pageview();
 
-// Tracking after some async operation completes
-async function loadDataAndTrack() {
-  await fetchData();
-  rybbit.pageview(); // Track pageview after data is ready
+// Example: Track a step within a multi-step modal
+function openUserDetailsModal(userId, step) {
+  // ... logic to open and display the modal step ...
+  rybbit.pageview(`/users/${userId}/modal/${step}`);
 }
+openUserDetailsModal("user-abc", "contact-info");
+
+// Example: Track a virtual pageview with its own query parameters
+function showFilteredProductList(category, sortBy) {
+   const virtualPathWithQuery = `/products/category/${category}?sort=${sortBy}&view=grid`;
+   rybbit.pageview(virtualPathWithQuery);
+}
+showFilteredProductList("electronics", "price_desc");
 ```
 
 ## Tracking Custom Events
@@ -98,8 +107,8 @@ rybbit.event(name: string, properties?: Record<string, any>);
 
 ### Parameters
 
-  * **`name`** (`string`, Required): The name of the event you want to track (e.g., `"signup"`, `"add_to_cart"`, `"video_play"`). Use clear, consistent naming.
-  * **`properties`** (`object`, Optional): An object containing additional key-value pairs related to the event. Values should ideally be strings, numbers, or booleans. Keep the structure flat.
+- **`name`** (`string`, Required): The name of the event you want to track (e.g., `"signup"`, `"add_to_cart"`, `"video_play"`). Use clear, consistent naming.
+- **`properties`** (`object`, Optional): An object containing additional key-value pairs related to the event. Values should ideally be strings, numbers, or booleans. Keep the structure flat.
 
 ### Example
 
@@ -134,8 +143,6 @@ function addToCart(item) {
 
 Outbound links (links to external domains) are tracked automatically by default if `trackOutboundLinks` is enabled. The SDK attaches a global click listener to capture clicks on `<a>` tags with external `href` attributes.
 
-You can manually track an outbound link if needed.
-
 ### Syntax
 
 ```typescript
@@ -144,15 +151,15 @@ rybbit.trackOutboundLink(url: string, text?: string, target?: string);
 
 ### Parameters
 
-  * **`url`** (`string`, Required): The destination URL of the outbound link.
-  * **`text`** (`string`, Optional): The text content of the link. Defaults to `""`.
-  * **`target`** (`string`, Optional): The `target` attribute of the link (e.g., `_blank`). Defaults to `_self`.
+- **`url`** (`string`, Required): The destination URL of the outbound link.
+- **`text`** (`string`, Optional): The text content of the link. Defaults to `""`.
+- **`target`** (`string`, Optional): The `target` attribute of the link (e.g., `_blank`). Defaults to `_self`.
 
 ### When to Use Manually
 
-  * **Automatic tracking disabled:** If you set `trackOutboundLinks: false` during init.
-  * **Dynamically generated links:** If links are added to the DOM after the initial page load and you want to ensure they are tracked immediately upon interaction.
-  * **Non-anchor elements:** If you trigger navigation to an external site using JavaScript from an element that isn't an `<a>` tag.
+- **Automatic tracking disabled:** If you set `trackOutboundLinks: false` during init.
+- **Dynamically generated links:** If links are added to the DOM after the initial page load and you want to ensure they are tracked immediately upon interaction.
+- **Non-anchor elements:** If you trigger navigation to an external site using JavaScript from an element that isn't an `<a>` tag.
 
 ### Example
 
@@ -172,8 +179,8 @@ These configuration options allow you to control which page paths are tracked an
 
 ### Wildcards
 
-  * `*`: Matches any sequence of characters **except** the forward slash (`/`). Useful for matching single path segments.
-  * `**`: Matches any sequence of characters **including** the forward slash (`/`). Useful for matching multiple path segments or arbitrary endings.
+- `*`: Matches any sequence of characters **except** the forward slash (`/`). Useful for matching single path segments.
+- `**`: Matches any sequence of characters **including** the forward slash (`/`). Useful for matching multiple path segments or arbitrary endings.
 
 ### `skipPatterns`
 
@@ -181,10 +188,10 @@ If a page's path (`window.location.pathname`) matches any pattern in the `skipPa
 
 **Examples:**
 
-  * `"/admin/*"`: Skips `/admin/login`, `/admin/users`, but **not** `/admin/settings/profile`.
-  * `"/admin/**"`: Skips `/admin/login`, `/admin/users`, *and* `/admin/settings/profile`.
-  * `"/users/*/profile"`: Skips `/users/123/profile`, `/users/abc/profile`, but **not** `/users/123/settings`.
-  * `"/private"`: Skips only the exact path `/private`.
+- `"/admin/*"`: Skips `/admin/login`, `/admin/users`, but **not** `/admin/settings/profile`.
+- `"/admin/**"`: Skips `/admin/login`, `/admin/users`, *and* `/admin/settings/profile`.
+- `"/users/*/profile"`: Skips `/users/123/profile`, `/users/abc/profile`, but **not** `/users/123/settings`.
+- `"/private"`: Skips only the exact path `/private`.
 
 ```javascript filename="Example skipPatterns in init"
 rybbit.init({
@@ -207,12 +214,12 @@ If a page's path matches a pattern in the `maskPatterns` array, the pageview eve
 
 **Examples:**
 
-  * Pattern: `"/users/*/profile"`
-      * `/users/123/profile` is tracked as `pathname: "/users/*/profile"`
-      * `/users/abc/profile` is tracked as `pathname: "/users/*/profile"`
-  * Pattern: `"/products/**"`
-      * `/products/electronics/tv-123` is tracked as `pathname: "/products/**"`
-      * `/products/clothing/shirt-xyz` is tracked as `pathname: "/products/**"`
+- Pattern: `"/users/*/profile"`
+  - `/users/123/profile` is tracked as `pathname: "/users/*/profile"`
+  - `/users/abc/profile` is tracked as `pathname: "/users/*/profile"`
+- Pattern: `"/products/**"`
+  - `/products/electronics/tv-123` is tracked as `pathname: "/products/**"`
+  - `/products/clothing/shirt-xyz` is tracked as `pathname: "/products/**"`
 
 ```javascript filename="Example maskPatterns in init"
 rybbit.init({
