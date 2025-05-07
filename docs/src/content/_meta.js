@@ -13,6 +13,7 @@ export default {
   },
   "self-hosting": "",
   "self-hosting-advanced": "",
+  "self-hosting-nginx": "",
   _5: {
     type: "separator",
     title: "Settings",
