@@ -1,0 +1,229 @@
+import { Callout } from "nextra/components"
+
+# JavaScript (Web)
+
+## Installation
+
+```bash filename="npm"
+npm install @rybbit/js
+````
+
+```bash filename="yarn"
+yarn add @rybbit/js
+```
+
+## Initialization (`rybbit.init`)
+
+<Callout type="warning">
+`rybbit.init()` **must** be called once before any other tracking methods (`pageview`, `event`, etc.) can be used. Attempting to call other methods before `init` will result in errors or no tracking.
+</Callout>
+
+### Syntax
+
+```typescript
+rybbit.init(config: RybbitConfig);
+```
+
+### Example
+
+```javascript
+import rybbit from "@rybbit/js";
+
+rybbit.init({
+  analyticsHost: "https://api.ribbit.io",
+  siteId: "1",
+});
+```
+
+## Configuration Options
+
+| Option (`init`)      | Type             | Default | Description                                                                                                                                                             |
+| :------------------- | :--------------- | :------ | :---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `analyticsHost`      | `string`         | —       | **Required.** URL of your Rybbit analytics instance (e.g., `https://rybbit.yourdomain.com`).                                                                            |
+| `siteId`             | `string \| number` | —       | **Required.** The Site ID for your website obtained from your Rybbit instance.                                                                                        |
+| `debounce`           | `number`         | `500`   | Debounce time in milliseconds for tracking SPA pageviews after route changes. Set to `0` to disable debouncing (track immediately).                                     |
+| `autoTrackPageviews` | `boolean`        | `true`  | If `true`, automatically tracks pageviews on initial load and (if `autoTrackSpaRoutes` is `true`) on SPA navigation.                                                    |
+| `autoTrackSpaRoutes` | `boolean`        | `true`  | If `true` (and `autoTrackPageviews` is `true`), automatically tracks pageviews when browser history changes (`pushState`, `popstate`).                                  |
+| `trackQuerystring`   | `boolean`        | `true`  | If `true`, includes the URL's query string (e.g., `?utm_source=google`) in the tracked `querystring` data.                                                              |
+| `trackOutboundLinks` | `boolean`        | `true`  | If `true`, automatically tracks clicks on anchor (`<a>`) tags that link to external domains.                                                                            |
+| `skipPatterns`       | `string[]`       | `[]`    | Array of path patterns. Pageviews whose path matches any pattern will **not** be tracked. See [Path Matching](#path-matching).                                          |
+| `maskPatterns`       | `string[]`       | `[]`    | Array of path patterns. For matching pageview paths, the original path will be **replaced** by the pattern itself in tracked data. See [Path Matching](#path-matching). |
+| `debug`              | `boolean`        | `false` | If `true`, enables detailed logging to the browser console.                                                                                                             |
+
+## Tracking Pageviews (`rybbit.pageview`)
+
+Pageviews are tracked automatically if `autoTrackPageviews` is enabled (default). This includes the initial page load and subsequent route changes in Single Page Applications (SPAs) if `autoTrackSpaRoutes` is also enabled.
+
+You can manually trigger a pageview track if needed.
+
+### Syntax
+
+```typescript
+rybbit.pageview(path?: string);
+```
+
+### Parameters
+
+  * **`path`** (`string`, Optional): Allows you to override the automatically detected URL path (`window.location.pathname`). *Note: The core tracking logic currently uses `window.location.pathname` even if a path is provided here; this parameter is reserved for future enhancement.*
+
+### When to Use Manually
+
+  * **Automatic tracking disabled:** If you set `autoTrackPageviews: false` during init.
+  * **Virtual Pageviews:** In SPAs where a significant view change occurs without a URL change (though changing the URL is generally better practice).
+  * **Specific Timing:** If you need to ensure a pageview is tracked only after certain conditions are met or specific data is available.
+
+### Example
+
+```javascript
+// Usually not needed if auto-tracking is on.
+// Call this if auto-tracking is off or for virtual views.
+rybbit.pageview();
+
+// Tracking after some async operation completes
+async function loadDataAndTrack() {
+  await fetchData();
+  rybbit.pageview(); // Track pageview after data is ready
+}
+```
+
+## Tracking Custom Events (`rybbit.event`)
+
+Use custom events to track specific user interactions or milestones beyond simple page navigation. Examples include button clicks, form submissions, video plays, item purchases, etc.
+
+### Syntax
+
+```typescript
+rybbit.event(name: string, properties?: Record<string, any>);
+```
+
+### Parameters
+
+  * **`name`** (`string`, Required): The name of the event you want to track (e.g., `"signup"`, `"add_to_cart"`, `"video_play"`). Use clear, consistent naming.
+  * **`properties`** (`object`, Optional): An object containing additional key-value pairs related to the event. Values should ideally be strings, numbers, or booleans. Keep the structure flat.
+
+### Example
+
+```javascript
+// Track a simple button click
+document.getElementById("cta-button")?.addEventListener("click", () => {
+  rybbit.event("cta_click");
+});
+
+// Track a signup event with properties
+function handleSignup(formData) {
+  // ... process signup ...
+  rybbit.event("signup_complete", {
+    plan: formData.plan,
+    method: "email"
+  });
+}
+
+// Track adding an item to a shopping cart
+function addToCart(item) {
+  // ... add item ...
+  rybbit.event("add_to_cart", {
+    itemId: item.id,
+    itemName: item.name,
+    price: item.price,
+    quantity: 1
+  });
+}
+```
+
+## Tracking Outbound Links (`rybbit.trackOutboundLink`)
+
+Outbound links (links to external domains) are tracked automatically by default if `trackOutboundLinks` is enabled. The SDK attaches a global click listener to capture clicks on `<a>` tags with external `href` attributes.
+
+You can manually track an outbound link if needed.
+
+### Syntax
+
+```typescript
+rybbit.trackOutboundLink(url: string, text?: string, target?: string);
+```
+
+### Parameters
+
+  * **`url`** (`string`, Required): The destination URL of the outbound link.
+  * **`text`** (`string`, Optional): The text content of the link. Defaults to `""`.
+  * **`target`** (`string`, Optional): The `target` attribute of the link (e.g., `_blank`). Defaults to `_self`.
+
+### When to Use Manually
+
+  * **Automatic tracking disabled:** If you set `trackOutboundLinks: false` during init.
+  * **Dynamically generated links:** If links are added to the DOM after the initial page load and you want to ensure they are tracked immediately upon interaction.
+  * **Non-anchor elements:** If you trigger navigation to an external site using JavaScript from an element that isn't an `<a>` tag.
+
+### Example
+
+```javascript
+// Manually track an outbound click triggered by a button
+document.getElementById("external-service-button")?.addEventListener("click", () => {
+  const url = "https://external-service.com";
+  rybbit.trackOutboundLink(url, "Visit External Service", "_blank");
+  // Optionally navigate after tracking
+  window.open(url, "_blank");
+});
+```
+
+## Path Matching
+
+These configuration options allow you to control which page paths are tracked and how they appear in your analytics data using wildcard patterns passed in the `rybbit.init()` configuration object.
+
+### Wildcards
+
+  * `*`: Matches any sequence of characters **except** the forward slash (`/`). Useful for matching single path segments.
+  * `**`: Matches any sequence of characters **including** the forward slash (`/`). Useful for matching multiple path segments or arbitrary endings.
+
+### `skipPatterns`
+
+If a page's path (`window.location.pathname`) matches any pattern in the `skipPatterns` array, the pageview event (and any associated data) for that path will **not** be sent to Rybbit.
+
+**Examples:**
+
+  * `"/admin/*"`: Skips `/admin/login`, `/admin/users`, but **not** `/admin/settings/profile`.
+  * `"/admin/**"`: Skips `/admin/login`, `/admin/users`, *and* `/admin/settings/profile`.
+  * `"/users/*/profile"`: Skips `/users/123/profile`, `/users/abc/profile`, but **not** `/users/123/settings`.
+  * `"/private"`: Skips only the exact path `/private`.
+
+{/* <!-- end list --> */}
+
+```javascript filename="Example skipPatterns in init"
+rybbit.init({
+  // ... other options
+  skipPatterns: [
+    "/admin/**",        // Skip all admin sections
+    "/debug",           // Skip exact /debug path
+    "/users/*/settings" // Skip settings page for any user
+  ]
+});
+```
+
+### `maskPatterns`
+
+If a page's path matches a pattern in the `maskPatterns` array, the pageview event **will** be sent, but the `pathname` property in the tracked data will be **replaced** by the pattern string itself. This is useful for grouping similar pages or hiding sensitive information like IDs in URLs while still tracking the view.
+
+<Callout>
+**Priority:** If a path matches both a `skipPatterns` and a `maskPatterns` pattern, **skipping takes priority**.
+</Callout>
+
+**Examples:**
+
+  * Pattern: `"/users/*/profile"`
+      * `/users/123/profile` is tracked as `pathname: "/users/*/profile"`
+      * `/users/abc/profile` is tracked as `pathname: "/users/*/profile"`
+  * Pattern: `"/products/**"`
+      * `/products/electronics/tv-123` is tracked as `pathname: "/products/**"`
+      * `/products/clothing/shirt-xyz` is tracked as `pathname: "/products/**"`
+
+{/* <!-- end list --> */}
+
+```javascript filename="Example maskPatterns in init"
+rybbit.init({
+  // ... other options
+  maskPatterns: [
+    "/users/*/profile",  // Group all user profile views
+    "/orders/*"          // Mask specific order IDs
+  ]
+});
+```
