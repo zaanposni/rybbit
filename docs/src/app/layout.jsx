@@ -106,7 +106,7 @@ export default async function RootLayout({ children }) {
                 🚀 We just launched! Please star us on Github!{" "}
               </div>
               <a
-                class="github-button"
+                className="github-button"
                 href="https://github.com/rybbit-io/rybbit"
                 data-color-scheme="no-preference: light; light: light; dark: light;"
                 data-show-count="true"
