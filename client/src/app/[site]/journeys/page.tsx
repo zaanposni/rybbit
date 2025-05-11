@@ -58,8 +58,6 @@ export default function JourneysPage() {
     // Get container width for responsive sizing
     const containerWidth = svgRef.current.parentElement?.clientWidth || 1000;
 
-    console.log(containerWidth);
-
     // Build nodes first to calculate dimensions properly
     const nodes: any[] = [];
     const links: any[] = [];
