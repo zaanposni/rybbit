@@ -36,7 +36,7 @@ export interface GetUsersOptions {
 
 export function useGetUsers(options: GetUsersOptions) {
   const { time, site } = useStore();
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  const isPast24HoursMode = time.mode === "last-24-hours";
 
   // Get the appropriate time parameters
   const timeParams = isPast24HoursMode
@@ -78,7 +78,7 @@ export function useGetUsers(options: GetUsersOptions) {
 
       // Add time parameters
       if (isPast24HoursMode) {
-        // Add minutes parameter for past-24-hours mode
+        // Add minutes parameter for last-24-hours mode
         Object.assign(requestParams, timeParams);
       } else {
         requestParams.startDate = timeParams.startDate;

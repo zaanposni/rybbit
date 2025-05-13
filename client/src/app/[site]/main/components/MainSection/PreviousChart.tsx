@@ -9,7 +9,7 @@ import { GetOverviewBucketedResponse } from "../../../../../api/analytics/useGet
 import { Time } from "../../../../../components/DateSelector/types";
 
 const getMin = (time: Time) => {
-  if (time.mode === "past-24-hours") {
+  if (time.mode === "last-24-hours") {
     return DateTime.now()
       .setZone("UTC")
       .minus({ hours: 48 })
@@ -57,7 +57,7 @@ export function PreviousChart({
 
   const min = useMemo(() => getMin(time), [time]);
   const max24Hours =
-    time.mode === "past-24-hours"
+    time.mode === "last-24-hours"
       ? DateTime.now().setZone("UTC").minus({ hours: 24 }).toJSDate()
       : undefined;
 
@@ -100,7 +100,7 @@ export function PreviousChart({
         format: (value) => {
           const localTime = DateTime.fromJSDate(value).toLocal();
 
-          if (time.mode === "past-24-hours" || time.mode === "day") {
+          if (time.mode === "last-24-hours" || time.mode === "day") {
             return localTime.toFormat("ha");
           } else if (time.mode === "range") {
             return localTime.toFormat("MMM d");

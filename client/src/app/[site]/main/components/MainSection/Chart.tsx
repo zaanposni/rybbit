@@ -19,7 +19,7 @@ export const formatter = Intl.NumberFormat("en", { notation: "compact" });
 
 const getMax = (time: Time, bucket: TimeBucket) => {
   const now = DateTime.now();
-  if (time.mode === "past-24-hours") {
+  if (time.mode === "last-24-hours") {
     return DateTime.now().setZone("UTC").startOf("hour").toJSDate();
   } else if (time.mode === "day") {
     const dayDate = DateTime.fromISO(time.day)
@@ -64,7 +64,7 @@ const getMax = (time: Time, bucket: TimeBucket) => {
 };
 
 const getMin = (time: Time, bucket: TimeBucket) => {
-  if (time.mode === "past-24-hours") {
+  if (time.mode === "last-24-hours") {
     return DateTime.now()
       .setZone("UTC")
       .minus({ hours: 24 })
@@ -278,7 +278,7 @@ export function Chart({
         truncateTickAt: 0,
         tickValues: Math.min(
           maxTicks,
-          time.mode === "day" || time.mode === "past-24-hours"
+          time.mode === "day" || time.mode === "last-24-hours"
             ? 24
             : Math.min(12, data?.data?.length ?? 0)
         ),
@@ -286,7 +286,7 @@ export function Chart({
           // Convert UTC date to local timezone for display
           const localTime = DateTime.fromJSDate(value).toLocal();
 
-          if (time.mode === "past-24-hours" || time.mode === "day") {
+          if (time.mode === "last-24-hours" || time.mode === "day") {
             return localTime.toFormat("ha");
           } else if (time.mode === "range") {
             return localTime.toFormat("MMM d");

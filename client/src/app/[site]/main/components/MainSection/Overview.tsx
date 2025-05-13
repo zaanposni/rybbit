@@ -80,7 +80,7 @@ const Stat = ({
 }) => {
   const { selectedStat, setSelectedStat, site, bucket, time } = useStore();
   const [isHovering, setIsHovering] = useState(false);
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  const isPast24HoursMode = time.mode === "last-24-hours";
 
   // Regular bucketed data for sparklines
   const { data: regularData } = useGetOverviewBucketed({
@@ -108,7 +108,7 @@ const Stat = ({
   const sparklinesData =
     data?.data
       ?.filter((d) => {
-        // For past-24-hours mode, ensure we only show data within the last 24 hours
+        // For last-24-hours mode, ensure we only show data within the last 24 hours
         if (isPast24HoursMode) {
           const timestamp = new Date(d.time);
           const now = new Date();
@@ -176,7 +176,7 @@ const Stat = ({
 
 export function Overview() {
   const { site, time } = useStore();
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  const isPast24HoursMode = time.mode === "last-24-hours";
 
   // Regular time-based queries
   const {

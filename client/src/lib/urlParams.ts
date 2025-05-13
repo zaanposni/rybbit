@@ -63,8 +63,8 @@ export const deserializeUrlToState = (
   // Deserialize time
   const timeMode = searchParams.get("timeMode") as Time["mode"] | null;
   if (timeMode) {
-    if (timeMode === "past-24-hours") {
-      result.time = { mode: "past-24-hours" };
+    if (timeMode === "last-24-hours") {
+      result.time = { mode: "last-24-hours" };
     } else if (timeMode === "day") {
       const day = searchParams.get("day");
       if (day) {

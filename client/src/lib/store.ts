@@ -195,10 +195,10 @@ export const useStore = create<Store>((set) => ({
         mode: "day",
         day: DateTime.fromISO(time.day).minus({ days: 1 }).toISODate() ?? "",
       };
-    } else if (time.mode === "past-24-hours") {
+    } else if (time.mode === "last-24-hours") {
       bucketToUse = "hour";
       previousTime = {
-        mode: "past-24-hours",
+        mode: "last-24-hours",
       };
     } else if (time.mode === "range") {
       const timeRangeLength =

@@ -36,8 +36,8 @@ export function MainSection() {
 
   const { selectedStat, time, site, bucket } = useStore();
 
-  // Use the past minutes API when in past-24-hours mode
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  // Use the past minutes API when in last-24-hours mode
+  const isPast24HoursMode = time.mode === "last-24-hours";
 
   // Regular date-based queries
   const {

@@ -29,8 +29,8 @@ export function useSingleCol({
   const { time, previousTime, site, filters } = useStore();
   const timeToUse = periodTime === "previous" ? previousTime : time;
 
-  // Check if we're using past-24-hours mode
-  const isPast24HoursMode = timeToUse.mode === "past-24-hours";
+  // Check if we're using last-24-hours mode
+  const isPast24HoursMode = timeToUse.mode === "last-24-hours";
 
   // Determine the query parameters based on mode
   const queryParams = isPast24HoursMode

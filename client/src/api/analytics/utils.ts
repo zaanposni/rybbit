@@ -10,8 +10,8 @@ export function getQueryTimeParams(time: Time): string {
   const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const params = new URLSearchParams();
 
-  // Handle past-24-hours mode differently
-  if (time.mode === "past-24-hours") {
+  // Handle last-24-hours mode differently
+  if (time.mode === "last-24-hours") {
     // Use minutes parameter instead of date range
     params.append("minutes", "1440"); // 24 hours * 60 minutes
     params.append("timezone", timezone);

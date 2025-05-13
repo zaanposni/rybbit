@@ -34,8 +34,8 @@ export function Weekdays() {
   const { site, time } = useStore();
   const [metric, setMetric] = useState<StatType>("users");
 
-  // Use the past minutes API when in past-24-hours mode
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  // Use the past minutes API when in last-24-hours mode
+  const isPast24HoursMode = time.mode === "last-24-hours";
 
   const { data, isFetching, error } = useGetOverviewBucketed({
     site,

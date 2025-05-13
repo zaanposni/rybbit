@@ -24,7 +24,7 @@ const getLabel = (time: Time) => {
     return `${startFormatted} - ${endFormatted}`;
   }
 
-  if (time.mode === "past-24-hours") {
+  if (time.mode === "last-24-hours") {
     return "Past 24 Hours";
   }
 
@@ -109,11 +109,11 @@ export function DateSelector({
           <DropdownMenuItem
             onClick={() =>
               setTime({
-                mode: "past-24-hours",
+                mode: "last-24-hours",
               })
             }
           >
-            Past 24 Hours
+            Last 24 Hours
           </DropdownMenuItem>
         )}
         <DropdownMenuItem

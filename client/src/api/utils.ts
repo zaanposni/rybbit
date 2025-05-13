@@ -26,7 +26,7 @@ export function getStartAndEndDate(time: Time) {
   if (time.mode === "all-time") {
     return { startDate: null, endDate: null };
   }
-  if (time.mode === "past-24-hours") {
+  if (time.mode === "last-24-hours") {
     return { startDate: null, endDate: null };
   }
   return { startDate: time.day, endDate: time.day };

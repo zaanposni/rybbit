@@ -135,7 +135,7 @@ export function useGetOverviewBucketedPastMinutes({
 }
 
 /**
- * Hook to get previous time period data for comparison with past-24-hours mode
+ * Hook to get previous time period data for comparison with last-24-hours mode
  */
 export function useGetOverviewBucketedPreviousPastMinutes({
   pastMinutes = 24 * 60,

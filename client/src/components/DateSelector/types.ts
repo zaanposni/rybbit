@@ -35,7 +35,7 @@ export type AllTimeMode = {
 };
 
 export type Past24HoursMode = {
-  mode: "past-24-hours";
+  mode: "last-24-hours";
 };
 
 export type Time =

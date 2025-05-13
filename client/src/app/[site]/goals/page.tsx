@@ -17,7 +17,7 @@ export default function GoalsPage() {
   useSetPageTitle("Rybbit · Goals");
 
   const { time, site } = useStore();
-  const isPast24HoursMode = time.mode === "past-24-hours";
+  const isPast24HoursMode = time.mode === "last-24-hours";
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 9; // Show 9 cards (3x3 grid)
 
