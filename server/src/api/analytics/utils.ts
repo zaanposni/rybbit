@@ -7,31 +7,62 @@ import {
 } from "./query-validation.js";
 import SqlString from "sqlstring";
 
-export function getTimeStatement({
-  date,
-  pastMinutes,
-  minutes,
-  pastMinutesRange,
-}: {
-  date?: {
-    startDate?: string;
-    endDate?: string;
-    timezone?: string;
-    table?: "events" | "sessions";
-  };
-  pastMinutes?: number;
-  minutes?: number; // Alternative name for pastMinutes for compatibility
-  pastMinutesRange?: { start: number; end: number };
-}) {
-  // For backward compatibility, support both minutes and pastMinutes
-  const actualPastMinutes = pastMinutes || minutes;
+export function getTimeStatement(
+  params:
+    | {
+        date?: {
+          startDate?: string;
+          endDate?: string;
+          timezone?: string;
+          table?: "events" | "sessions";
+        };
+        pastMinutes?: number;
+        pastMinutesRange?: { start: number; end: number };
+      }
+    | {
+        startDate?: string;
+        endDate?: string;
+        timezone?: string;
+        minutes?: string | number;
+        pastMinutesStart?: string | number;
+        pastMinutesEnd?: string | number;
+      }
+) {
+  // Handle if raw query parameters are passed
+  if ("pastMinutesStart" in params || "minutes" in params) {
+    // Extract and normalize raw parameters
+    const {
+      startDate,
+      endDate,
+      timezone,
+      minutes,
+      pastMinutesStart,
+      pastMinutesEnd,
+    } = params;
 
-  // Sanitize inputs with Zod
-  const sanitized = validateTimeStatementParams({
-    date,
-    pastMinutes: actualPastMinutes,
-    pastMinutesRange,
-  });
+    // Convert to the internal format
+    const pastMinutesRange =
+      pastMinutesStart && pastMinutesEnd
+        ? {
+            start: Number(pastMinutesStart),
+            end: Number(pastMinutesEnd),
+          }
+        : undefined;
+
+    const normalizedParams = pastMinutesRange
+      ? { pastMinutesRange }
+      : minutes
+      ? { pastMinutes: Number(minutes) }
+      : startDate && endDate
+      ? { date: { startDate, endDate, timezone } }
+      : {};
+
+    // Call self with normalized parameters
+    return getTimeStatement(normalizedParams);
+  }
+
+  // Original function implementation with sanitized parameters
+  const sanitized = validateTimeStatementParams(params);
 
   if (sanitized.date) {
     const { startDate, endDate, timezone } = sanitized.date;

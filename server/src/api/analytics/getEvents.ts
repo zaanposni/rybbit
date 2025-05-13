@@ -66,7 +66,7 @@ export async function getEvents(
   // Get time and filter statements if parameters are provided
   const timeStatement =
     startDate || endDate
-      ? getTimeStatement({ date: { startDate, endDate, timezone } })
+      ? getTimeStatement({ startDate, endDate, timezone })
       : "AND timestamp > now() - INTERVAL 30 MINUTE"; // Default to last 30 minutes if no time range specified
 
   const filterStatement = filters ? getFilterStatement(filters) : "";

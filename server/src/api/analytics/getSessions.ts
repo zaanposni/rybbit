@@ -72,23 +72,14 @@ export async function getSessions(
   }
 
   const filterStatement = getFilterStatement(filters);
-
-  // Handle specific past minutes range if provided
-  const pastMinutesRange =
-    pastMinutesStart && pastMinutesEnd
-      ? { start: Number(pastMinutesStart), end: Number(pastMinutesEnd) }
-      : undefined;
-
-  // Set up time parameters
-  const timeParams = pastMinutesRange
-    ? { pastMinutesRange }
-    : minutes
-    ? { pastMinutes: Number(minutes) }
-    : startDate && endDate
-    ? { date: { startDate, endDate, timezone } }
-    : {};
-
-  const timeStatement = getTimeStatement(timeParams);
+  const timeStatement = getTimeStatement({
+    startDate,
+    endDate,
+    timezone,
+    minutes,
+    pastMinutesStart,
+    pastMinutesEnd,
+  });
 
   const query = `
   WITH AggregatedSessions AS (

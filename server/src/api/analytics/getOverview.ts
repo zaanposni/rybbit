@@ -34,7 +34,8 @@ const getQuery = ({
 }) => {
   const filterStatement = getFilterStatement(filters);
 
-  return `SELECT   
+  return `
+    SELECT
       session_stats.sessions,
       session_stats.pages_per_session,
       session_stats.bounce_rate * 100 AS bounce_rate,
@@ -61,13 +62,12 @@ const getQuery = ({
                 WHERE
                     site_id = {siteId:Int32}
                     ${filterStatement}
-                    ${getTimeStatement(
-                      pastMinutes
-                        ? { pastMinutes }
-                        : {
-                            date: { startDate, endDate, timezone },
-                          }
-                    )}
+                    ${getTimeStatement({
+                      startDate,
+                      endDate,
+                      timezone,
+                      minutes: pastMinutes,
+                    })}
                 GROUP BY session_id
             )
         ) AS session_stats
@@ -81,13 +81,12 @@ const getQuery = ({
             WHERE 
                 site_id = {siteId:Int32}
                 ${filterStatement}
-                ${getTimeStatement(
-                  pastMinutes
-                    ? { pastMinutes }
-                    : {
-                        date: { startDate, endDate, timezone },
-                      }
-                )}
+                ${getTimeStatement({
+                  startDate,
+                  endDate,
+                  timezone,
+                  minutes: pastMinutes,
+                })}
                 AND type = 'pageview'
         ) AS page_stats`;
 };
