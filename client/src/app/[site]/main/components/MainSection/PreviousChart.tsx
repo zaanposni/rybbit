@@ -10,7 +10,11 @@ import { Time } from "../../../../../components/DateSelector/types";
 
 const getMin = (time: Time) => {
   if (time.mode === "past-24-hours") {
-    return DateTime.now().setZone("UTC").minus({ hours: 49 }).toJSDate();
+    return DateTime.now()
+      .setZone("UTC")
+      .minus({ hours: 48 })
+      .startOf("hour")
+      .toJSDate();
   } else if (time.mode === "day") {
     const dayDate = DateTime.fromISO(time.day).startOf("day");
     return dayDate.toJSDate();

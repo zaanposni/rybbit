@@ -20,7 +20,7 @@ export const formatter = Intl.NumberFormat("en", { notation: "compact" });
 const getMax = (time: Time, bucket: TimeBucket) => {
   const now = DateTime.now();
   if (time.mode === "past-24-hours") {
-    return DateTime.now().setZone("UTC").toJSDate();
+    return DateTime.now().setZone("UTC").startOf("hour").toJSDate();
   } else if (time.mode === "day") {
     const dayDate = DateTime.fromISO(time.day)
       .endOf("day")
@@ -65,7 +65,11 @@ const getMax = (time: Time, bucket: TimeBucket) => {
 
 const getMin = (time: Time, bucket: TimeBucket) => {
   if (time.mode === "past-24-hours") {
-    return DateTime.now().setZone("UTC").minus({ hours: 25 }).toJSDate();
+    return DateTime.now()
+      .setZone("UTC")
+      .minus({ hours: 24 })
+      .startOf("hour")
+      .toJSDate();
   } else if (time.mode === "day") {
     const dayDate = DateTime.fromISO(time.day).startOf("day");
     return dayDate.toJSDate();
