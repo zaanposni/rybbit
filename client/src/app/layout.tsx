@@ -92,7 +92,7 @@ export default function RootLayout({
           <Toaster />
         </body>
       </TooltipProvider>
-      {globalThis.location.hostname === "app.rybbit.io" && (
+      {globalThis?.location?.hostname === "app.rybbit.io" && (
         <Script
           src="https://app.rybbit.io/api/script.js"
           data-site-id="349"
