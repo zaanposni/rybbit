@@ -1,28 +1,86 @@
 import { and, eq } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { db } from "../../db/postgres/postgres.js";
-import { member } from "../../db/postgres/schema.js";
-import { getSitesUserHasAccessTo } from "../../lib/auth-utils.js";
+import { member, user } from "../../db/postgres/schema.js";
+import {
+  getSitesUserHasAccessTo,
+  getUserGodMode,
+} from "../../lib/auth-utils.js";
 import { getSubscriptionInner } from "../stripe/getSubscription.js";
 import { IS_CLOUD, TRIAL_EVENT_LIMIT } from "../../lib/const.js";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
+import { auth } from "../../lib/auth.js";
+import { processResults } from "../analytics/utils.js";
+
+// Define type for session count result
+interface SessionCountResult {
+  site_id: number;
+  total_sessions: number;
+}
 
 export async function getSites(req: FastifyRequest, reply: FastifyReply) {
   try {
     // Get sites the user has access to
     const sitesData = await getSitesUserHasAccessTo(req);
+    const godMode = await getUserGodMode(req);
+
+    // Only query for session counts if there are sites
+    const sessionCountMap = new Map<number, number>();
+
+    if (sitesData.length > 0) {
+      // Extract site IDs that the user has access to
+      const siteIds = sitesData.map((site) => site.siteId);
+
+      // Query session counts only for the user's sites
+      const sessionCountsResult = await clickhouse.query({
+        query: `
+          SELECT 
+            site_id, 
+            uniqExact(session_id) AS total_sessions 
+          FROM events 
+          WHERE timestamp >= now() - INTERVAL 1 DAY 
+            AND site_id IN (${siteIds.join(",")})
+          GROUP BY site_id
+        `,
+        format: "JSONEachRow",
+      });
+
+      const sessionCounts = await processResults(sessionCountsResult);
+
+      // Add session counts to map
+      if (Array.isArray(sessionCounts)) {
+        sessionCounts.forEach((row: any) => {
+          if (
+            row &&
+            typeof row.site_id === "number" &&
+            typeof row.total_sessions === "number"
+          ) {
+            sessionCountMap.set(Number(row.site_id), row.total_sessions);
+          }
+        });
+      }
+    }
+
+    console.info({
+      sessionCountMap,
+    });
 
     const enhancedSitesData = await Promise.all(
       sitesData.map(async (site) => {
         let isOwner = false;
         let ownerId = "";
 
-        if (!IS_CLOUD) {
+        if (!IS_CLOUD || godMode) {
+          console.info({
+            sessionsLast24Hours: sessionCountMap.get(Number(site.siteId)) || 0,
+          });
           return {
             ...site,
             monthlyEventCount: 0,
             eventLimit: Infinity,
             overMonthlyLimit: false,
             isOwner: true,
+            sessionsLast24Hours: sessionCountMap.get(Number(site.siteId)) || 0,
           };
         }
         // Determine ownership if organization ID exists
@@ -55,11 +113,18 @@ export async function getSites(req: FastifyRequest, reply: FastifyReply) {
           eventLimit,
           overMonthlyLimit: monthlyEventCount > eventLimit,
           isOwner,
+          sessionsLast24Hours: sessionCountMap.get(site.siteId) || 0,
         };
       })
     );
 
-    return reply.status(200).send(enhancedSitesData);
+    return reply
+      .status(200)
+      .send(
+        enhancedSitesData.sort(
+          (a, b) => b.sessionsLast24Hours - a.sessionsLast24Hours
+        )
+      );
   } catch (err) {
     console.error("Error in getSites:", err);
     return reply.status(500).send(String(err));

@@ -22,6 +22,23 @@ export async function getSession(req: FastifyRequest) {
   return session;
 }
 
+export async function getUserGodMode(req: FastifyRequest) {
+  const headers = new Headers(req.headers as any);
+  const session = await auth!.api.getSession({ headers });
+  const userId = session?.user.id;
+
+  if (!userId) {
+    return false;
+  }
+
+  const userRecord = await db
+    .select({ godMode: user.godMode })
+    .from(user)
+    .where(eq(user.id, userId))
+    .limit(1);
+  return userRecord.length > 0 && userRecord[0].godMode;
+}
+
 export async function getSitesUserHasAccessTo(
   req: FastifyRequest,
   adminOnly = false
