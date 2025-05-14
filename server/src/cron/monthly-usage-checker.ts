@@ -5,13 +5,15 @@ import { processResults } from "../api/analytics/utils.js";
 import { clickhouse } from "../db/clickhouse/clickhouse.js";
 import { db } from "../db/postgres/postgres.js";
 import { member, sites, user } from "../db/postgres/schema.js";
-import { getStripePrices, StripePlan } from "../lib/const.js";
+import {
+  getStripePrices,
+  StripePlan,
+  TRIAL_EVENT_LIMIT,
+} from "../lib/const.js";
 import { stripe } from "../lib/stripe.js";
 
 // Default event limit for users without an active subscription
 const DEFAULT_EVENT_LIMIT = 0;
-
-const TRIAL_EVENT_LIMIT = 1_000_000;
 
 // Global set to track site IDs that have exceeded their monthly limits
 export const sitesOverLimit = new Set<number>();
