@@ -1,6 +1,6 @@
 import cors from "@fastify/cors";
-import fastifyStatic from "@fastify/static";
 import rateLimit from "@fastify/rate-limit";
+import fastifyStatic from "@fastify/static";
 import { toNodeHandler } from "better-auth/node";
 import Fastify from "fastify";
 import { dirname, join } from "path";
@@ -8,8 +8,8 @@ import { Headers, HeadersInit } from "undici";
 import { fileURLToPath } from "url";
 import { createFunnel } from "./api/analytics/createFunnel.js";
 import { createGoal } from "./api/analytics/createGoal.js";
-import { deleteGoal } from "./api/analytics/deleteGoal.js";
 import { deleteFunnel } from "./api/analytics/deleteFunnel.js";
+import { deleteGoal } from "./api/analytics/deleteGoal.js";
 import { getEventNames } from "./api/analytics/getEventNames.js";
 import { getEventProperties } from "./api/analytics/getEventProperties.js";
 import { getEvents } from "./api/analytics/getEvents.js";
@@ -49,7 +49,6 @@ import { allowList, loadAllowedDomains } from "./lib/allowedDomains.js";
 import { mapHeaders } from "./lib/auth-utils.js";
 import { auth } from "./lib/auth.js";
 import { siteConfig } from "./lib/siteConfig.js";
-import { isKnownCrawler } from "./lib/security.js";
 import { trackEvent } from "./tracker/trackEvent.js";
 import { extractSiteId, isSitePublic, normalizeOrigin } from "./utils.js";
 
@@ -57,10 +56,8 @@ import { extractSiteId, isSitePublic, normalizeOrigin } from "./utils.js";
 import { createCheckoutSession } from "./api/stripe/createCheckoutSession.js";
 import { createPortalSession } from "./api/stripe/createPortalSession.js";
 import { getSubscription } from "./api/stripe/getSubscription.js";
-import { handleWebhook } from "./api/stripe/webhook.js";
-import { IS_CLOUD } from "./lib/const.js";
 import { addUserToOrganization } from "./api/user/addUserToOrganization.js";
-import { DateTime } from "luxon";
+import { IS_CLOUD } from "./lib/const.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -76,10 +73,9 @@ const server = Fastify({
 });
 
 if (IS_CLOUD) {
-  // Register rate limit plugin globally with moderate limits
   server.register(rateLimit, {
-    max: 100, // Allow 100 requests per timeWindow
-    timeWindow: "1 minute", // Per minute
+    max: 100,
+    timeWindow: "1 minute",
     allowList: (req) => {
       const url = req.raw.url || "";
       return (
@@ -90,45 +86,7 @@ if (IS_CLOUD) {
       );
     },
   });
-
-  server.register(rateLimit, {
-    prefix: "/track-limiter",
-    max: 15, // Lower limit for tracking requests (per IP per site_id)
-    timeWindow: "1 minute",
-    keyGenerator: (req) => {
-      // Extract site_id from the tracking request body
-      const body = req.body as any;
-      const siteId = body?.site_id || "unknown";
-      // Create a compound key of IP address + site_id
-      return `${req.ip}-${siteId}`;
-    },
-    errorResponseBuilder: () => {
-      return {
-        statusCode: 200,
-        error: "",
-        message: "OK",
-      };
-    },
-  });
 }
-
-// Store to track IPs hitting multiple site_ids
-const multiSiteIps = new Map<string, Set<string>>();
-
-// Cleanup function to run periodically to prevent memory leaks
-const cleanupMultiSiteTracking = () => {
-  // Remove IPs older than 24 hours (instead of 1 hour)
-  const oneDayAgo = Date.now() - 24 * 60 * 60 * 1000;
-
-  for (const [ip, data] of multiSiteIps.entries()) {
-    if ((data as any).timestamp < oneDayAgo) {
-      multiSiteIps.delete(ip);
-    }
-  }
-};
-
-// Run cleanup every 15 minutes
-setInterval(cleanupMultiSiteTracking, 15 * 60 * 1000);
 
 server.register(cors, {
   origin: (origin, callback) => {
@@ -314,65 +272,7 @@ if (IS_CLOUD) {
   // ); // Use rawBody parser config for webhook
 }
 
-// Modified /track endpoint preHandler
-server.post(
-  "/track",
-  {
-    config: {
-      rateLimit: {
-        keyGenerator: function (req) {
-          // Use the special track-limiter rate limiter
-          return `/track-limiter${req.ip}`;
-        },
-      },
-    },
-    preHandler: async (request, reply) => {
-      // Validate the request body
-      const body = request.body as any;
-      if (!body || !body.site_id) return;
-
-      const ip = request.ip;
-      const siteId = body.site_id;
-
-      // Check if this is a known web crawler by IP and User-Agent
-      const userAgent = request.headers["user-agent"] as string | undefined;
-
-      if (isKnownCrawler(ip, userAgent)) {
-        // Log crawler activity but don't block them
-        console.info(
-          `[${DateTime.now().toLocaleString(
-            DateTime.DATETIME_MED
-          )}] Crawler detected - IP ${ip}, UA: ${userAgent || "undefined"}`
-        );
-        return; // Allow crawler to proceed
-      }
-
-      // Check if this IP has accessed multiple site_ids
-      if (!multiSiteIps.has(ip)) {
-        multiSiteIps.set(ip, new Set([siteId]));
-        (multiSiteIps.get(ip) as any).timestamp = Date.now();
-      } else {
-        const siteIds = multiSiteIps.get(ip)!;
-        siteIds.add(siteId);
-
-        // If IP has hit more than 3 different site_id in the tracking window,
-        // silently accept but don't process the request
-        if (siteIds.size > 3) {
-          console.warn(
-            `[${DateTime.now().toLocaleString(
-              DateTime.DATETIME_MED
-            )}] Sigr - IP ${ip} blocked for hitting multiple site_ids (${
-              siteIds.size
-            })`
-          );
-          // Return 200 OK but don't process the actual tracking
-          return reply.status(200).send({ success: true });
-        }
-      }
-    },
-  },
-  trackEvent
-);
+server.post("/track", trackEvent);
 
 const start = async () => {
   try {

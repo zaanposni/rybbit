@@ -1,5 +1,12 @@
+import { eq } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
 import { z, ZodError } from "zod";
+import { db } from "../db/postgres/postgres.js";
+import { activeSessions } from "../db/postgres/schema.js";
+import { siteConfig } from "../lib/siteConfig.js";
+import { getDeviceType } from "../utils.js";
+import { DISABLE_ORIGIN_CHECK } from "./const.js";
+import { pageviewQueue } from "./pageviewQueue.js";
 import {
   clearSelfReferrer,
   createBasePayload,
@@ -7,18 +14,6 @@ import {
   isSiteOverLimit,
   TotalTrackingPayload,
 } from "./trackingUtils.js";
-import { db } from "../db/postgres/postgres.js";
-import { activeSessions } from "../db/postgres/schema.js";
-import { eq } from "drizzle-orm";
-import { getDeviceType } from "../utils.js";
-import { pageviewQueue } from "./pageviewQueue.js";
-import { siteConfig } from "../lib/siteConfig.js";
-import {
-  DISABLE_ORIGIN_CHECK,
-  TOMATO_EVENT_NAMES,
-  TOMATO_PATH_NAMES,
-} from "./const.js";
-import { DateTime } from "luxon";
 
 // Define Zod schema for validation
 export const trackingPayloadSchema = z.discriminatedUnion("type", [
@@ -230,30 +225,7 @@ export async function trackEvent(request: FastifyRequest, reply: FastifyReply) {
     // Use validated data
     const validatedPayload = validationResult.data;
 
-    if (
-      validatedPayload.site_id === "1" &&
-      validatedPayload.hostname?.includes("tomato.gg")
-    ) {
-      if (
-        (validatedPayload.pathname &&
-          !TOMATO_PATH_NAMES.includes(validatedPayload.pathname ?? "")) ||
-        (validatedPayload.event_name &&
-          !TOMATO_EVENT_NAMES.includes(validatedPayload.event_name ?? ""))
-      ) {
-        console.info(
-          `[${DateTime.now().toLocaleString(
-            DateTime.DATETIME_MED
-          )}] spam blocked - ${validatedPayload.site_id}: ${
-            validatedPayload.event_name
-          } | ip ${request.ip} | ua ${request.headers.user_agent}`
-        );
-        return reply.status(200).send({
-          success: true,
-        });
-      }
-    }
-
-    // Validate that the request is coming from the expected origin
+    // Validate that the request is coming from the expected origin. I removed this because people can just spoof the header
     // const originValidation = await validateOrigin(
     //   validatedPayload.site_id,
     //   request.headers.origin as string
