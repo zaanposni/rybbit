@@ -1,22 +1,15 @@
 import { and, eq } from "drizzle-orm";
 import { FastifyReply, FastifyRequest } from "fastify";
+import clickhouse from "../../db/clickhouse/clickhouse.js";
 import { db } from "../../db/postgres/postgres.js";
-import { member, user } from "../../db/postgres/schema.js";
+import { member } from "../../db/postgres/schema.js";
 import {
   getSitesUserHasAccessTo,
   getUserGodMode,
 } from "../../lib/auth-utils.js";
-import { getSubscriptionInner } from "../stripe/getSubscription.js";
 import { IS_CLOUD, TRIAL_EVENT_LIMIT } from "../../lib/const.js";
-import clickhouse from "../../db/clickhouse/clickhouse.js";
-import { auth } from "../../lib/auth.js";
 import { processResults } from "../analytics/utils.js";
-
-// Define type for session count result
-interface SessionCountResult {
-  site_id: number;
-  total_sessions: number;
-}
+import { getSubscriptionInner } from "../stripe/getSubscription.js";
 
 export async function getSites(req: FastifyRequest, reply: FastifyReply) {
   try {
@@ -61,19 +54,12 @@ export async function getSites(req: FastifyRequest, reply: FastifyReply) {
       }
     }
 
-    console.info({
-      sessionCountMap,
-    });
-
     const enhancedSitesData = await Promise.all(
       sitesData.map(async (site) => {
         let isOwner = false;
         let ownerId = "";
 
         if (!IS_CLOUD || godMode) {
-          console.info({
-            sessionsLast24Hours: sessionCountMap.get(Number(site.siteId)) || 0,
-          });
           return {
             ...site,
             monthlyEventCount: 0,
