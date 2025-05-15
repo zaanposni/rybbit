@@ -27,7 +27,8 @@ import { Logo } from "../../components/Logo";
 import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { useSetPageTitle } from "../../hooks/useSetPageTitle";
 import { authClient } from "../../lib/auth";
-import { DISABLE_SIGNUP, IS_CLOUD } from "../../lib/const";
+import { useConfigs } from "../../lib/configs";
+import { IS_CLOUD } from "../../lib/const";
 import { userStore } from "../../lib/userStore";
 import { cn } from "../../lib/utils";
 
@@ -52,6 +53,7 @@ function StepHandler({ onSetStep }: { onSetStep: (step: number) => void }) {
 }
 
 export default function SignupPage() {
+  const { configs, isLoading: isLoadingConfigs } = useConfigs();
   useSetPageTitle("Rybbit · Signup");
 
   const [currentStep, setCurrentStep] = useState(1);
@@ -494,7 +496,11 @@ export default function SignupPage() {
   // Calculate progress percentage
   const progressPercentage = ((currentStep - 1) / 3) * 100;
 
-  if(DISABLE_SIGNUP) {
+  if (isLoadingConfigs) {
+    return null;
+  }
+
+  if (configs?.disableSignup) {
     return (
       <div className="flex justify-center items-center h-screen w-full">
         <Card className="w-full max-w-sm p-1">
@@ -506,14 +512,19 @@ export default function SignupPage() {
           </CardHeader>
           <CardContent>
             <div className="flex flex-col gap-6">
-              <p className="text-center">New account registration is currently disabled. If you have an account, you can
-                {" "}<Link href="/login" className="underline">sign in</Link>.
+              <p className="text-center">
+                New account registration is currently disabled. If you have an
+                account, you can{" "}
+                <Link href="/login" className="underline">
+                  sign in
+                </Link>
+                .
               </p>
             </div>
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
   return (
@@ -548,10 +559,24 @@ export default function SignupPage() {
               {[1, 2, 3, 4].map((step) => (
                 <div
                   key={step}
-                  className={cn("flex items-center space-x-3 py-3", currentStep === step ? "text-emerald-400 font-medium" : currentStep > step ? "text-muted-foreground" : "text-muted-foreground/60")}                  
+                  className={cn(
+                    "flex items-center space-x-3 py-3",
+                    currentStep === step
+                      ? "text-emerald-400 font-medium"
+                      : currentStep > step
+                      ? "text-muted-foreground"
+                      : "text-muted-foreground/60"
+                  )}
                 >
                   <div
-                    className={cn("flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300", currentStep === step ? "bg-emerald-600 text-primary-foreground" : currentStep > step ? "bg-emerald-600/20 text-emerald-400" : "bg-muted-foreground/20 text-muted-foreground")}                    
+                    className={cn(
+                      "flex items-center justify-center w-8 h-8 rounded-full transition-all duration-300",
+                      currentStep === step
+                        ? "bg-emerald-600 text-primary-foreground"
+                        : currentStep > step
+                        ? "bg-emerald-600/20 text-emerald-400"
+                        : "bg-muted-foreground/20 text-muted-foreground"
+                    )}
                   >
                     {currentStep > step ? (
                       <Check className="h-4 w-4" />

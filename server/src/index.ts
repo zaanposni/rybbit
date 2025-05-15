@@ -58,6 +58,7 @@ import { getSubscription } from "./api/stripe/getSubscription.js";
 import { handleWebhook } from "./api/stripe/webhook.js";
 import { IS_CLOUD } from "./lib/const.js";
 import { addUserToOrganization } from "./api/user/addUserToOrganization.js";
+import { getConfig } from "./api/getConfig.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -120,6 +121,7 @@ const PUBLIC_ROUTES: string[] = [
   "/track",
   "/script",
   "/auth",
+  "/config",
   "/api/auth",
   "/api/auth/callback/google",
   "/api/auth/callback/github",
@@ -229,6 +231,7 @@ server.get("/events/names/:site", getEventNames);
 server.get("/events/properties/:site", getEventProperties);
 
 // Administrative
+server.get("/config", getConfig);
 server.post("/add-site", addSite);
 server.post("/change-site-domain", changeSiteDomain);
 server.post("/change-site-public", changeSitePublic);
