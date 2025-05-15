@@ -21,9 +21,13 @@ source .env
 # Start the appropriate services with updated environment variables
 if [ "$USE_WEBSERVER" = "false" ]; then
   # Start without the caddy service when using --no-webserver
-  docker compose up -d backend client clickhouse postgres
+  # Force rebuild of client to ensure build args are refreshed
+  docker compose up -d --build client
+  docker compose up -d backend clickhouse postgres
 else
   # Start all services including caddy
+  # Force rebuild of client to ensure build args are refreshed
+  docker compose up -d --build client
   docker compose up -d
 fi
 
