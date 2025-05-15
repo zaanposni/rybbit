@@ -1,3 +1,8 @@
+console.info(process.env);
+
+console.info(process.env.NEXT_PUBLIC_BACKEND_URL);
+console.info(process.env.NEXT_PUBLIC_DISABLE_SIGNUP);
+
 export const BACKEND_URL =
   process.env.NEXT_PUBLIC_BACKEND_URL === "http://localhost:3001"
     ? "http://localhost:3001"
