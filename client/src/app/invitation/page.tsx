@@ -25,10 +25,9 @@ import { Login } from "./components/login";
 import { Signup } from "./components/signup";
 
 function AuthComponent() {
-  const invitationId = useSearchParams().get("invitationId");
   const organization = useSearchParams().get("organization");
   const inviterEmail = useSearchParams().get("inviterEmail");
-  const [activeTab, setActiveTab] = useState<"login" | "signup">("login");
+  const [activeTab, setActiveTab] = useState<"login" | "signup">("signup");
 
   return (
     <Card className="w-full max-w-md p-1">
@@ -48,8 +47,8 @@ function AuthComponent() {
           onValueChange={(v) => setActiveTab(v as "login" | "signup")}
         >
           <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="login">Login</TabsTrigger>
             <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsTrigger value="login">Login</TabsTrigger>
           </TabsList>
 
           <TabsContent value="login">
