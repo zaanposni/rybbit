@@ -23,7 +23,7 @@ import { UserPlus } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { Alert } from "../../../../components/ui/alert";
-import { BACKEND_URL } from "../../../../lib/const";
+import { authClient } from "../../../../lib/auth";
 
 interface AddMemberDialogProps {
   organizationId: string;
@@ -35,7 +35,7 @@ export function AddMemberDialog({
   onSuccess,
 }: AddMemberDialogProps) {
   const [email, setEmail] = useState("");
-  const [role, setRole] = useState("admin");
+  const [role, setRole] = useState<"admin" | "member">("member");
 
   const [isLoading, setIsLoading] = useState(false);
   const [open, setOpen] = useState(false);
@@ -49,17 +49,24 @@ export function AddMemberDialog({
 
     setIsLoading(true);
     try {
-      await fetch(`${BACKEND_URL}/add-user-to-organization`, {
-        method: "POST",
-        body: JSON.stringify({
-          email: email,
-          role: role,
-          organizationId: organizationId,
-        }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
+      // await fetch(`${BACKEND_URL}/add-user-to-organization`, {
+      //   method: "POST",
+      //   body: JSON.stringify({
+      //     email: email,
+      //     role: role,
+      //     organizationId: organizationId,
+      //   }),
+      //   headers: {
+      //     "Content-Type": "application/json",
+      //   },
+      //   credentials: "include",
+      // });
+
+      await authClient.organization.inviteMember({
+        email,
+        role,
+        organizationId,
+        resend: true,
       });
 
       toast.success(`Invitation sent to ${email}`);
@@ -79,14 +86,14 @@ export function AddMemberDialog({
       <DialogTrigger asChild>
         <Button size="sm" variant="outline">
           <UserPlus className="h-4 w-4 mr-1" />
-          Add Member
+          Invite Member
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add a new member</DialogTitle>
+          <DialogTitle>Invite a new member</DialogTitle>
           <DialogDescription>
-            Add a new member to this organization.
+            Invite a new member to this organization.
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
@@ -104,7 +111,10 @@ export function AddMemberDialog({
           </div>
           <div className="grid gap-2">
             <Label htmlFor="role">Role</Label>
-            <Select value={role} onValueChange={setRole}>
+            <Select
+              value={role}
+              onValueChange={(value) => setRole(value as "admin" | "member")}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select a role" />
               </SelectTrigger>
@@ -122,7 +132,7 @@ export function AddMemberDialog({
             Cancel
           </Button>
           <Button onClick={handleInvite} disabled={isLoading} variant="success">
-            {isLoading ? "Adding..." : "Add"}
+            {isLoading ? "Inviting..." : "Invite"}
           </Button>
         </DialogFooter>
       </DialogContent>
