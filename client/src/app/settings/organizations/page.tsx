@@ -19,11 +19,12 @@ import { authClient } from "../../../lib/auth";
 // Import the separated dialog components
 import { useOrganizationMembers } from "../../../api/admin/auth";
 import {
+  useOrganizationInvitations,
   UserOrganization,
   useUserOrganizations,
 } from "../../../api/admin/organizations";
 import { NoOrganization } from "../../../components/NoOrganization";
-import { AddMemberDialog } from "./components/AddMemberDialog";
+import { InviteMemberDialog } from "./components/InviteMemberDialog";
 import { DeleteOrganizationDialog } from "./components/DeleteOrganizationDialog";
 import { EditOrganizationDialog } from "./components/EditOrganizationDialog";
 import { RemoveMemberDialog } from "./components/RemoveMemberDialog";
@@ -55,6 +56,7 @@ export type Member = {
 // Organization Component with Members Table
 function Organization({ org }: { org: UserOrganization }) {
   const { data: members, refetch } = useOrganizationMembers(org.id);
+  const { refetch: refetchInvitations } = useOrganizationInvitations(org.id);
   const { data } = authClient.useSession();
 
   const isOwner = members?.data.find(
@@ -63,6 +65,7 @@ function Organization({ org }: { org: UserOrganization }) {
 
   const handleRefresh = () => {
     refetch();
+    refetchInvitations();
   };
 
   return (
@@ -80,7 +83,7 @@ function Organization({ org }: { org: UserOrganization }) {
             <div className="flex items-center gap-2">
               {isOwner && (
                 <>
-                  <AddMemberDialog
+                  <InviteMemberDialog
                     organizationId={org.id}
                     onSuccess={handleRefresh}
                   />

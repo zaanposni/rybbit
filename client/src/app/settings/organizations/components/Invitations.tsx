@@ -20,6 +20,7 @@ import { Badge } from "../../../../components/ui/badge";
 import { Button } from "../../../../components/ui/button";
 import { useState } from "react";
 import { toast } from "sonner";
+import { useOrganizationInvitations } from "../../../../api/admin/organizations";
 
 interface InvitationsProps {
   organizationId: string;
@@ -31,22 +32,8 @@ export function Invitations({ organizationId, isOwner }: InvitationsProps) {
     null
   );
 
-  const { data: invitations, refetch: refetchInvitations } = useQuery({
-    queryKey: ["invitations", organizationId],
-    queryFn: async () => {
-      const invitations = await authClient.organization.listInvitations({
-        query: {
-          organizationId,
-        },
-      });
-
-      if (invitations.error) {
-        throw new Error(invitations.error.message);
-      }
-
-      return invitations.data;
-    },
-  });
+  const { data: invitations, refetch: refetchInvitations } =
+    useOrganizationInvitations(organizationId);
 
   const handleCancelInvitation = async (invitationId: string) => {
     try {
