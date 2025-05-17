@@ -114,6 +114,13 @@ export const sendInvitationEmail = async (
             font-size: 12px;
             color: #a3a3a3;
           }
+          .footer a {
+            color: #10b981;
+            text-decoration: none;
+          }
+          .footer a:hover {
+            text-decoration: underline;
+          }
           h2 {
             color: #ffffff;
             font-size: 28px;
@@ -137,7 +144,7 @@ export const sendInvitationEmail = async (
               <h2>You've Been Invited!</h2>
             </div>
             <div class="invite-text">
-              <p><span class="highlight">${invitedBy}</span> has invited you to join <span class="highlight">${organizationName}</span> on Rybbit Analytics.</p>
+              <p>${invitedBy} has invited you to join <span class="highlight">${organizationName}</span> on Rybbit Analytics.</p>
               <p>Rybbit is an open-source analytics platform that helps you understand your website traffic while respecting user privacy.</p>
             </div>
             <div class="button-container">
@@ -145,7 +152,7 @@ export const sendInvitationEmail = async (
             </div>
           </div>
           <div class="footer">
-            <p>This invitation was sent to ${email}.</p>
+            <p>This invitation was sent to <span class="highlight">${email}</span>.</p>
             <p>&copy; ${new Date().getFullYear()} Rybbit Analytics</p>
           </div>
         </div>
