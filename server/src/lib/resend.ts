@@ -13,7 +13,9 @@ export const sendEmail = async (
   html: string
 ) => {
   if (!resend) {
-    throw new Error("Resend is not initialized");
+    return;
+    // not sure how to handle self hosted instances without resend
+    // throw new Error("Resend is not initialized");
   }
   try {
     const response = await resend.emails.send({
@@ -135,9 +137,6 @@ export const sendInvitationEmail = async (
       </head>
       <body>
         <div class="email-container">
-          <div class="header">
-            <img src="https://raw.githubusercontent.com/rybbit-io/rybbit/refs/heads/master/client/public/rybbit.png" alt="Rybbit" class="logo" width="150">
-          </div>
           <div class="content">
             <div style="text-align: center;">
               <div class="invite-badge">New Invitation</div>
