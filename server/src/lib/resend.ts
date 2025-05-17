@@ -115,7 +115,7 @@ export const sendInvitationEmail = async (
       <body>
         <div class="email-container">
           <div class="header">
-            <img src="${inviteLink.split("/invitation")[0]}/rybbit.png" alt="Rybbit" class="logo">
+            <img src="https://raw.githubusercontent.com/rybbit-io/rybbit/refs/heads/master/client/public/rybbit.png" alt="Rybbit" class="logo" width="200">
           </div>
           <div class="content">
             <h2>You've Been Invited!</h2>
