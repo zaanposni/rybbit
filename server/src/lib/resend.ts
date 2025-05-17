@@ -46,50 +46,57 @@ export const sendInvitationEmail = async (
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             line-height: 1.6;
-            color: #333;
-            background-color: #ecfdf5;
+            color: #1a1a1a;
+            background-color: #0c0c0c;
             margin: 0;
             padding: 0;
           }
           .email-container {
             max-width: 600px;
             margin: 0 auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            padding: 40px 24px;
+            background-color: #0c0c0c;
           }
           .header {
             text-align: center;
-            padding-bottom: 20px;
-            border-bottom: 1px solid #d1fae5;
+            padding-bottom: 32px;
           }
           .logo {
             margin: 0 auto;
-            width: 80px;
-            height: auto;
-            margin-bottom: 10px;
+            display: block;
           }
           .content {
-            padding: 30px 20px;
+            padding: 0;
+          }
+          .invite-badge {
+            display: inline-block;
+            background-color: rgba(16, 185, 129, 0.2);
+            color: #10b981;
+            padding: 6px 12px;
+            border-radius: 50px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-align: center;
           }
           .invite-text {
             font-size: 16px;
-            margin-bottom: 25px;
+            margin-bottom: 32px;
+            color: #e5e5e5;
           }
           .highlight {
             font-weight: bold;
-            color: #059669;
+            color: #10b981;
           }
           .button-container {
             text-align: center;
-            margin: 30px 0;
+            margin: 32px 0;
           }
           .button {
             display: inline-block;
             background-color: #10b981;
             color: white;
-            padding: 12px 30px;
+            padding: 12px 32px;
             text-decoration: none;
             font-weight: bold;
             border-radius: 6px;
@@ -101,24 +108,34 @@ export const sendInvitationEmail = async (
           }
           .footer {
             text-align: center;
+            margin-top: 40px;
             padding-top: 20px;
-            border-top: 1px solid #d1fae5;
+            border-top: 1px solid #27272a;
             font-size: 12px;
-            color: #999;
+            color: #a3a3a3;
           }
           h2 {
-            color: #065f46;
+            color: #ffffff;
+            font-size: 28px;
             text-align: center;
+            margin-bottom: 24px;
+            font-weight: 600;
+          }
+          p {
+            margin: 12px 0;
           }
         </style>
       </head>
       <body>
         <div class="email-container">
           <div class="header">
-            <img src="https://raw.githubusercontent.com/rybbit-io/rybbit/refs/heads/master/client/public/rybbit.png" alt="Rybbit" class="logo" width="200">
+            <img src="https://raw.githubusercontent.com/rybbit-io/rybbit/refs/heads/master/client/public/rybbit.png" alt="Rybbit" class="logo" width="150">
           </div>
           <div class="content">
-            <h2>You've Been Invited!</h2>
+            <div style="text-align: center;">
+              <div class="invite-badge">New Invitation</div>
+              <h2>You've Been Invited!</h2>
+            </div>
             <div class="invite-text">
               <p><span class="highlight">${invitedBy}</span> has invited you to join <span class="highlight">${organizationName}</span> on Rybbit Analytics.</p>
               <p>Rybbit is an open-source analytics platform that helps you understand your website traffic while respecting user privacy.</p>
@@ -126,7 +143,6 @@ export const sendInvitationEmail = async (
             <div class="button-container">
               <a href="${inviteLink}" class="button">Accept Invitation</a>
             </div>
-            <p>If you have any questions, please contact the person who invited you.</p>
           </div>
           <div class="footer">
             <p>This invitation was sent to ${email}.</p>
