@@ -52,6 +52,11 @@ export function TopBar() {
               >
                 Sign out
               </DropdownMenuItem>
+              {session.data.user.role === "admin" && (
+                <Link href="/admin" passHref>
+                  <DropdownMenuItem>Admin</DropdownMenuItem>
+                </Link>
+              )}
             </DropdownMenuContent>
           </DropdownMenu>
         ) : IS_DEMO ? (

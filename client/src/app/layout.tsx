@@ -11,6 +11,7 @@ import { userStore } from "../lib/userStore";
 import { cn } from "../lib/utils";
 import "./globals.css";
 import Script from "next/script";
+import { useStopImpersonation } from "@/hooks/useStopImpersonation";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -40,6 +41,9 @@ export default function RootLayout({
   const [isCheckingPublic, setIsCheckingPublic] = useState(false);
   const [isPublicSite, setIsPublicSite] = useState(false);
 
+  // Use the hook to expose stopImpersonating globally
+  useStopImpersonation();
+
   useEffect(() => {
     // Check if the current path could be a site path
     // Extract potential siteId from path like /{siteId} or /{siteId}/something
@@ -50,9 +54,14 @@ export default function RootLayout({
       // Don't check for public site status on obvious non-site paths
       if (
         !publicRoutes.includes(`/${potentialSiteId}`) &&
-        !["_next", "api", "settings", "subscribe", "invitation"].includes(
-          potentialSiteId
-        )
+        ![
+          "_next",
+          "api",
+          "settings",
+          "subscribe",
+          "invitation",
+          "admin",
+        ].includes(potentialSiteId)
       ) {
         setIsCheckingPublic(true);
 
