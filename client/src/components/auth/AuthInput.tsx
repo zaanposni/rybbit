@@ -2,6 +2,7 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ReactNode } from "react";
 
 interface AuthInputProps {
   id: string;
@@ -12,6 +13,7 @@ interface AuthInputProps {
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   required?: boolean;
   className?: string;
+  rightElement?: ReactNode;
 }
 
 export function AuthInput({
@@ -23,10 +25,14 @@ export function AuthInput({
   onChange,
   required = false,
   className = "",
+  rightElement,
 }: AuthInputProps) {
   return (
     <div className={`grid gap-2 ${className}`}>
-      <Label htmlFor={id}>{label}</Label>
+      <div className="flex justify-between items-center">
+        <Label htmlFor={id}>{label}</Label>
+        {rightElement && <div>{rightElement}</div>}
+      </div>
       <Input
         id={id}
         type={type}
@@ -35,6 +41,7 @@ export function AuthInput({
         onChange={onChange}
         required={required}
         className="h-10 transition-all bg-neutral-800/50 border-neutral-700"
+        minLength={type === "password" ? 8 : undefined}
       />
     </div>
   );

@@ -39,9 +39,6 @@ class SiteConfig {
       }
 
       this.initialized = true;
-      console.log(
-        `Loaded ${this.siteConfigMap.size} sites into site config cache`
-      );
     } catch (error) {
       console.error("Error loading site configurations:", error);
       this.initialized = false;

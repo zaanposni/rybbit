@@ -15,7 +15,7 @@ import { useStopImpersonation } from "@/hooks/useStopImpersonation";
 
 const inter = Inter({ subsets: ["latin"] });
 
-const publicRoutes = ["/login", "/signup", "/invitation"];
+const publicRoutes = ["/login", "/signup", "/invitation", "/reset-password"];
 
 // Helper function to check if a site is public
 async function checkIfSiteIsPublic(siteId: string): Promise<boolean> {
@@ -52,17 +52,7 @@ export default function RootLayout({
       const potentialSiteId = pathSegments[0];
 
       // Don't check for public site status on obvious non-site paths
-      if (
-        !publicRoutes.includes(`/${potentialSiteId}`) &&
-        ![
-          "_next",
-          "api",
-          "settings",
-          "subscribe",
-          "invitation",
-          "admin",
-        ].includes(potentialSiteId)
-      ) {
+      if (!isNaN(Number(potentialSiteId))) {
         setIsCheckingPublic(true);
 
         checkIfSiteIsPublic(potentialSiteId).then((isPublic) => {

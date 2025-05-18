@@ -79,6 +79,14 @@ export default function Page() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                rightElement={
+                  <Link
+                    href="/reset-password"
+                    className="text-xs text-muted-foreground hover:text-primary"
+                  >
+                    Forgot password?
+                  </Link>
+                }
               />
 
               <AuthButton isLoading={isLoading} loadingText="Logging in...">
