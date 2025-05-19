@@ -214,7 +214,7 @@
     pageview: trackPageview,
     event: (name, properties = {}) => track("custom_event", name, properties),
     trackOutbound: (url, text = "", target = "_self") =>
-      track("outbound", "", { url, text, target }),
+      track("custom_event", "outbound", { url, text, target }),
   };
 
   if (autoTrackPageview) {
