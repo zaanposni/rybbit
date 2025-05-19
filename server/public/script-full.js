@@ -22,13 +22,13 @@
     ? Math.max(0, parseInt(scriptTag.getAttribute("data-debounce")))
     : 500;
 
+  const autoTrackPageview =
+    scriptTag.getAttribute("data-auto-track-pageview") !== "false";
   const autoTrackSpa = scriptTag.getAttribute("data-track-spa") !== "false";
   const trackQuerystring =
     scriptTag.getAttribute("data-track-query") !== "false";
   const trackOutbound =
     scriptTag.getAttribute("data-track-outbound") !== "false";
-  const autoTrackPageview =
-    scriptTag.getAttribute("data-auto-track-pageview") !== "false";
 
   let skipPatterns = [];
   try {
@@ -124,6 +124,12 @@
     const url = new URL(window.location.href);
     let pathname = url.pathname;
 
+    // Always handle hash-based SPA routing
+    if (url.hash && url.hash.startsWith("#/")) {
+      // For #/path format, replace pathname with just /path
+      pathname = url.hash.substring(1);
+    }
+
     if (findMatchingPattern(pathname, skipPatterns)) {
       return;
     }
@@ -200,6 +206,8 @@
     };
 
     window.addEventListener("popstate", debouncedTrackPageview);
+    // Always listen for hashchange events for hash-based routing
+    window.addEventListener("hashchange", debouncedTrackPageview);
   }
 
   window.rybbit = {

@@ -34,7 +34,7 @@ export function NoData() {
           <span className="text-xs text-muted-foreground">
             See our{" "}
             <a
-              href="https://rybbit.io/docs"
+              href="https://rybbit.io/docs/script"
               className="text-blue-500 hover:underline"
             >
               docs
